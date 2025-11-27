@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Slider } from '@mui/material';
 import { API_BASE_URL } from '../Config';
+import { useAuth } from '../contexts/AuthContext';
 
 const CreateMeetup: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
@@ -15,6 +17,13 @@ const CreateMeetup: React.FC = () => {
   const [fairnessMode, setFairnessMode] = useState('fastest');
   const [maxTravelTime, setMaxTravelTime] = useState(45);
   const [globalPrivacy, setGlobalPrivacy] = useState(true);
+
+  // Auto-populate name if user is logged in
+  useEffect(() => {
+    if (user && user.name) {
+      setCreatedByName(user.name);
+    }
+  }, [user]);
 
   const vibeOptions = [
     { value: 'coffee', icon: '☕', label: 'Coffee' },
@@ -102,7 +111,7 @@ const CreateMeetup: React.FC = () => {
             {/* Organizer Name */}
             <div>
               <label htmlFor="organizer-name" className="block text-lg font-semibold text-gray-700 mb-2">
-                Your Name
+                Your Name {user && <span className="text-sm text-emerald-600 font-normal">(Logged in)</span>}
               </label>
               <input
                 id="organizer-name"
@@ -110,9 +119,19 @@ const CreateMeetup: React.FC = () => {
                 value={createdByName}
                 onChange={(e) => setCreatedByName(e.target.value)}
                 placeholder="Enter your name"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg"
+                disabled={!!user}
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-emerald-500 text-lg ${
+                  user
+                    ? 'bg-gray-100 text-gray-600 cursor-not-allowed border-gray-300'
+                    : 'border-gray-300'
+                }`}
                 required
               />
+              {user && (
+                <p className="text-sm text-emerald-600 mt-1">
+                  ✓ Your name is locked because you're logged in
+                </p>
+              )}
             </div>
 
             {/* Meetup Title (Optional) */}

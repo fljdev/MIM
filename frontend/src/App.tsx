@@ -11,12 +11,7 @@ import LandingPage from './LandingPage';
 import { calculateMidpoint } from './utils/midpointCalculator';
 import { DEV_CONFIG, devLog } from './utils/devConfig';
 import { API_BASE_URL } from './Config';
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-}
+import { useAuth } from './contexts/AuthContext';
 
 interface Person {
   id: number;
@@ -30,10 +25,9 @@ interface Person {
 }
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isLoading, login, logout } = useAuth();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [showLandingPage, setShowLandingPage] = useState(true);
 
   // State for modes
@@ -70,70 +64,30 @@ function App() {
   const [searchResults, setSearchResults] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Token validation on mount
+  // Pre-fill Person 1 with logged-in user's name when user state changes
   useEffect(() => {
-    const validateToken = async () => {
-      const token = localStorage.getItem('token');
+    if (user && user.name) {
+      setPeople(prev => [
+        { ...prev[0], name: user.name },
+        ...prev.slice(1)
+      ]);
+    }
+  }, [user]);
 
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-          // Pre-fill Person 1 with logged-in user's name
-          setPeople(prev => [
-            { ...prev[0], name: data.user.name },
-            ...prev.slice(1)
-          ]);
-        } else {
-          // Token invalid, clear it
-          localStorage.removeItem('token');
-        }
-      } catch (error) {
-        console.error('Token validation error:', error);
-        localStorage.removeItem('token');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    validateToken();
-  }, []);
-
-  const handleRegisterSuccess = (newUser: User) => {
-    setUser(newUser);
+  const handleRegisterSuccess = (newUser: { id: number; email: string; name: string }) => {
+    const token = localStorage.getItem('token') || '';
+    login(newUser, token);
     setIsRegisterModalOpen(false);
-    // Pre-fill Person 1 with registered user's name
-    setPeople(prev => [
-      { ...prev[0], name: newUser.name },
-      ...prev.slice(1)
-    ]);
   };
 
-  const handleLoginSuccess = (loggedInUser: User) => {
-    setUser(loggedInUser);
+  const handleLoginSuccess = (loggedInUser: { id: number; email: string; name: string }) => {
+    const token = localStorage.getItem('token') || '';
+    login(loggedInUser, token);
     setIsLoginModalOpen(false);
-    // Pre-fill Person 1 with logged-in user's name
-    setPeople(prev => [
-      { ...prev[0], name: loggedInUser.name },
-      ...prev.slice(1)
-    ]);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+    logout();
     // Reset people array to default empty state
     setPeople([
       { id: 1, name: '', location: '' },
