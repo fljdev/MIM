@@ -1,0 +1,126 @@
+ current_database 
+------------------
+ mim
+(1 row)
+
+            List of relations
+ Schema |      Name       | Type  | Owner 
+--------+-----------------+-------+-------
+ public | saved_locations | table | john
+ public | users           | table | john
+(2 rows)
+
+                                                            List of relations
+ Schema |      Name       | Type  | Owner | Persistence | Access method | Size  |                      Description                       
+--------+-----------------+-------+-------+-------------+---------------+-------+--------------------------------------------------------
+ public | saved_locations | table | john  | permanent   | heap          | 16 kB | Stores user pinned/saved locations with 5 max per user
+ public | users           | table | john  | permanent   | heap          | 16 kB | 
+(2 rows)
+
+                                          Table "public.users"
+    Column     |            Type             | Collation | Nullable |              Default              
+---------------+-----------------------------+-----------+----------+-----------------------------------
+ id            | integer                     |           | not null | nextval('users_id_seq'::regclass)
+ email         | character varying(255)      |           | not null | 
+ name          | character varying(100)      |           | not null | 
+ role          | character varying(50)       |           | not null | 'app_user'::character varying
+ is_premium    | boolean                     |           |          | false
+ created_at    | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+ password_hash | character varying(255)      |           |          | 
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (id)
+    "users_email_key" UNIQUE CONSTRAINT, btree (email)
+Referenced by:
+    TABLE "saved_locations" CONSTRAINT "saved_locations_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+                                         Table "public.saved_locations"
+    Column    |            Type             | Collation | Nullable |                   Default                   
+--------------+-----------------------------+-----------+----------+---------------------------------------------
+ id           | integer                     |           | not null | nextval('saved_locations_id_seq'::regclass)
+ user_id      | integer                     |           | not null | 
+ label        | character varying(50)       |           | not null | 
+ address      | text                        |           | not null | 
+ place_id     | character varying(255)      |           |          | 
+ latitude     | numeric(10,8)               |           | not null | 
+ longitude    | numeric(11,8)               |           | not null | 
+ created_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+ updated_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+ last_used_at | timestamp without time zone |           |          | 
+ use_count    | integer                     |           |          | 0
+Indexes:
+    "saved_locations_pkey" PRIMARY KEY, btree (id)
+    "idx_saved_locations_last_used" btree (user_id, last_used_at DESC)
+    "idx_saved_locations_user_id" btree (user_id)
+    "unique_user_label" UNIQUE CONSTRAINT, btree (user_id, label)
+Foreign-key constraints:
+    "saved_locations_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+                                                                    Table "public.saved_locations"
+    Column    |            Type             | Collation | Nullable |                   Default                   | Storage  | Compression | Stats target | Description 
+--------------+-----------------------------+-----------+----------+---------------------------------------------+----------+-------------+--------------+-------------
+ id           | integer                     |           | not null | nextval('saved_locations_id_seq'::regclass) | plain    |             |              | 
+ user_id      | integer                     |           | not null |                                             | plain    |             |              | 
+ label        | character varying(50)       |           | not null |                                             | extended |             |              | 
+ address      | text                        |           | not null |                                             | extended |             |              | 
+ place_id     | character varying(255)      |           |          |                                             | extended |             |              | 
+ latitude     | numeric(10,8)               |           | not null |                                             | main     |             |              | 
+ longitude    | numeric(11,8)               |           | not null |                                             | main     |             |              | 
+ created_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP                           | plain    |             |              | 
+ updated_at   | timestamp without time zone |           |          | CURRENT_TIMESTAMP                           | plain    |             |              | 
+ last_used_at | timestamp without time zone |           |          |                                             | plain    |             |              | 
+ use_count    | integer                     |           |          | 0                                           | plain    |             |              | 
+Indexes:
+    "saved_locations_pkey" PRIMARY KEY, btree (id)
+    "idx_saved_locations_last_used" btree (user_id, last_used_at DESC)
+    "idx_saved_locations_user_id" btree (user_id)
+    "unique_user_label" UNIQUE CONSTRAINT, btree (user_id, label)
+Foreign-key constraints:
+    "saved_locations_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+Access method: heap
+
+   table_name    | column_name | foreign_table_name | foreign_column_name 
+-----------------+-------------+--------------------+---------------------
+ saved_locations | user_id     | users              | id
+(1 row)
+
+           indexname           |                                                   indexdef                                                    
+-------------------------------+---------------------------------------------------------------------------------------------------------------
+ saved_locations_pkey          | CREATE UNIQUE INDEX saved_locations_pkey ON public.saved_locations USING btree (id)
+ unique_user_label             | CREATE UNIQUE INDEX unique_user_label ON public.saved_locations USING btree (user_id, label)
+ idx_saved_locations_user_id   | CREATE INDEX idx_saved_locations_user_id ON public.saved_locations USING btree (user_id)
+ idx_saved_locations_last_used | CREATE INDEX idx_saved_locations_last_used ON public.saved_locations USING btree (user_id, last_used_at DESC)
+(4 rows)
+
+ column_name  |          data_type          | character_maximum_length | is_nullable |               column_default                
+--------------+-----------------------------+--------------------------+-------------+---------------------------------------------
+ id           | integer                     |                          | NO          | nextval('saved_locations_id_seq'::regclass)
+ user_id      | integer                     |                          | NO          | 
+ label        | character varying           |                       50 | NO          | 
+ address      | text                        |                          | NO          | 
+ place_id     | character varying           |                      255 | YES         | 
+ latitude     | numeric                     |                          | NO          | 
+ longitude    | numeric                     |                          | NO          | 
+ created_at   | timestamp without time zone |                          | YES         | CURRENT_TIMESTAMP
+ updated_at   | timestamp without time zone |                          | YES         | CURRENT_TIMESTAMP
+ last_used_at | timestamp without time zone |                          | YES         | 
+ use_count    | integer                     |                          | YES         | 0
+(11 rows)
+
+       constraint_name        | constraint_type | column_name 
+------------------------------+-----------------+-------------
+ saved_locations_pkey         | PRIMARY KEY     | id
+ unique_user_label            | UNIQUE          | user_id
+ unique_user_label            | UNIQUE          | label
+ saved_locations_user_id_fkey | FOREIGN KEY     | user_id
+(4 rows)
+
+ table_exists 
+--------------
+ t
+(1 row)
+
+ count 
+-------
+     0
+(1 row)
+
