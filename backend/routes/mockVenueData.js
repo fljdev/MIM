@@ -15,15 +15,15 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Get speed in km/h based on transit mode
+// Get speed in km/h based on transit mode (case-insensitive)
 function getSpeedForMode(mode) {
   const SPEEDS = {
-    'WALKING': 5,
-    'BICYCLING': 15,
-    'TRANSIT': 25,
-    'DRIVING': 40
+    'walking': 5,
+    'bicycling': 15,
+    'transit': 25,
+    'driving': 40
   };
-  return SPEEDS[mode] || SPEEDS['DRIVING'];
+  return SPEEDS[mode?.toLowerCase()] || SPEEDS['driving'];
 }
 
 // Dublin venues - 254 venues from Google Places API

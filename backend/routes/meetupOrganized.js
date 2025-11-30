@@ -178,7 +178,7 @@ router.post('/:code/join', async (req, res) => {
         location,
         latitude,
         longitude,
-        transit_mode || 'WALKING',
+        transit_mode || 'walking',
         is_private || false,
         needs_accessibility || false
       ]

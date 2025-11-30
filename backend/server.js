@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -6,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const savedLocationsRouter = require('./routes/savedLocations');
 const midpointRouter = require('./routes/midpoint');
 const meetupOrganizedRouter = require('./routes/meetupOrganized');
+const meetupsRouter = require('./routes/meetups');
 const app = express();
 
 app.use(cors());
@@ -46,6 +48,9 @@ app.use('/api/midpoint', midpointRouter);
 
 // Meetup organized routes
 app.use('/api/meetup', meetupOrganizedRouter);
+
+// New Phase 1 meetups routes (2-person flow with shareable links)
+app.use('/api/meetups', meetupsRouter);
 
 // Get all users
 app.get('/api/users', async (req, res) => {
