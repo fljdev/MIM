@@ -61,8 +61,8 @@ function calculateSustainable(venues, participants) {
   const venuesWithTimes = venues.map(venue => {
     const venueData = calculateVenueTravelTimes(venue, participants);
 
-    // Check if any participant is driving
-    const hasDriving = venueData.travelTimes.some(t => t.mode === 'DRIVING');
+    // Check if any participant is driving (case-insensitive)
+    const hasDriving = venueData.travelTimes.some(t => t.mode?.toLowerCase() === 'driving');
 
     // Apply penalty if driving is used
     const penalizedTime = hasDriving
