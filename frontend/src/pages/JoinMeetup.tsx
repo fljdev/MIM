@@ -24,7 +24,7 @@ const JoinMeetup: React.FC = () => {
   const [participantName, setParticipantName] = useState('');
   const [location, setLocation] = useState('');
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [transitMode, setTransitMode] = useState('WALKING');
+  const [transitMode, setTransitMode] = useState('walking');
   const [isPrivate, setIsPrivate] = useState(false);
   const [needsAccessibility, setNeedsAccessibility] = useState(false);
   const [locationError, setLocationError] = useState('');
@@ -327,10 +327,10 @@ const JoinMeetup: React.FC = () => {
                 onChange={(e) => setTransitMode(e.target.value)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 bg-white text-lg"
               >
-                <option value="WALKING">🚶 Walking</option>
-                <option value="DRIVING">🚗 Driving</option>
-                <option value="TRANSIT">🚌 Luas/Bus</option>
-                <option value="BICYCLING">🚴 Cycling</option>
+                <option value="walking">🚶 Walking</option>
+                <option value="driving">🚗 Driving</option>
+                <option value="transit">🚌 Luas/Bus</option>
+                <option value="bicycling">🚴 Cycling</option>
               </select>
             </div>
 

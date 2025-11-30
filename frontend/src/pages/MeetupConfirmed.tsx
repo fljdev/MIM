@@ -68,12 +68,12 @@ const MeetupConfirmed: React.FC = () => {
 
   const getTransitIcon = (mode: string) => {
     const icons: { [key: string]: string } = {
-      WALKING: '🚶',
-      DRIVING: '🚗',
-      TRANSIT: '🚌',
-      BICYCLING: '🚴'
+      walking: '🚶',
+      driving: '🚗',
+      transit: '🚌',
+      bicycling: '🚴'
     };
-    return icons[mode] || '🚶';
+    return icons[mode?.toLowerCase()] || '🚶';
   };
 
   const getPriceSymbol = (level?: number) => {
