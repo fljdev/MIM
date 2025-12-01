@@ -1,6 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
 const ComingSoonLandingPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      setStatus('error');
+      setMessage('Please enter a valid email address');
+      return;
+    }
+
+    setStatus('loading');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/waitlist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setStatus('success');
+        setMessage(data.message);
+        setEmail('');
+      } else {
+        setStatus('error');
+        setMessage(data.error || 'Something went wrong');
+      }
+    } catch (error) {
+      setStatus('error');
+      setMessage('Could not connect to server. Please try again.');
+    }
+  };
+
   return (
     <div style={{
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
@@ -42,7 +84,6 @@ const ComingSoonLandingPage: React.FC = () => {
             </div>
             <span>Meet in Middle</span>
           </div>
-          {/* No login/signup buttons in Coming Soon mode */}
         </nav>
       </header>
 
@@ -99,7 +140,7 @@ const ComingSoonLandingPage: React.FC = () => {
             Whether you're driving, taking the Luas, or walking—everyone gets a fair journey.
           </p>
           
-          {/* Email signup instead of Get Started button */}
+          {/* Email signup form */}
           <div style={{
             maxWidth: '500px',
             margin: '0 auto',
@@ -114,48 +155,79 @@ const ComingSoonLandingPage: React.FC = () => {
             }}>
               Be the first to know when we launch:
             </p>
-            <div style={{
-              display: 'flex',
-              gap: '0.5rem',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-            }}>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                style={{
-                  padding: '1rem 1.5rem',
-                  fontSize: '1rem',
-                  borderRadius: '8px',
-                  border: 'none',
-                  flex: '1',
-                  minWidth: '200px',
-                }}
-              />
-              <button
-                style={{
-                  background: '#0D9488',
-                  color: 'white',
-                  padding: '1rem 2rem',
-                  fontSize: '1rem',
-                  borderRadius: '8px',
-                  border: '2px solid white',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  transition: 'all 0.3s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'white';
-                  e.currentTarget.style.color = '#0D9488';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#0D9488';
-                  e.currentTarget.style.color = 'white';
-                }}
-              >
-                Notify Me
-              </button>
-            </div>
+            
+            {status === 'success' ? (
+              <div style={{
+                background: 'rgba(255,255,255,0.9)',
+                color: '#065F46',
+                padding: '1rem',
+                borderRadius: '8px',
+                fontWeight: '600',
+              }}>
+                ✅ {message}
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{
+                display: 'flex',
+                gap: '0.5rem',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+              }}>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{
+                    padding: '1rem 1.5rem',
+                    fontSize: '1rem',
+                    borderRadius: '8px',
+                    border: status === 'error' ? '2px solid #EF4444' : 'none',
+                    flex: '1',
+                    minWidth: '200px',
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  style={{
+                    background: status === 'loading' ? '#6B7280' : '#0D9488',
+                    color: 'white',
+                    padding: '1rem 2rem',
+                    fontSize: '1rem',
+                    borderRadius: '8px',
+                    border: '2px solid white',
+                    cursor: status === 'loading' ? 'not-allowed' : 'pointer',
+                    fontWeight: '600',
+                    transition: 'all 0.3s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (status !== 'loading') {
+                      e.currentTarget.style.background = 'white';
+                      e.currentTarget.style.color = '#0D9488';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (status !== 'loading') {
+                      e.currentTarget.style.background = '#0D9488';
+                      e.currentTarget.style.color = 'white';
+                    }
+                  }}
+                >
+                  {status === 'loading' ? 'Submitting...' : 'Notify Me'}
+                </button>
+              </form>
+            )}
+            
+            {status === 'error' && (
+              <p style={{
+                marginTop: '0.5rem',
+                color: '#FEE2E2',
+                fontSize: '0.9rem',
+              }}>
+                {message}
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -327,7 +399,7 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Final CTA - Modified for Coming Soon */}
+      {/* Final CTA */}
       <section style={{
         background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
         color: 'white',
