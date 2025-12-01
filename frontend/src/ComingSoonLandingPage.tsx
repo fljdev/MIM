@@ -185,6 +185,8 @@ const ComingSoonLandingPage: React.FC = () => {
                     border: status === 'error' ? '2px solid #EF4444' : 'none',
                     flex: '1',
                     minWidth: '200px',
+                    color: '#333',
+                    backgroundColor: 'white',
                   }}
                 />
                 <button
