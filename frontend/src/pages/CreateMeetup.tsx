@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../Config';
 import { useAuth } from '../contexts/AuthContext';
+import LocationAutocomplete from '../LocationAutocomplete';
 
 const CreateMeetup: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +49,16 @@ const CreateMeetup: React.FC = () => {
     { value: 'bicycling', label: 'Bike' },
     { value: 'driving', label: 'Car' }
   ];
+
+  const handleLocationChange = (address: string, placeId?: string, coordinates?: { lat: number; lng: number }) => {
+    if (coordinates) {
+      setUserLocation({
+        name: address,
+        lat: coordinates.lat,
+        lng: coordinates.lng
+      });
+    }
+  };
 
   const isFormValid = createdByName.trim() !== '' && meetupVibe !== '' && budgetLevel !== '' && userLocation !== null;
 
@@ -160,8 +171,8 @@ const CreateMeetup: React.FC = () => {
                     type="button"
                     onClick={() => setMeetupVibe(vibe.value)}
                     className={`p-4 rounded-lg border-2 font-semibold transition-all ${meetupVibe === vibe.value
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                        : 'border-gray-300 text-gray-700 hover:border-emerald-300'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                      : 'border-gray-300 text-gray-700 hover:border-emerald-300'
                       }`}
                   >
                     <div className="text-3xl mb-2">{vibe.icon}</div>
@@ -183,8 +194,8 @@ const CreateMeetup: React.FC = () => {
                     type="button"
                     onClick={() => setBudgetLevel(budget.value)}
                     className={`p-5 rounded-lg border-2 font-semibold transition-all ${budgetLevel === budget.value
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                        : 'border-gray-300 text-gray-700 hover:border-emerald-300'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                      : 'border-gray-300 text-gray-700 hover:border-emerald-300'
                       }`}
                   >
                     <div className="text-2xl mb-2">{budget.icon}</div>
@@ -207,8 +218,8 @@ const CreateMeetup: React.FC = () => {
                     type="button"
                     onClick={() => setFairnessMode(mode.value)}
                     className={`p-5 rounded-lg border-2 font-semibold transition-all ${fairnessMode === mode.value
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                        : 'border-gray-300 text-gray-700 hover:border-emerald-300'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                      : 'border-gray-300 text-gray-700 hover:border-emerald-300'
                       }`}
                   >
                     <div className="text-2xl mb-2">{mode.icon}</div>
@@ -224,25 +235,15 @@ const CreateMeetup: React.FC = () => {
               <label className="block text-lg font-semibold text-gray-700 mb-2">
                 Your Location <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                placeholder="Enter your location (e.g., Smithfield, Dublin)"
-                onChange={(e) => {
-                  // Simplified - you'll need to integrate Google Places API properly
-                  if (e.target.value) {
-                    setUserLocation({
-                      name: e.target.value,
-                      lat: 53.3498, // Placeholder
-                      lng: -6.2603
-                    });
-                  }
-                }}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg"
-                required
-              />
+
               <p className="text-sm text-gray-500 mt-1">Enter where you're coming from</p>
             </div>
-
+            <LocationAutocomplete
+              value={userLocation?.name || ''}
+              onChange={handleLocationChange}
+              placeholder="📍 Enter your Dublin location"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg"
+            />
             {/* Travel Mode */}
             <div>
               <label className="block text-lg font-semibold text-gray-700 mb-2">
