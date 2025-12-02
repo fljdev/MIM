@@ -130,15 +130,53 @@ const ComingSoonLandingPage: React.FC = () => {
           </p>
           <p style={{
             fontSize: '1.1rem',
-            marginBottom: '3rem',
+            marginBottom: '2rem',
             opacity: '0.9',
             maxWidth: '700px',
             marginLeft: 'auto',
             marginRight: 'auto',
           }}>
-            The only Dublin app that finds meeting spots based on each person's actual travel time.
-            Whether you're driving, taking the Luas, or walking—everyone gets a fair journey.
+            The only Dublin app that finds meeting spots based on everyone's actual travel time—Luas, bus, bike, or walking.
           </p>
+          
+          {/* Benefits list */}
+          <div style={{
+            maxWidth: '600px',
+            margin: '2rem auto',
+            textAlign: 'left',
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            padding: '1.5rem 2rem',
+          }}>
+            <p style={{
+              fontSize: '1.1rem',
+              marginBottom: '0.75rem',
+              fontWeight: '600',
+            }}>
+              ✓ Fair journeys for everyone
+            </p>
+            <p style={{
+              fontSize: '1.1rem',
+              marginBottom: '0.75rem',
+              fontWeight: '600',
+            }}>
+              ✓ Budget-friendly venues
+            </p>
+            <p style={{
+              fontSize: '1.1rem',
+              marginBottom: '0.75rem',
+              fontWeight: '600',
+            }}>
+              ✓ Sustainable transport choices
+            </p>
+            <p style={{
+              fontSize: '1.1rem',
+              marginBottom: '0',
+              fontWeight: '600',
+            }}>
+              ✓ Zero tracking, no location history
+            </p>
+          </div>
           
           {/* Email signup form */}
           <div style={{
