@@ -14,9 +14,15 @@ const AppRouter: React.FC = () => {
   const isComingSoonMode = process.env.REACT_APP_COMING_SOON === 'true';
   const bypassKey = new URLSearchParams(window.location.search).get('dev');
   const hasDevAccess = bypassKey === 'mimdev2025';
+  
+  // Allow meetup-related paths to bypass Coming Soon
+  const currentPath = window.location.pathname;
+  const isMeetupPath = currentPath.startsWith('/meetup/') || 
+                       currentPath.startsWith('/join/') ||
+                       currentPath.startsWith('/create-meetup');
 
-  // Show Coming Soon page if enabled and no dev bypass
-  if (isComingSoonMode && !hasDevAccess) {
+  // Show Coming Soon page ONLY for homepage, not meetup paths
+  if (isComingSoonMode && !hasDevAccess && !isMeetupPath) {
     return <ComingSoonLandingPage />;
   }
 
