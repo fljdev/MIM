@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Slider } from '@mui/material';
-import RegisterModal from './RegisterModal';
-import LoginModal from './LoginModal';
-import LocationAutocomplete from './LocationAutocomplete';
-import SavedLocationsList from './components/SavedLocationsList';
-import SaveLocationModal from './components/SaveLocationModal';
-import ResultsView from './components/ResultsView';
-import LandingPage from './LandingPage';
-import { calculateMidpoint } from './utils/midpointCalculator';
+import RegisterModal from './features/auth/components/RegisterModal';
+import LoginModal from './features/auth/components/LoginModal';
+import LocationAutocomplete from './features/meetup/components/LocationAutocomplete';
+import SavedLocationsList from './features/meetup/components/SavedLocationsList';
+import SaveLocationModal from './features/meetup/components/SaveLocationModal';
+import ResultsView from './features/meetup/components/ResultsView';
+import LandingPage from './features/landing/pages/LandingPage';
+import { calculateMidpoint } from './lib/calculations/midpointCalculator';
 import { DEV_CONFIG, devLog } from './utils/devConfig';
 import { API_BASE_URL } from './Config';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './features/auth/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 interface Person {

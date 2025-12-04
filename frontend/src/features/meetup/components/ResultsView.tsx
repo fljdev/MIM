@@ -3,12 +3,12 @@ import {
   getWeatherForLocation,
   getTrafficInfo,
   checkWeatherSuitability
-} from '../utils/apiHelpers';
+} from '../../../lib/apiHelpers';
 import {
   getTravelTime,
   getGoogleMapsDirectionsUrl,
   getGoogleMapsLocationUrl
-} from '../utils/travelTimeCalculator';
+} from '../../../lib/calculations/travelTimeCalculator';
 
 interface Venue {
   id: string;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { API_BASE_URL } from '../Config';
+import { API_BASE_URL } from '../../../Config';
 
 export interface User {
   id: number;

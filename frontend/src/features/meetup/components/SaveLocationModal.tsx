@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { API_BASE_URL } from '../Config';
+import { API_BASE_URL } from '../../../Config';
 
 interface SaveLocationModalProps {
   isOpen: boolean;
