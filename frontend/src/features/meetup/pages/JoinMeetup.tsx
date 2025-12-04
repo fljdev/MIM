@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import LocationAutocomplete from '../LocationAutocomplete';
-import { API_BASE_URL } from '../Config';
+import LocationAutocomplete from '../components/LocationAutocomplete';
+import { API_BASE_URL } from '../../../Config';
 
 interface MeetupInfo {
   vibe: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../Config';
+import { API_BASE_URL } from '../../../Config';
 
 interface SavedLocation {
   id: number;

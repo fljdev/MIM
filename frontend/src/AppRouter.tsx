@@ -1,13 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import App from './App';
-import CreateMeetup from './pages/CreateMeetup';
-import MeetupCreated from './pages/MeetupCreated';
-import JoinMeetup from './pages/JoinMeetup';
-import MeetupLobby from './pages/MeetupLobby';
-import MeetupResults from './pages/MeetupResults';
-import MeetupConfirmed from './pages/MeetupConfirmed';
-import ComingSoonLandingPage from './ComingSoonLandingPage';
+import CreateMeetup from './features/meetup/pages/CreateMeetup';
+import MeetupCreated from './features/meetup/pages/MeetupCreated';
+import JoinMeetup from './features/meetup/pages/JoinMeetup';
+import MeetupLobby from './features/meetup/pages/MeetupLobby';
+import MeetupResults from './features/meetup/pages/MeetupResults';
+import MeetupConfirmed from './features/meetup/pages/MeetupConfirmed';
+import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
 
 const AppRouter: React.FC = () => {
   // Coming Soon mode check

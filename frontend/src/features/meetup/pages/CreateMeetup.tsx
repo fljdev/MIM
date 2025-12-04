@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_BASE_URL } from '../Config';
-import { useAuth } from '../contexts/AuthContext';
-import LocationAutocomplete from '../LocationAutocomplete';
+import { API_BASE_URL } from '../../../Config';
+import { useAuth } from '../../auth/contexts/AuthContext';
+import LocationAutocomplete from '../components/LocationAutocomplete';
 
 const CreateMeetup: React.FC = () => {
   const navigate = useNavigate();

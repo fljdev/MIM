@@ -1,55 +1,32 @@
 import { useState } from 'react';
-import { API_BASE_URL } from './Config';
+import { API_BASE_URL } from '../../../Config';
 
-interface RegisterModalProps {
+interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRegisterSuccess: (user: { id: number; email: string; name: string }) => void;
-  onSwitchToLogin: () => void;
+  onLoginSuccess: (user: { id: number; email: string; name: string }) => void;
+  onSwitchToRegister: () => void;
 }
 
-const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onRegisterSuccess, onSwitchToLogin }) => {
-  const [formData, setFormData] = useState({
-    email: '',
-    name: '',
-    password: '',
-    confirmPassword: ''
-  });
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess, onSwitchToRegister }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
   const validateForm = () => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email || !emailRegex.test(formData.email)) {
+    if (!email || !emailRegex.test(email)) {
       setError('Please enter a valid email address');
       return false;
     }
 
-    // Name validation
-    if (!formData.name || formData.name.trim().length < 2) {
-      setError('Please enter your full name');
-      return false;
-    }
-
     // Password validation
-    if (!formData.password || formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return false;
-    }
-
-    // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+    if (!password) {
+      setError('Please enter your password');
       return false;
     }
 
@@ -67,45 +44,38 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onRegist
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
-          name: formData.name,
-          password: formData.password,
+          email,
+          password,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || 'Login failed');
       }
 
       // Store JWT token in localStorage
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
+      localStorage.setItem('token', data.token);
 
       // Call success callback with user data
-      onRegisterSuccess(data.user);
+      onLoginSuccess(data.user);
 
       // Reset form
-      setFormData({
-        email: '',
-        name: '',
-        password: '',
-        confirmPassword: ''
-      });
+      setEmail('');
+      setPassword('');
       setError('');
 
       // Close modal
       onClose();
     } catch (err: any) {
-      setError(err.message || 'An error occurred during registration');
+      setError(err.message || 'An error occurred during login');
     } finally {
       setLoading(false);
     }
@@ -124,7 +94,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onRegist
     >
       <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Create Account</h2>
+          <h2 className="text-2xl font-bold">Login</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -136,32 +106,14 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onRegist
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-              Full Name
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-              placeholder="John Doe"
-              disabled={loading}
-              autoComplete="name"
-            />
-          </div>
-
-          <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
               Email
             </label>
             <input
               id="email"
-              name="email"
               type="email"
-              value={formData.email}
-              onChange={handleChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
               placeholder="your.email@example.com"
               disabled={loading}
@@ -169,37 +121,19 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onRegist
             />
           </div>
 
-          <div className="mb-4">
+          <div className="mb-6">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
               Password
             </label>
             <input
               id="password"
-              name="password"
               type="password"
-              value={formData.password}
-              onChange={handleChange}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-              placeholder="Minimum 6 characters"
+              placeholder="Enter your password"
               disabled={loading}
-              autoComplete="new-password"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmPassword">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-              placeholder="Re-enter password"
-              disabled={loading}
-              autoComplete="new-password"
+              autoComplete="current-password"
             />
           </div>
 
@@ -216,19 +150,19 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onRegist
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {loading ? 'Creating Account...' : 'Create Account'}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
         <div className="mt-4 text-center">
           <p className="text-sm text-gray-600">
-            Already have an account?{' '}
+            Don't have an account?{' '}
             <button
-              onClick={onSwitchToLogin}
+              onClick={onSwitchToRegister}
               className="text-emerald-500 hover:text-emerald-700 font-semibold"
               disabled={loading}
             >
-              Login
+              Register
             </button>
           </p>
         </div>
@@ -237,4 +171,4 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onRegist
   );
 };
 
-export default RegisterModal;
+export default LoginModal;
