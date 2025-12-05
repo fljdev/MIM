@@ -17,6 +17,8 @@ const CreateMeetup: React.FC = () => {
   const [fairnessMode, setFairnessMode] = useState('fastest');
   const [userLocation, setUserLocation] = useState<{ name: string, lat: number, lng: number } | null>(null);
   const [transitMode, setTransitMode] = useState('walking');
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [needsAccessibility, setNeedsAccessibility] = useState(false);
 
   useEffect(() => {
     if (user && user.name) {
@@ -40,7 +42,7 @@ const CreateMeetup: React.FC = () => {
   const fairnessOptions = [
     { value: 'fastest', icon: '⚡', label: 'Fastest', description: 'Minimize travel time' },
     { value: 'sustainable', icon: '🌱', label: 'Sustainable', description: 'Eco-friendly priority' },
-    { value: 'accessible', icon: '♿', label: 'Accessible', description: 'Wheelchair-friendly only' }
+    { value: 'accessible', icon: '♿', label: 'Accessible', description: 'Accessible venues' }
   ];
 
   const transitOptions = [
@@ -90,7 +92,9 @@ const CreateMeetup: React.FC = () => {
             lat: userLocation.lat,
             lng: userLocation.lng
           },
-          transit_mode: transitMode
+          transit_mode: transitMode,
+          is_private: isPrivate,
+          needs_accessibility: needsAccessibility
         })
       });
 
@@ -115,15 +119,27 @@ const CreateMeetup: React.FC = () => {
     }
   };
 
+  const handleCancel = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="container mx-auto px-4 max-w-3xl">
         <div className="bg-white rounded-xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-emerald-700 mb-2">
-              Create Your Meetup
-            </h1>
-            <p className="text-gray-600">Set up your meetup preferences</p>
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h1 className="text-4xl font-bold text-emerald-700 mb-2">
+                Plan a Meetup
+              </h1>
+              <p className="text-gray-600">Find the perfect meeting spot</p>
+            </div>
+            <button
+              onClick={handleCancel}
+              className="px-6 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg font-semibold transition-all"
+            >
+              Cancel
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -241,9 +257,10 @@ const CreateMeetup: React.FC = () => {
             <LocationAutocomplete
               value={userLocation?.name || ''}
               onChange={handleLocationChange}
-              placeholder="📍 Enter your Dublin location"
+              placeholder="🏠 Enter your Dublin location"
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 text-lg"
             />
+            
             {/* Travel Mode */}
             <div>
               <label className="block text-lg font-semibold text-gray-700 mb-2">
@@ -260,6 +277,44 @@ const CreateMeetup: React.FC = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Personal Settings */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold text-gray-700 mb-2">Personal Settings</h3>
+
+              <label className="flex items-start cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isPrivate}
+                  onChange={(e) => setIsPrivate(e.target.checked)}
+                  className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1"
+                />
+                <div className="ml-3">
+                  <div className="font-medium text-gray-900">Keep my exact location private</div>
+                  <p className="text-sm text-gray-600">
+                    Others will see you joined but not your exact location
+                  </p>
+                </div>
+              </label>
+
+              <label className="flex items-start cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={needsAccessibility}
+                  onChange={(e) => setNeedsAccessibility(e.target.checked)}
+                  disabled={fairnessMode === 'accessible'}
+                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-1 disabled:opacity-50"
+                />
+                <div className="ml-3">
+                  <div className="font-medium text-gray-900">I need wheelchair access</div>
+                  {fairnessMode === 'accessible' && (
+                    <p className="text-sm text-blue-600">
+                      ♿ This meetup is already in accessible mode
+                    </p>
+                  )}
+                </div>
+              </label>
             </div>
 
             {/* Submit Button */}
