@@ -191,128 +191,85 @@ function App() {
     );
   };
 
-  // NEW: Handle Find Meeting Spot button click
-  const handleFindMeetingSpot = async () => {
-    devLog('🎯 Find Meeting Spot clicked', {
-      people,
-      sustainableMode,
-      accessibilityMode,
-      selectedVenueTypes,
-      transitModes,
-      maxTravelTime
+  const updateTransitMode = (personIndex: number, mode: string) => {
+    setTransitModes(prev => {
+      const newModes = [...prev];
+      newModes[personIndex] = mode;
+      return newModes;
     });
+  };
 
-    // Get first two people (basic version - can expand for 3-4 people later)
-    const person1 = people[0];
-    const person2 = people[1];
-
-    // Validation
-    if (!person1.coordinates || !person2.coordinates) {
-      alert('Please enter locations for both people');
-      return;
-    }
-
+  // NEW: Handle Find Meeting Spot
+  const handleFindMeetingSpot = async () => {
     setIsSearching(true);
 
     try {
-      // Calculate midpoint
-      const person1Loc = {
-        lat: person1.coordinates.lat,
-        lng: person1.coordinates.lng,
-        address: person1.location
-      };
+      // Build params - only include actual locations with coordinates
+      const validPeople = people.filter(p => p.coordinates);
 
-      const person2Loc = {
-        lat: person2.coordinates.lat,
-        lng: person2.coordinates.lng,
-        address: person2.location
-      };
-
-      const midpoint = calculateMidpoint(person1Loc, person2Loc);
-      devLog('📍 Midpoint calculated', midpoint);
-
-      // Call backend API to get venues with proper travel time calculations
-      devLog('📡 Calling backend API for venues');
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/midpoint`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            locations: people.slice(0, 2).map(p => ({
-              lat: p.coordinates!.lat,
-              lng: p.coordinates!.lng,
-              name: p.name || 'Unknown'
-            })),
-            transitModes: transitModes.slice(0, 2),
-            maxTravelTime: maxTravelTime,
-            venueType: selectedVenueTypes.length > 0 ? selectedVenueTypes : ['cafe', 'restaurant', 'bar', 'parks'],
-            budgetMode: budgetMode,
-            priceLevels: selectedPriceLevels
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch venues');
-        }
-
-        const data = await response.json();
-        devLog(`✅ Found ${data.venues.length} venues from backend`, data);
-
-        setSearchResults({
-          midpoint,
-          venues: data.venues,
-          transitModes,
-          sustainableMode,
-          accessibilityMode,
-          budgetMode,
-          selectedVenueTypes,
-          maxTravelTime,
-          person1: {
-            name: person1.name || 'You',
-            location: person1.location,
-            coordinates: person1.coordinates
-          },
-          person2: {
-            name: person2.name || 'Friend',
-            location: person2.location,
-            coordinates: person2.coordinates
-          }
-        });
-      } catch (apiError) {
-        console.error('Backend API error:', apiError);
-        alert('Error fetching venues from backend. Please try again.');
-        throw apiError;
+      if (validPeople.length < 2) {
+        alert('Please enter locations for at least two people');
+        setIsSearching(false);
+        return;
       }
 
+      const locations = validPeople.map((person, idx) => ({
+        address: person.location,
+        coordinates: person.coordinates!,
+        placeId: person.placeId,
+        transitMode: transitModes[idx] || 'WALKING'
+      }));
+
+      // Build mode flags
+      const modes = {
+        sustainable: sustainableMode,
+        accessible: accessibilityMode,
+        private: privacyMode,
+        budget: budgetMode
+      };
+
+      // Build request body
+      const requestBody = {
+        locations,
+        modes,
+        maxTravelTime,
+        venueTypes: selectedVenueTypes.length > 0 ? selectedVenueTypes : undefined,
+        priceLevels: budgetMode && selectedPriceLevels.length > 0 ? selectedPriceLevels : undefined
+      };
+
+      devLog('Making request to:', `${API_BASE_URL}/api/meetup/find-spot`);
+      devLog('Request body:', requestBody);
+
+      const response = await fetch(`${API_BASE_URL}/api/meetup/find-spot`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        devLog('Error response:', errorText);
+        throw new Error(`Failed to find meeting spot: ${response.status}`);
+      }
+
+      const data = await response.json();
+      devLog('Response data:', data);
+
+      setSearchResults(data);
     } catch (error) {
-      console.error('❌ Error finding meeting spot:', error);
-      alert('Error finding meeting spot. Please try again.');
+      console.error('Error finding meeting spot:', error);
+      alert('Failed to find meeting spot. Please try again.');
     } finally {
       setIsSearching(false);
     }
   };
 
-  // NEW: Handle going back to search form
-  const handleNewSearch = () => {
-    devLog('🔄 New search initiated');
+  // Reset search results to go back to input view
+  const handleResetSearch = () => {
     setSearchResults(null);
   };
-
-  // Loading screen
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-cream">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-turquoise mb-4"></div>
-          <p className="text-brand-brown text-lg">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-brand-cream">
@@ -345,12 +302,6 @@ function App() {
                 >
                   🏠 Home
                 </button>
-                <Link
-                  to="/create-meetup"
-                  className="hidden md:inline-block px-4 py-2 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 transition-all"
-                >
-                  🎉 Create Group Meetup
-                </Link>
               </div>
 
               {!user ? (
@@ -370,229 +321,163 @@ function App() {
                 </div>
               ) : (
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-semibold">{user.name}</p>
-                    <p className="text-xs opacity-75">{user.email}</p>
-                  </div>
+                  <span className="hidden md:inline text-brand-cream font-medium">
+                    Hi, {user.name}!
+                  </span>
                   <button
                     onClick={handleLogout}
-                    className="px-4 py-2 bg-brand-turquoise-dark text-white rounded-lg font-semibold hover:bg-opacity-80 transition-all"
+                    className="px-4 py-2 bg-white text-brand-turquoise rounded-lg font-semibold hover:bg-brand-cream transition-all"
                   >
                     Logout
                   </button>
                 </div>
               )}
             </div>
-
-            {/* Mode Toggles */}
-            <div className="bg-brand-turquoise-dark py-2 md:py-3 border-t border-brand-turquoise">
-              <div className="container mx-auto px-2 md:px-4 flex flex-wrap justify-center gap-2 md:gap-4">
-                {/* Sustainable Toggle */}
-                <button
-                  onClick={() => setSustainableMode(!sustainableMode)}
-                  className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 text-sm md:text-base rounded-lg font-semibold transition-all ${sustainableMode
-                    ? 'bg-white text-brand-turquoise-dark'
-                    : 'bg-brand-turquoise text-white hover:bg-brand-turquoise-light'
-                    }`}
-                >
-                  <span className="text-lg md:text-xl">🌱</span>
-                  <span className="hidden sm:inline">Sustainable</span>
-                  {sustainableMode && (
-                    <span className="ml-1 text-xs bg-brand-turquoise text-white px-2 py-0.5 rounded-full">
-                      ON
-                    </span>
-                  )}
-                </button>
-
-                {/* Accessibility Toggle */}
-                <button
-                  onClick={() => setAccessibilityMode(!accessibilityMode)}
-                  className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 text-sm md:text-base rounded-lg font-semibold transition-all ${accessibilityMode
-                    ? 'bg-white text-blue-700'
-                    : 'bg-brand-turquoise text-white hover:bg-brand-turquoise-light'
-                    }`}
-                >
-                  <span className="text-lg md:text-xl">♿</span>
-                  <span className="hidden sm:inline">Accessible</span>
-                  {accessibilityMode && (
-                    <span className="ml-1 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
-                      ON
-                    </span>
-                  )}
-                </button>
-
-                {/* Privacy Toggle */}
-                <button
-                  onClick={() => setPrivacyMode(!privacyMode)}
-                  className={`flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 text-sm md:text-base rounded-lg font-semibold transition-all ${privacyMode
-                    ? 'bg-white text-purple-700'
-                    : 'bg-brand-turquoise text-white hover:bg-brand-turquoise-light'
-                    }`}
-                >
-                  <span className="text-lg md:text-xl">🔒</span>
-                  <span className="hidden sm:inline">Private</span>
-                  {privacyMode && (
-                    <span className="ml-1 text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">
-                      ON
-                    </span>
-                  )}
-                </button>
-
-                {/* Budget Toggle */}
-                <button
-                  onClick={() => setBudgetMode(!budgetMode)}
-                  className={`px-2 md:px-4 py-2 text-sm md:text-base rounded-lg border-2 font-semibold transition-all ${budgetMode
-                    ? 'bg-brand-cream border-brand-turquoise text-brand-turquoise'
-                    : 'border-white/50 text-white hover:border-white'
-                    }`}
-                >
-                  💰 Budget
-                </button>
-
-              </div>
-            </div>
           </header>
 
           {/* Main Content */}
           <main className="container mx-auto px-4 py-8">
-            {/* NEW: Conditional rendering - show results or search form */}
             {searchResults ? (
               <ResultsView
                 results={searchResults}
-                onNewSearch={handleNewSearch}
+                onNewSearch={handleResetSearch}
               />
             ) : (
-              <div className="w-full px-2 md:px-4 py-4 md:py-8">
-                <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-xl p-4 md:p-8">
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white rounded-lg shadow-xl p-6 md:p-8 border-2 border-brand-turquoise">
                   <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8 text-brand-turquoise">
-                    Who's Meeting?
+                    Find Your Fair Meeting Spot
                   </h2>
 
-                  {/* People Section */}
-                  <div className="space-y-6 mb-8">
-                    {/* Dublin City Notice */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-center">
-                      <p className="text-amber-800 text-sm font-medium">
-                        📍 Currently only <span className="font-bold underline">Dublin City</span> locations are supported
-                      </p>
-                    </div>
-
-                    {people.map((person, index) => {
-                      const isCurrentUser = user && index === 0;
-                      return (
-                        <div key={person.id} className="border-2 border-gray-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-brand-brown">
-                              {isCurrentUser ? 'You' : `Friend ${index}`}
-                            </h3>
-                            {index >= 2 && (
+                  {/* People Input Section */}
+                  <div className="mb-6 md:mb-8">
+                    <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-center">Who's Meeting?</h3>
+                    <div className="space-y-4">
+                      {people.map((person, index) => (
+                        <div key={person.id} className="space-y-2 md:space-y-3">
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <span className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-brand-turquoise text-white rounded-full flex items-center justify-center font-bold text-sm md:text-base">
+                              {index + 1}
+                            </span>
+                            <input
+                              type="text"
+                              placeholder="Name"
+                              value={person.name}
+                              onChange={(e) => updatePersonName(person.id, e.target.value)}
+                              className="flex-1 md:flex-none md:w-48 px-3 md:px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-brand-turquoise text-sm md:text-base"
+                            />
+                            {index > 1 && (
                               <button
                                 onClick={() => removePerson(person.id)}
-                                className="text-red-500 hover:text-red-600 text-sm font-semibold"
+                                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all text-sm md:text-base"
                               >
-                                Remove
+                                ✕
                               </button>
                             )}
                           </div>
-
-                          {/* Name Input */}
-                          <input
-                            type="text"
-                            value={person.name}
-                            onChange={(e) => updatePersonName(person.id, e.target.value)}
-                            placeholder={isCurrentUser ? user?.name : `Name (e.g., Sarah)`}
-                            disabled={isCurrentUser}
-                            className={`w-full px-4 py-2 mb-2 border-2 rounded-lg focus:outline-none focus:border-brand-turquoise ${isCurrentUser
-                              ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
-                              : 'border-gray-300'
-                              }`}
-                          />
-
-                          {/* Saved Locations List - Only for logged-in user */}
-                          {isCurrentUser && user && (
-                            <SavedLocationsList
-                              onSelectLocation={handleSelectSavedLocation}
-                              onDeleteLocation={handleLocationDeleted}
-                              refreshTrigger={savedLocationsRefresh}
-                            />
-                          )}
-
-                          {/* Location Autocomplete with Save Button */}
-                          <div className="relative mb-3">
+                          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 ml-10 md:ml-12">
                             <LocationAutocomplete
-                              value={person.location}
                               onChange={(address, placeId, coordinates) =>
                                 updatePersonLocation(person.id, address, placeId, coordinates)
                               }
-                              placeholder={isCurrentUser ? "📍 Your location (DUBLIN CITY ONLY)" : "📍 Their location (DUBLIN CITY ONLY)"}
-                              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-brand-turquoise"
+                              value={person.location}
+                              placeholder={`Where is ${person.name || 'this person'} starting from?`}
                             />
-                            {/* Save Location Button - Only for logged-in user with a valid location */}
-                            {isCurrentUser && user && person.location && person.coordinates && (
-                              <button
-                                onClick={handleSaveLocationClick}
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-brand-turquoise hover:text-brand-turquoise-dark transition-colors"
-                                title="Save this location"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                                  />
-                                </svg>
-                              </button>
-                            )}
                           </div>
 
-                          {/* Travel Mode Dropdown */}
-                          <div>
-                            <label htmlFor={`transit-mode-${person.id}`} className="block text-sm font-medium text-brand-brown mb-1">
-                              Travel Mode
-                            </label>
-                            <select
-                              id={`transit-mode-${person.id}`}
-                              value={transitModes[index]}
-                              onChange={(e) => {
-                                const newModes = [...transitModes];
-                                newModes[index] = e.target.value;
-                                setTransitModes(newModes);
-                              }}
-                              className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-brand-turquoise bg-white"
-                            >
-                              <option value="WALKING">🚶 Walking</option>
-                              <option value="DRIVING">🚗 Driving</option>
-                              <option value="TRANSIT">🚌 Transit</option>
-                              <option value="BICYCLING">🚴 Bicycling</option>
-                            </select>
+                          {/* Transit mode selector for this person */}
+                          <div className="ml-10 md:ml-12 flex flex-wrap gap-2">
+                            {['WALKING', 'BICYCLING', 'TRANSIT', 'DRIVING'].map((mode) => (
+                              <button
+                                key={mode}
+                                onClick={() => updateTransitMode(index, mode)}
+                                className={`px-3 py-1.5 text-xs md:text-sm rounded-lg border-2 font-semibold transition-all ${transitModes[index] === mode
+                                  ? 'bg-brand-turquoise text-white border-brand-turquoise'
+                                  : 'bg-white text-brand-brown border-gray-300 hover:border-brand-turquoise'
+                                  }`}
+                              >
+                                {mode === 'WALKING' && '🚶 Walk'}
+                                {mode === 'BICYCLING' && '🚴 Bike'}
+                                {mode === 'TRANSIT' && '🚇 Transit'}
+                                {mode === 'DRIVING' && '🚗 Drive'}
+                              </button>
+                            ))}
                           </div>
+
+                          {/* Saved Locations for Person 1 (logged in user) */}
+                          {index === 0 && user && (
+                            <div className="ml-10 md:ml-12 space-y-2">
+                              <SavedLocationsList
+                                onSelectLocation={handleSelectSavedLocation}
+                                refreshTrigger={savedLocationsRefresh}
+                                onDeleteLocation={handleLocationDeleted}
+                              />
+                              {person.location && person.coordinates && (
+                                <button
+                                  onClick={handleSaveLocationClick}
+                                  className="text-brand-turquoise text-sm hover:text-brand-turquoise-dark font-medium"
+                                >
+                                  💾 Save this location
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+
+                    {people.length < 4 && (
+                      <button
+                        onClick={addPerson}
+                        className="mt-4 w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-brand-cream text-brand-turquoise border-2 border-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all text-sm md:text-base"
+                      >
+                        ➕ Add Another Person
+                      </button>
+                    )}
                   </div>
 
-                  {/* Add Person Button */}
-                  {people.length < 4 && (
-                    <button
-                      onClick={addPerson}
-                      className="mt-4 w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-brand-brown hover:border-brand-turquoise hover:text-brand-turquoise transition-all"
-                    >
-                      + Add Another Friend ({people.length} of 4)
-                    </button>
-                  )}
-
-                  {people.length === 4 && (
-                    <div className="mt-4 w-full py-3 bg-brand-cream border-2 border-brand-turquoise rounded-lg text-brand-turquoise text-center font-semibold">
-                      ✓ Maximum 4 People
+                  {/* Mode Selection */}
+                  <div className="mb-6 md:mb-8">
+                    <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-center">Preferences</h3>
+                    <div className="flex gap-2 md:gap-4 flex-wrap justify-center">
+                      <button
+                        onClick={() => setSustainableMode(!sustainableMode)}
+                        className={`px-3 md:px-6 py-2 md:py-3 text-sm md:text-base rounded-lg border-2 font-semibold transition-all ${sustainableMode
+                          ? 'bg-brand-cream border-brand-turquoise text-brand-turquoise'
+                          : 'border-gray-300 text-brand-brown hover:border-brand-turquoise-light'
+                          }`}
+                      >
+                        🌱 Sustainable
+                      </button>
+                      <button
+                        onClick={() => setAccessibilityMode(!accessibilityMode)}
+                        className={`px-3 md:px-6 py-2 md:py-3 text-sm md:text-base rounded-lg border-2 font-semibold transition-all ${accessibilityMode
+                          ? 'bg-brand-cream border-brand-turquoise text-brand-turquoise'
+                          : 'border-gray-300 text-brand-brown hover:border-brand-turquoise-light'
+                          }`}
+                      >
+                        ♿ Accessible
+                      </button>
+                      <button
+                        onClick={() => setPrivacyMode(!privacyMode)}
+                        className={`px-3 md:px-6 py-2 md:py-3 text-sm md:text-base rounded-lg border-2 font-semibold transition-all ${privacyMode
+                          ? 'bg-brand-cream border-brand-turquoise text-brand-turquoise'
+                          : 'border-gray-300 text-brand-brown hover:border-brand-turquoise-light'
+                          }`}
+                      >
+                        🔒 Private
+                      </button>
+                      <button
+                        onClick={() => setBudgetMode(!budgetMode)}
+                        className={`px-3 md:px-6 py-2 md:py-3 text-sm md:text-base rounded-lg border-2 font-semibold transition-all ${budgetMode
+                          ? 'bg-brand-cream border-brand-turquoise text-brand-turquoise'
+                          : 'border-gray-300 text-brand-brown hover:border-brand-turquoise-light'
+                          }`}
+                      >
+                        💰 Budget
+                      </button>
                     </div>
-                  )}
+                  </div>
 
                   {/* Vibe (Venue Type) */}
                   <div className="mb-6 md:mb-8">

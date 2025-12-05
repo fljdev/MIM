@@ -179,36 +179,39 @@ const LandingPage: React.FC<LandingPageProps> = ({
             The only Dublin app that finds meeting spots based on each person's actual travel time.
             Whether you're driving, taking the Luas, or walking—everyone gets a fair journey.
           </p>
-          <button
-            onClick={onGetStarted}
-            style={{
-              background: 'white',
-              color: '#14B8A6',
-              padding: '1rem 3rem',
-              fontSize: '1.2rem',
-              borderRadius: '12px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '600',
-              boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-              transition: 'all 0.3s',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px)';
-              e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.4)';
-              e.currentTarget.style.background = '#FAF5F1';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
-              e.currentTarget.style.background = 'white';
-            }}
-          >
-            ✨ Create Your First Meetup
-          </button>
+          {/* Only show Create Meetup button if user is logged in */}
+          {user && (
+            <button
+              onClick={onGetStarted}
+              style={{
+                background: 'white',
+                color: '#14B8A6',
+                padding: '1rem 3rem',
+                fontSize: '1.2rem',
+                borderRadius: '12px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '600',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+                transition: 'all 0.3s',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.4)';
+                e.currentTarget.style.background = '#FAF5F1';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
+                e.currentTarget.style.background = 'white';
+              }}
+            >
+              ✨ Create Meetup
+            </button>
+          )}
         </div>
       </section>
 
@@ -392,36 +395,39 @@ const LandingPage: React.FC<LandingPageProps> = ({
         <p style={{ fontSize: '1.2rem', marginBottom: '2rem', opacity: '0.9' }}>
           Join Dublin's fairest way to meet up
         </p>
-        <button
-          onClick={onGetStarted}
-          style={{
-            background: 'white',
-            color: '#14B8A6',
-            padding: '1rem 3rem',
-            fontSize: '1.2rem',
-            borderRadius: '12px',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: '600',
-            boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-            transition: 'all 0.3s',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-3px)';
-            e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.4)';
-            e.currentTarget.style.background = '#FAF5F1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
-            e.currentTarget.style.background = 'white';
-          }}
-        >
-          ✨ Get Started Free
-        </button>
+        {/* Only show Get Started button if user is logged in */}
+        {user && (
+          <button
+            onClick={onGetStarted}
+            style={{
+              background: 'white',
+              color: '#14B8A6',
+              padding: '1rem 3rem',
+              fontSize: '1.2rem',
+              borderRadius: '12px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+              transition: 'all 0.3s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px)';
+              e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.4)';
+              e.currentTarget.style.background = '#FAF5F1';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
+              e.currentTarget.style.background = 'white';
+            }}
+          >
+            ✨ Get Started Free
+          </button>
+        )}
       </section>
 
       {/* Footer */}
