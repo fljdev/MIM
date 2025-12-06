@@ -370,11 +370,12 @@ router.post('/code/:meetupCode/join', async (req, res) => {
 
     const newCount = parseInt(newCountResult.rows[0].count);
 
-    // If we now have 2 participants, update meetup status
+    // If we now have 2 participants, update meetup status to active
+    // Note: calculation_status remains 'pending' until organizer manually triggers calculation
     if (newCount === 2) {
       await pool.query(
-        `UPDATE meetups 
-         SET status = 'active', calculation_status = 'ready' 
+        `UPDATE meetups
+         SET status = 'active'
          WHERE id = $1`,
         [meetup.id]
       );

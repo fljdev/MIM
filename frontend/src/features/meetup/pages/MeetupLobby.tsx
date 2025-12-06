@@ -40,7 +40,7 @@ const MeetupLobby: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [organizerName, setOrganizerName] = useState('');
+  const [isOrganizer, setIsOrganizer] = useState(false);
 
   // Fetch lobby data
   const fetchLobbyData = async () => {
@@ -51,6 +51,12 @@ const MeetupLobby: React.FC = () => {
       }
       const data: LobbyData = await response.json();
       setLobbyData(data);
+
+      // Check if current user is organizer
+      const storedOrganizerName = localStorage.getItem(`meetup_organizer_${code}`);
+      if (storedOrganizerName && storedOrganizerName === data.meetup.created_by_name) {
+        setIsOrganizer(true);
+      }
 
       // Check if calculation is ready and navigate
       if (data.meetup.calculation_status === 'ready') {
@@ -92,8 +98,13 @@ const MeetupLobby: React.FC = () => {
   };
 
   const handleCalculate = async () => {
-    if (!lobbyData || !organizerName) {
-      alert('Please enter your name to calculate');
+    if (!lobbyData) {
+      return;
+    }
+
+    const organizerName = localStorage.getItem(`meetup_organizer_${code}`);
+    if (!organizerName) {
+      alert('Unable to verify organizer status');
       return;
     }
 
@@ -106,7 +117,7 @@ const MeetupLobby: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          organizer_name: organizerName || lobbyData.meetup.created_by_name
+          organizer_name: organizerName
         })
       });
 
@@ -223,8 +234,6 @@ const MeetupLobby: React.FC = () => {
     );
   }
 
-  const isOrganizer = lobbyData.meetup.created_by_name === organizerName || organizerName === '';
-
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -334,21 +343,11 @@ const MeetupLobby: React.FC = () => {
         {/* Action Section */}
         {lobbyData.ready_to_calculate && (
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="text-center mb-4">
-              <input
-                type="text"
-                value={organizerName}
-                onChange={(e) => setOrganizerName(e.target.value)}
-                placeholder="Enter your name (organizer)"
-                className="w-full max-w-md px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 mb-4"
-              />
-            </div>
-
-            {organizerName === lobbyData.meetup.created_by_name ? (
+            {isOrganizer ? (
               <button
                 onClick={handleCalculate}
-                disabled={calculating}
-                className="w-full bg-emerald-500 text-white py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-all shadow-lg disabled:opacity-50"
+                disabled={calculating || lobbyData.participant_count < 2}
+                className="w-full bg-emerald-500 text-white py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {calculating ? (
                   <span className="flex items-center justify-center">
@@ -356,10 +355,10 @@ const MeetupLobby: React.FC = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Finding fair spots...
+                    Finding meeting spots...
                   </span>
                 ) : (
-                  '🎯 Find Fair Spots'
+                  '🎯 Find Meeting Spots'
                 )}
               </button>
             ) : (

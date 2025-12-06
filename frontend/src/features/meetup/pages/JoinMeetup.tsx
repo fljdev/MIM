@@ -215,6 +215,11 @@ const JoinMeetup: React.FC = () => {
         throw new Error('Failed to join meetup');
       }
 
+      // Store organizer name in localStorage if this is the organizer
+      if (isOrganizer) {
+        localStorage.setItem(`meetup_organizer_${code}`, participantName);
+      }
+
       // Navigate to lobby
       navigate(`/meetup/${code}/lobby`);
 
