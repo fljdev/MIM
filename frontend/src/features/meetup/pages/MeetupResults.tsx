@@ -40,26 +40,42 @@ interface ResultsData {
   };
 }
 
+interface MeetupInfo {
+  created_by_name: string;
+}
+
 const MeetupResults: React.FC = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
 
   const [results, setResults] = useState<ResultsData | null>(null);
+  const [meetupInfo, setMeetupInfo] = useState<MeetupInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
-  const [organizerName, setOrganizerName] = useState('');
 
   useEffect(() => {
-    const fetchResults = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/meetup/${code}/results`);
-        if (!response.ok) {
+        // Fetch both results and meetup info
+        const [resultsResponse, meetupResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/meetup/${code}/results`),
+          fetch(`${API_BASE_URL}/api/meetup/${code}/lobby`)
+        ]);
+
+        if (!resultsResponse.ok) {
           throw new Error('Failed to fetch results');
         }
-        const data: ResultsData = await response.json();
-        setResults(data);
+        if (!meetupResponse.ok) {
+          throw new Error('Failed to fetch meetup info');
+        }
+
+        const resultsData: ResultsData = await resultsResponse.json();
+        const meetupData = await meetupResponse.json();
+
+        setResults(resultsData);
+        setMeetupInfo({ created_by_name: meetupData.meetup.created_by_name });
       } catch (error) {
-        console.error('Error fetching results:', error);
+        console.error('Error fetching data:', error);
         alert('Failed to load results');
       } finally {
         setLoading(false);
@@ -67,13 +83,13 @@ const MeetupResults: React.FC = () => {
     };
 
     if (code) {
-      fetchResults();
+      fetchData();
     }
   }, [code]);
 
   const handleConfirm = async (venue: Venue) => {
-    if (!organizerName.trim()) {
-      alert('Please enter your name to confirm venue');
+    if (!meetupInfo?.created_by_name) {
+      alert('Unable to confirm venue - organizer information missing');
       return;
     }
 
@@ -86,7 +102,7 @@ const MeetupResults: React.FC = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          organizer_name: organizerName,
+          organizer_name: meetupInfo.created_by_name,
           venue_id: venue.id,
           venue_name: venue.name
         })
@@ -189,22 +205,6 @@ const MeetupResults: React.FC = () => {
           </div>
         </div>
 
-        {/* Organizer Input */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="max-w-md mx-auto">
-            <label className="block text-lg font-semibold text-gray-700 mb-2">
-              Organizer Name (to confirm venue)
-            </label>
-            <input
-              type="text"
-              value={organizerName}
-              onChange={(e) => setOrganizerName(e.target.value)}
-              placeholder="Enter your name"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        </div>
-
         {/* Venues List */}
         <div className="space-y-4">
           {results.venues.length === 0 ? (
@@ -284,7 +284,7 @@ const MeetupResults: React.FC = () => {
                   <div>
                     <button
                       onClick={() => handleConfirm(venue)}
-                      disabled={!organizerName.trim() || confirming}
+                      disabled={confirming}
                       className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     >
                       ✓ Confirm
