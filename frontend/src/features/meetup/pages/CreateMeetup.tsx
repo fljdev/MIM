@@ -103,6 +103,10 @@ const CreateMeetup: React.FC = () => {
       }
 
       const data = await response.json();
+
+      // Store organizer name in localStorage for lobby detection
+      localStorage.setItem(`meetup_organizer_${data.meetup.meetup_code}`, createdByName);
+
       //navigate(`/meetup/${data.meetup.meetup_code}/waiting`);
       navigate('/meetup/created', {
         state: {
