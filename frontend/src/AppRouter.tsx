@@ -7,6 +7,8 @@ import JoinMeetup from './features/meetup/pages/JoinMeetup';
 import MeetupLobby from './features/meetup/pages/MeetupLobby';
 import MeetupResults from './features/meetup/pages/MeetupResults';
 import MeetupConfirmed from './features/meetup/pages/MeetupConfirmed';
+import InvitationView from './features/meetup/pages/InvitationView';
+import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
 import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
 
 const AppRouter: React.FC = () => {
@@ -15,10 +17,11 @@ const AppRouter: React.FC = () => {
   const bypassKey = new URLSearchParams(window.location.search).get('dev');
   const hasDevAccess = bypassKey === 'mimdev2025';
   
-  // Allow meetup-related paths to bypass Coming Soon
-  const currentPath = window.location.pathname;
-  const isMeetupPath = currentPath.startsWith('/meetup/') || 
+    // Allow meetup-related paths to bypass Coming Soon
+    const currentPath = window.location.pathname;
+    const isMeetupPath = currentPath.startsWith('/meetup/') || 
                        currentPath.startsWith('/join/') ||
+                       currentPath.startsWith('/invite/') ||
                        currentPath.startsWith('/create-meetup');
 
   // Show Coming Soon page ONLY for homepage, not meetup paths
@@ -37,6 +40,8 @@ const AppRouter: React.FC = () => {
         <Route path="/meetup/created" element={<MeetupCreated />} />
         <Route path="/meetup/created/:code" element={<MeetupCreated />} />
         <Route path="/join/:code" element={<JoinMeetup />} />
+        <Route path="/invite/:shareableCode" element={<InvitationView />} />
+        <Route path="/meetup/:id/preferences" element={<JoinerPreferences />} />
         <Route path="/meetup/:code/lobby" element={<MeetupLobby />} />
         <Route path="/meetup/:code/results" element={<MeetupResults />} />
         <Route path="/meetup/:code/confirmed" element={<MeetupConfirmed />} />

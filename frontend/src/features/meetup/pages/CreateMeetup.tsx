@@ -84,22 +84,22 @@ const CreateMeetup: React.FC = () => {
         },
         body: JSON.stringify({
           title: meetupTitle || null,
-          vibe: meetupVibe,
+          vibe: meetupVibe.toLowerCase(), // Convert to lowercase for API
           budget_level: budgetLevel,
-          fairness_mode: fairnessMode,
+          fairness_mode: fairnessMode.toLowerCase(), // Convert to lowercase for API
           creator_location: {
             name: userLocation.name,
             lat: userLocation.lat,
             lng: userLocation.lng
           },
-          transit_mode: transitMode,
-          is_private: isPrivate,
-          needs_accessibility: needsAccessibility
+          transit_mode: transitMode.toLowerCase(), // Convert to lowercase for API
+          privacy_mode: isPrivate // Changed from is_private to privacy_mode
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create meetup');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create meetup');
       }
 
       const data = await response.json();
@@ -107,17 +107,17 @@ const CreateMeetup: React.FC = () => {
       // Store organizer name in localStorage for lobby detection
       localStorage.setItem(`meetup_organizer_${data.meetup.meetup_code}`, createdByName);
 
-      //navigate(`/meetup/${data.meetup.meetup_code}/waiting`);
+      // Navigate to meetup created page with shareable link
       navigate('/meetup/created', {
         state: {
           meetup_code: data.meetup.meetup_code,
-          share_link: `https://mim.town/join/${data.meetup.meetup_code}`
+          share_link: `http://localhost:3000/invite/${data.meetup.meetup_code}`
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating meetup:', error);
-      alert('Failed to create meetup. Please try again.');
+      alert(error.message || 'Failed to create meetup. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -297,7 +297,7 @@ const CreateMeetup: React.FC = () => {
                 <div className="ml-3">
                   <div className="font-medium text-gray-900">Keep my exact location private</div>
                   <p className="text-sm text-gray-600">
-                    Others will see you joined but not your exact location
+                    Others will see you joined but not your exact location (privacy mode)
                   </p>
                 </div>
               </label>
