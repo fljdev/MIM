@@ -76,10 +76,11 @@ const InvitationView: React.FC = () => {
     }
   };
 
-  const handleAcceptInvitation = async () => {
+  const handleAcceptInvitation = async (skipAuthCheck = false) => {
     if (!shareableCode || !invitation) return;
 
-    if (!isAuthenticated) {
+    // Only check authentication if not skipping (e.g., when called from login/register success)
+    if (!skipAuthCheck && !isAuthenticated) {
       setShowLoginModal(true);
       return;
     }
@@ -87,6 +88,10 @@ const InvitationView: React.FC = () => {
     setAccepting(true);
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/meetups/${shareableCode}/accept`, {
         method: 'POST',
         headers: {
@@ -114,13 +119,19 @@ const InvitationView: React.FC = () => {
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
     // After login, automatically accept the invitation
-    handleAcceptInvitation();
+    // Use setTimeout to allow auth context to update
+    setTimeout(() => {
+      handleAcceptInvitation(true); // Skip auth check since we just logged in
+    }, 100);
   };
 
   const handleRegisterSuccess = () => {
     setShowRegisterModal(false);
     // After registration, automatically accept the invitation
-    handleAcceptInvitation();
+    // Use setTimeout to allow auth context to update
+    setTimeout(() => {
+      handleAcceptInvitation(true); // Skip auth check since we just registered
+    }, 100);
   };
 
   const getVibeIcon = (vibe: string) => {
@@ -276,7 +287,7 @@ const InvitationView: React.FC = () => {
                 Accept this invitation to set your preferences and find a meeting spot.
               </p>
               <button
-                onClick={handleAcceptInvitation}
+                onClick={() => handleAcceptInvitation()}
                 disabled={accepting}
                 className="w-full bg-emerald-500 text-white py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
