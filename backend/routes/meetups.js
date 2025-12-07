@@ -47,11 +47,11 @@ function generateMeetupCode() {
  * 
  * Request body: {
  *   title: string (optional),
- *   vibe: "Coffee"|"Food"|"Drinks"|"Walk",
+ *   vibe: "Coffee"|"Food"|"Drinks"|"Walk" (case-insensitive),
  *   budget_level: "€"|"€€"|"€€€",
- *   fairness_mode: "fastest"|"sustainable"|"accessible",
+ *   fairness_mode: "fastest"|"sustainable"|"accessible" (case-insensitive),
  *   creator_location: { name: string, lat: number, lng: number },
- *   transit_mode: "walking"|"driving"|"transit"|"bicycling",
+ *   transit_mode: "walking"|"driving"|"transit"|"bicycling" (case-insensitive),
  *   privacy_mode: boolean
  * }
  */
@@ -91,9 +91,10 @@ router.post('/create', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'creator_location must include name, lat, and lng' });
     }
 
-    // Validate vibe
-    const validVibes = ['Coffee', 'Food', 'Drinks', 'Walk'];
-    if (!validVibes.includes(vibe)) {
+    // Validate vibe (case-insensitive)
+    const validVibes = ['coffee', 'food', 'drinks', 'walk'];
+    const vibeLower = vibe.toLowerCase();
+    if (!validVibes.includes(vibeLower)) {
       return res.status(400).json({ error: `Invalid vibe. Must be one of: ${validVibes.join(', ')}` });
     }
 
@@ -103,17 +104,17 @@ router.post('/create', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: `Invalid budget_level. Must be one of: ${validBudgets.join(', ')}` });
     }
 
-    // Validate fairness_mode
+    // Validate fairness_mode (case-insensitive)
     const validFairnessModes = ['fastest', 'sustainable', 'accessible'];
-    const selectedFairnessMode = fairness_mode || 'fastest';
+    const selectedFairnessMode = (fairness_mode || 'fastest').toLowerCase();
     if (!validFairnessModes.includes(selectedFairnessMode)) {
       return res.status(400).json({ error: `Invalid fairness_mode. Must be one of: ${validFairnessModes.join(', ')}` });
     }
 
-    // Validate transit_mode
+    // Validate transit_mode (case-insensitive)
     const validTransitModes = ['walking', 'driving', 'transit', 'bicycling'];
-    const selectedTransitMode = transit_mode || 'walking';
-    if (!validTransitModes.includes(selectedTransitMode.toLowerCase())) {
+    const selectedTransitMode = (transit_mode || 'walking').toLowerCase();
+    if (!validTransitModes.includes(selectedTransitMode)) {
       return res.status(400).json({ error: `Invalid transit_mode. Must be one of: ${validTransitModes.join(', ')}` });
     }
 
@@ -163,7 +164,7 @@ router.post('/create', authenticateToken, async (req, res) => {
         userId,
         user.name,
         title || null,
-        vibe,
+        vibeLower, // Store lowercase vibe
         budget_level,
         selectedFairnessMode,
         privacy_mode !== false, // Default to true if not specified
@@ -287,7 +288,7 @@ router.get('/code/:meetupCode', async (req, res) => {
  * Request body: {
  *   name: string,
  *   location: { name: string, lat: number, lng: number },
- *   transit_mode: "walking"|"driving"|"transit"|"bicycling"
+ *   transit_mode: "walking"|"driving"|"transit"|"bicycling" (case-insensitive)
  * }
  */
 router.post('/code/:meetupCode/join', async (req, res) => {
@@ -306,10 +307,10 @@ router.post('/code/:meetupCode/join', async (req, res) => {
       return res.status(400).json({ error: 'location must include name, lat, and lng' });
     }
 
-    // Validate transit_mode
+    // Validate transit_mode (case-insensitive)
     const validTransitModes = ['walking', 'driving', 'transit', 'bicycling'];
-    const selectedTransitMode = transit_mode || 'walking';
-    if (!validTransitModes.includes(selectedTransitMode.toLowerCase())) {
+    const selectedTransitMode = (transit_mode || 'walking').toLowerCase();
+    if (!validTransitModes.includes(selectedTransitMode)) {
       return res.status(400).json({ error: `Invalid transit_mode. Must be one of: ${validTransitModes.join(', ')}` });
     }
 
@@ -532,9 +533,9 @@ router.post('/:shareableId/accept', authenticateToken, async (req, res) => {
  * 
  * Request body: {
  *   budget: "€"|"€€"|"€€€",
- *   fairness: "fastest"|"sustainable"|"accessible",
+ *   fairness: "fastest"|"sustainable"|"accessible" (case-insensitive),
  *   location: { name: string, lat: number, lng: number },
- *   transport: "walking"|"driving"|"transit"|"bicycling"
+ *   transport: "walking"|"driving"|"transit"|"bicycling" (case-insensitive)
  * }
  */
 router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
@@ -560,15 +561,17 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: `Invalid budget. Must be one of: ${validBudgets.join(', ')}` });
     }
 
-    // Validate fairness
+    // Validate fairness (case-insensitive)
     const validFairnessModes = ['fastest', 'sustainable', 'accessible'];
-    if (!validFairnessModes.includes(fairness)) {
+    const fairnessLower = fairness.toLowerCase();
+    if (!validFairnessModes.includes(fairnessLower)) {
       return res.status(400).json({ error: `Invalid fairness. Must be one of: ${validFairnessModes.join(', ')}` });
     }
 
-    // Validate transport
+    // Validate transport (case-insensitive)
     const validTransitModes = ['walking', 'driving', 'transit', 'bicycling'];
-    if (!validTransitModes.includes(transport.toLowerCase())) {
+    const transportLower = transport.toLowerCase();
+    if (!validTransitModes.includes(transportLower)) {
       return res.status(400).json({ error: `Invalid transport. Must be one of: ${validTransitModes.join(', ')}` });
     }
 
@@ -608,7 +611,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
         location.name,
         location.lat,
         location.lng,
-        transport.toLowerCase(),
+        transportLower,
         meetupId,
         userId
       ]
