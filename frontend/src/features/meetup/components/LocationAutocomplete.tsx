@@ -43,8 +43,6 @@ const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
       // PlacesService needs a DOM element (we'll use a hidden div)
       const div = document.createElement('div');
       placesService.current = new window.google.maps.places.PlacesService(div);
-      
-      console.log('Google Maps Autocomplete initialized');
     } else {
       console.error('Google Maps API not loaded');
     }
