@@ -47,19 +47,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // DEBUG LOGGING
-    console.log('\n=== MIDPOINT REQUEST DEBUG ===');
-    console.log('Number of locations:', locations.length);
-    locations.forEach((loc, i) => {
-      console.log(`Person ${i}:`, {
-        name: loc.name || 'unnamed',
-        lat: loc.lat,
-        lng: loc.lng,
-        transitMode: transitModes[i]
-      });
-    });
-    console.log('Max travel time:', maxTravelTime, 'minutes');
-    console.log('===========================\n');
+    // Request validation passed
 
     // Calculate travel times for each venue based on each person's location and transit mode
     let venues = MOCK_VENUES.map((venue, venueIndex) => {
@@ -80,17 +68,7 @@ router.post('/', async (req, res) => {
         // Calculate duration in minutes
         const durationMinutes = (distanceKm / speedKmh) * 60;
 
-        // DEBUG: Log calculation details for first venue
-        if (venueIndex === 0) {
-          console.log(`\n=== CALCULATING FOR: ${venue.name} ===`);
-          console.log(`Venue location: (${venue.latitude}, ${venue.longitude})`);
-          console.log(`Person ${index} (${locations[index].name || 'unnamed'}):`);
-          console.log(`  - Transit mode: ${mode}`);
-          console.log(`  - From: (${location.lat}, ${location.lng})`);
-          console.log(`  - Distance: ${distanceKm.toFixed(2)} km`);
-          console.log(`  - Speed: ${speedKmh} km/h`);
-          console.log(`  - Calculated time: ${durationMinutes.toFixed(1)} min (rounded to ${Math.round(durationMinutes)} min)`);
-        }
+        // Calculate travel time for each person
 
         return {
           personIndex: index,
@@ -99,9 +77,7 @@ router.post('/', async (req, res) => {
         };
       });
 
-      if (venueIndex === 0) {
-        console.log('=====================================\n');
-      }
+      // Return venue with travel times
 
       return {
         ...venue,

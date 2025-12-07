@@ -43,38 +43,38 @@ const InvitationView: React.FC = () => {
   const isAuthenticated = !!user;
 
   useEffect(() => {
+    const fetchInvitation = async () => {
+      if (!shareableCode) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`${API_BASE_URL}/api/meetups/${shareableCode}/invitation`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('This invitation doesn\'t exist');
+          } else if (response.status === 400) {
+            const data = await response.json();
+            throw new Error(data.error || 'This invitation has already been accepted');
+          } else {
+            throw new Error('Failed to load invitation');
+          }
+        }
+
+        const data: InvitationData = await response.json();
+        setInvitation(data);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load invitation');
+        console.error('Error fetching invitation:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchInvitation();
   }, [shareableCode]);
-
-  const fetchInvitation = async () => {
-    if (!shareableCode) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`${API_BASE_URL}/api/meetups/${shareableCode}/invitation`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('This invitation doesn\'t exist');
-        } else if (response.status === 400) {
-          const data = await response.json();
-          throw new Error(data.error || 'This invitation has already been accepted');
-        } else {
-          throw new Error('Failed to load invitation');
-        }
-      }
-
-      const data: InvitationData = await response.json();
-      setInvitation(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load invitation');
-      console.error('Error fetching invitation:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAcceptInvitation = async (skipAuthCheck = false) => {
     if (!shareableCode || !invitation) return;
