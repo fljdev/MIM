@@ -51,7 +51,8 @@ function generateMeetupCode() {
  *   budget_level: "€"|"€€"|"€€€",
  *   fairness_mode: "fastest"|"sustainable"|"accessible",
  *   creator_location: { name: string, lat: number, lng: number },
- *   transit_mode: "walking"|"driving"|"transit"|"bicycling"
+ *   transit_mode: "walking"|"driving"|"transit"|"bicycling",
+ *   privacy_mode: boolean
  * }
  */
 router.post('/create', authenticateToken, async (req, res) => {
@@ -61,7 +62,8 @@ router.post('/create', authenticateToken, async (req, res) => {
     budget_level,
     fairness_mode,
     creator_location,
-    transit_mode
+    transit_mode,
+    privacy_mode
   } = req.body;
 
   try {
@@ -81,8 +83,8 @@ router.post('/create', authenticateToken, async (req, res) => {
     const user = userResult.rows[0];
 
     // Validate required fields
-    if (!vibe || !budget_level || !creator_location) {
-      return res.status(400).json({ error: 'Missing required fields: vibe, budget_level, creator_location' });
+    if (!vibe || !budget_level || !creator_location || transit_mode === undefined) {
+      return res.status(400).json({ error: 'Missing required fields: vibe, budget_level, creator_location, transit_mode' });
     }
 
     if (!creator_location.name || creator_location.lat === undefined || creator_location.lng === undefined) {
@@ -149,11 +151,12 @@ router.post('/create', authenticateToken, async (req, res) => {
         meetup_vibe,
         budget_level,
         fairness_mode,
+        global_privacy,
         status,
         calculation_status,
         expires_at,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
       RETURNING id, meetup_code`,
       [
         meetup_code,
@@ -163,6 +166,7 @@ router.post('/create', authenticateToken, async (req, res) => {
         vibe,
         budget_level,
         selectedFairnessMode,
+        privacy_mode !== false, // Default to true if not specified
         'pending',
         'pending',
         expiresAt
@@ -392,6 +396,692 @@ router.post('/code/:meetupCode/join', async (req, res) => {
   } catch (error) {
     console.error('Error joining meetup:', error);
     res.status(500).json({ error: 'Failed to join meetup' });
+  }
+});
+
+/**
+ * POST /api/meetups/:shareableId/accept
+ * Accept a meetup invitation (AUTHENTICATED)
+ * 
+ * Request: authenticated user joins the meetup
+ * Response: success with meetup ID
+ */
+router.post('/:shareableId/accept', authenticateToken, async (req, res) => {
+  const { shareableId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Get user details
+    const userResult = await pool.query(
+      'SELECT id, name FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Find meetup by shareable ID (meetup_code)
+    const meetupResult = await pool.query(
+      'SELECT id, status FROM meetups WHERE meetup_code = $1',
+      [shareableId.toUpperCase()]
+    );
+
+    if (meetupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    const meetup = meetupResult.rows[0];
+
+    // Check if meetup is already accepted or beyond
+    if (meetup.status !== 'pending') {
+      return res.status(400).json({ error: `Meetup cannot be accepted. Current status: ${meetup.status}` });
+    }
+
+    // Count current participants
+    const countResult = await pool.query(
+      'SELECT COUNT(*) as count FROM meetup_participants WHERE meetup_id = $1',
+      [meetup.id]
+    );
+
+    const currentCount = parseInt(countResult.rows[0].count);
+
+    // Check if meetup is full (should be 1 creator already)
+    if (currentCount >= 2) {
+      return res.status(400).json({ error: 'Meetup is full' });
+    }
+
+    // Check if user is already a participant
+    const existingParticipant = await pool.query(
+      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      [meetup.id, userId]
+    );
+
+    if (existingParticipant.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already joined this meetup' });
+    }
+
+    // Get creator's location to use as default for joiner (they'll update later)
+    const creatorParticipant = await pool.query(
+      'SELECT location_name, location_lat, location_lng FROM meetup_participants WHERE meetup_id = $1 AND user_id IS NOT NULL ORDER BY joined_at LIMIT 1',
+      [meetup.id]
+    );
+
+    let locationName = 'To be specified';
+    let locationLat = 0;
+    let locationLng = 0;
+
+    if (creatorParticipant.rows.length > 0) {
+      locationName = creatorParticipant.rows[0].location_name;
+      locationLat = creatorParticipant.rows[0].location_lat;
+      locationLng = creatorParticipant.rows[0].location_lng;
+    }
+
+    // Insert joiner as participant
+    await pool.query(
+      `INSERT INTO meetup_participants (
+        meetup_id,
+        user_id,
+        participant_name,
+        location_name,
+        location_lat,
+        location_lng,
+        transit_mode,
+        is_private,
+        joined_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+      [
+        meetup.id,
+        userId,
+        user.name,
+        locationName,
+        locationLat,
+        locationLng,
+        'walking', // Default transit mode, will be updated when preferences are set
+        false
+      ]
+    );
+
+    // Update meetup status to 'accepted'
+    await pool.query(
+      `UPDATE meetups
+       SET status = 'accepted'
+       WHERE id = $1`,
+      [meetup.id]
+    );
+
+    res.status(200).json({
+      success: true,
+      meetup_id: meetup.id,
+      message: 'Successfully joined the meetup'
+    });
+
+  } catch (error) {
+    console.error('Error accepting meetup:', error);
+    res.status(500).json({ error: 'Failed to accept meetup invitation' });
+  }
+});
+
+/**
+ * POST /api/meetups/:id/joiner-preferences
+ * Submit joiner preferences (AUTHENTICATED)
+ * 
+ * Request body: {
+ *   budget: "€"|"€€"|"€€€",
+ *   fairness: "fastest"|"sustainable"|"accessible",
+ *   location: { name: string, lat: number, lng: number },
+ *   transport: "walking"|"driving"|"transit"|"bicycling"
+ * }
+ */
+router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
+  const meetupId = req.params.id;
+  const userId = req.user.userId;
+  const { budget, fairness, location, transport } = req.body;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Validate required fields
+    if (!budget || !fairness || !location || !transport) {
+      return res.status(400).json({ error: 'Missing required fields: budget, fairness, location, transport' });
+    }
+
+    if (!location.name || location.lat === undefined || location.lng === undefined) {
+      return res.status(400).json({ error: 'location must include name, lat, and lng' });
+    }
+
+    // Validate budget
+    const validBudgets = ['€', '€€', '€€€'];
+    if (!validBudgets.includes(budget)) {
+      return res.status(400).json({ error: `Invalid budget. Must be one of: ${validBudgets.join(', ')}` });
+    }
+
+    // Validate fairness
+    const validFairnessModes = ['fastest', 'sustainable', 'accessible'];
+    if (!validFairnessModes.includes(fairness)) {
+      return res.status(400).json({ error: `Invalid fairness. Must be one of: ${validFairnessModes.join(', ')}` });
+    }
+
+    // Validate transport
+    const validTransitModes = ['walking', 'driving', 'transit', 'bicycling'];
+    if (!validTransitModes.includes(transport.toLowerCase())) {
+      return res.status(400).json({ error: `Invalid transport. Must be one of: ${validTransitModes.join(', ')}` });
+    }
+
+    // Check if meetup exists and user is a participant
+    const meetupResult = await pool.query(
+      `SELECT m.id, m.status, mp.id as participant_id
+       FROM meetups m
+       LEFT JOIN meetup_participants mp ON m.id = mp.meetup_id AND mp.user_id = $1
+       WHERE m.id = $2`,
+      [userId, meetupId]
+    );
+
+    if (meetupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    const meetup = meetupResult.rows[0];
+
+    if (!meetup.participant_id) {
+      return res.status(403).json({ error: 'You are not a participant in this meetup' });
+    }
+
+    if (meetup.status !== 'accepted') {
+      return res.status(400).json({ error: `Meetup cannot accept preferences. Current status: ${meetup.status}` });
+    }
+
+    // Update joiner's participant record with preferences
+    await pool.query(
+      `UPDATE meetup_participants
+       SET location_name = $1,
+           location_lat = $2,
+           location_lng = $3,
+           transit_mode = $4,
+           updated_at = NOW()
+       WHERE meetup_id = $5 AND user_id = $6`,
+      [
+        location.name,
+        location.lat,
+        location.lng,
+        transport.toLowerCase(),
+        meetupId,
+        userId
+      ]
+    );
+
+    // Update meetup status to 'preferences_set'
+    await pool.query(
+      `UPDATE meetups
+       SET status = 'preferences_set'
+       WHERE id = $1`,
+      [meetupId]
+    );
+
+    // Get all participants for calculation
+    const participantsResult = await pool.query(
+      `SELECT
+        participant_name,
+        location_name,
+        location_lat,
+        location_lng,
+        transit_mode
+      FROM meetup_participants
+      WHERE meetup_id = $1`,
+      [meetupId]
+    );
+
+    const participants = participantsResult.rows;
+
+    if (participants.length < 2) {
+      return res.status(400).json({ error: 'Not enough participants for calculation' });
+    }
+
+    // Get meetup details for calculation
+    const meetupDetails = await pool.query(
+      `SELECT meetup_vibe, budget_level, fairness_mode
+       FROM meetups WHERE id = $1`,
+      [meetupId]
+    );
+
+    if (meetupDetails.rows.length === 0) {
+      return res.status(404).json({ error: 'Meetup details not found' });
+    }
+
+    const meetupInfo = meetupDetails.rows[0];
+
+    // Import calculation functions
+    const { calculateFairness, calculateMidpoint } = require('../utils/fairnessCalculator');
+    const { MOCK_VENUES } = require('./mockVenueData');
+
+    // Filter venues by budget
+    function filterVenuesByBudget(venues, budgetLevel) {
+      const budgetMap = {
+        '€': [1],
+        '€€': [1, 2],
+        '€€€': [1, 2, 3, 4]
+      };
+
+      const allowedPriceLevels = budgetMap[budgetLevel] || [1, 2];
+
+      return venues.filter(venue => {
+        const priceLevel = venue.priceLevel || 1;
+        return allowedPriceLevels.includes(priceLevel);
+      });
+    }
+
+    // Calculate midpoint
+    const midpoint = calculateMidpoint(participants);
+
+    // Filter venues by budget
+    let filteredVenues = filterVenuesByBudget(MOCK_VENUES, meetupInfo.budget_level);
+
+    // Apply fairness algorithm
+    let calculatedVenues;
+    try {
+      calculatedVenues = calculateFairness(
+        filteredVenues,
+        participants,
+        meetupInfo.fairness_mode
+      );
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Limit to top 3 venues
+    const topVenues = calculatedVenues.slice(0, 3);
+
+    // Store results in database
+    await pool.query(
+      `UPDATE meetups
+      SET
+        calculated_midpoint_lat = $1,
+        calculated_midpoint_lng = $2,
+        calculated_venues = $3,
+        calculation_status = 'ready'
+      WHERE id = $4`,
+      [
+        midpoint.lat,
+        midpoint.lng,
+        JSON.stringify(topVenues),
+        meetupId
+      ]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Preferences saved and venues calculated',
+      venues_calculated: topVenues.length,
+      meetup_status: 'preferences_set'
+    });
+
+  } catch (error) {
+    console.error('Error saving joiner preferences:', error);
+    res.status(500).json({ error: 'Failed to save preferences' });
+  }
+});
+
+/**
+ * GET /api/meetups/:id/lobby
+ * Get lobby data for meetup (AUTHENTICATED)
+ * 
+ * Response: {
+ *   participants: [user info],
+ *   creator_preferences: { ... },
+ *   joiner_preferences: { ... },
+ *   top_venues: [top 3 venues],
+ *   comments: [all comments]
+ * }
+ */
+router.get('/:id/lobby', authenticateToken, async (req, res) => {
+  const meetupId = req.params.id;
+  const userId = req.user.userId;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Check if user is a participant
+    const participantCheck = await pool.query(
+      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      [meetupId, userId]
+    );
+
+    if (participantCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a participant in this meetup' });
+    }
+
+    // Get meetup details
+    const meetupResult = await pool.query(
+      `SELECT
+        id,
+        meetup_code,
+        meetup_title,
+        meetup_vibe,
+        budget_level,
+        fairness_mode,
+        global_privacy,
+        status,
+        calculated_venues,
+        created_by
+      FROM meetups
+      WHERE id = $1`,
+      [meetupId]
+    );
+
+    if (meetupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    const meetup = meetupResult.rows[0];
+
+    // Check if meetup is in correct status
+    if (!['preferences_set', 'confirmed'].includes(meetup.status)) {
+      return res.status(400).json({ error: `Lobby not available. Current status: ${meetup.status}` });
+    }
+
+    // Get all participants
+    const participantsResult = await pool.query(
+      `SELECT
+        mp.id,
+        mp.user_id,
+        mp.participant_name,
+        mp.location_name,
+        mp.location_lat,
+        mp.location_lng,
+        mp.transit_mode,
+        mp.is_private,
+        u.email
+      FROM meetup_participants mp
+      LEFT JOIN users u ON mp.user_id = u.id
+      WHERE mp.meetup_id = $1
+      ORDER BY mp.joined_at ASC`,
+      [meetupId]
+    );
+
+    const participants = participantsResult.rows;
+
+    if (participants.length < 2) {
+      return res.status(400).json({ error: 'Not enough participants' });
+    }
+
+    // Separate creator and joiner
+    const creator = participants[0]; // First participant is creator
+    const joiner = participants[1]; // Second participant is joiner
+
+    // Apply privacy mode
+    const applyPrivacy = (participant) => {
+      if (meetup.global_privacy && participant.is_private) {
+        return {
+          ...participant,
+          location_name: 'Location hidden',
+          location_lat: null,
+          location_lng: null
+        };
+      }
+      return participant;
+    };
+
+    const sanitizedCreator = applyPrivacy(creator);
+    const sanitizedJoiner = applyPrivacy(joiner);
+
+    // Get top venues
+    const topVenues = meetup.calculated_venues || [];
+
+    // Get comments
+    const commentsResult = await pool.query(
+      `SELECT
+        mc.id,
+        mc.user_id,
+        mc.comment,
+        mc.created_at,
+        u.name as user_name
+      FROM meetup_comments mc
+      LEFT JOIN users u ON mc.user_id = u.id
+      WHERE mc.meetup_id = $1
+      ORDER BY mc.created_at ASC`,
+      [meetupId]
+    );
+
+    const comments = commentsResult.rows;
+
+    res.status(200).json({
+      success: true,
+      meetup: {
+        id: meetup.id,
+        code: meetup.meetup_code,
+        title: meetup.meetup_title,
+        vibe: meetup.meetup_vibe,
+        status: meetup.status
+      },
+      participants: {
+        creator: {
+          id: sanitizedCreator.user_id,
+          name: sanitizedCreator.participant_name,
+          email: sanitizedCreator.email,
+          location: {
+            name: sanitizedCreator.location_name,
+            lat: sanitizedCreator.location_lat,
+            lng: sanitizedCreator.location_lng
+          },
+          transport: sanitizedCreator.transit_mode
+        },
+        joiner: {
+          id: sanitizedJoiner.user_id,
+          name: sanitizedJoiner.participant_name,
+          email: sanitizedJoiner.email,
+          location: {
+            name: sanitizedJoiner.location_name,
+            lat: sanitizedJoiner.location_lat,
+            lng: sanitizedJoiner.location_lng
+          },
+          transport: sanitizedJoiner.transit_mode
+        }
+      },
+      preferences: {
+        budget: meetup.budget_level,
+        fairness: meetup.fairness_mode
+      },
+      top_venues: topVenues,
+      comments: comments
+    });
+
+  } catch (error) {
+    console.error('Error fetching lobby data:', error);
+    res.status(500).json({ error: 'Failed to fetch lobby data' });
+  }
+});
+
+/**
+ * POST /api/meetups/:id/comments
+ * Add a comment to meetup (AUTHENTICATED)
+ * 
+ * Request body: { comment: string }
+ */
+router.post('/:id/comments', authenticateToken, async (req, res) => {
+  const meetupId = req.params.id;
+  const userId = req.user.userId;
+  const { comment } = req.body;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Validate comment
+    if (!comment || comment.trim() === '') {
+      return res.status(400).json({ error: 'Comment cannot be empty' });
+    }
+
+    // Check if user is a participant
+    const participantCheck = await pool.query(
+      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      [meetupId, userId]
+    );
+
+    if (participantCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a participant in this meetup' });
+    }
+
+    // Check if meetup exists
+    const meetupCheck = await pool.query(
+      'SELECT id FROM meetups WHERE id = $1',
+      [meetupId]
+    );
+
+    if (meetupCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    // Insert comment
+    const result = await pool.query(
+      `INSERT INTO meetup_comments (meetup_id, user_id, comment, created_at)
+       VALUES ($1, $2, $3, NOW())
+       RETURNING id, comment, created_at`,
+      [meetupId, userId, comment.trim()]
+    );
+
+    const newComment = result.rows[0];
+
+    // Get user name for response
+    const userResult = await pool.query(
+      'SELECT name FROM users WHERE id = $1',
+      [userId]
+    );
+
+    const userName = userResult.rows[0]?.name || 'Unknown';
+
+    res.status(201).json({
+      success: true,
+      comment: {
+        id: newComment.id,
+        user_id: userId,
+        user_name: userName,
+        comment: newComment.comment,
+        created_at: newComment.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+/**
+ * GET /api/meetups/:id/comments
+ * Get all comments for meetup (AUTHENTICATED)
+ */
+router.get('/:id/comments', authenticateToken, async (req, res) => {
+  const meetupId = req.params.id;
+  const userId = req.user.userId;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Check if user is a participant
+    const participantCheck = await pool.query(
+      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      [meetupId, userId]
+    );
+
+    if (participantCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a participant in this meetup' });
+    }
+
+    // Get all comments
+    const commentsResult = await pool.query(
+      `SELECT
+        mc.id,
+        mc.user_id,
+        mc.comment,
+        mc.created_at,
+        u.name as user_name
+      FROM meetup_comments mc
+      LEFT JOIN users u ON mc.user_id = u.id
+      WHERE mc.meetup_id = $1
+      ORDER BY mc.created_at ASC`,
+      [meetupId]
+    );
+
+    const comments = commentsResult.rows;
+
+    res.status(200).json({
+      success: true,
+      comments: comments
+    });
+
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+/**
+ * POST /api/meetups/:id/confirm
+ * Confirm meetup venue (AUTHENTICATED)
+ * 
+ * Request: empty body, just authentication
+ * Response: success with updated status
+ */
+router.post('/:id/confirm', authenticateToken, async (req, res) => {
+  const meetupId = req.params.id;
+  const userId = req.user.userId;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Check if user is a participant
+    const participantCheck = await pool.query(
+      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      [meetupId, userId]
+    );
+
+    if (participantCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a participant in this meetup' });
+    }
+
+    // Get meetup details
+    const meetupResult = await pool.query(
+      `SELECT id, status, calculated_venues
+       FROM meetups WHERE id = $1`,
+      [meetupId]
+    );
+
+    if (meetupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    const meetup = meetupResult.rows[0];
+
+    // Check if meetup is in correct status
+    if (meetup.status !== 'preferences_set') {
+      return res.status(400).json({ error: `Meetup cannot be confirmed. Current status: ${meetup.status}` });
+    }
+
+    // Check if venues have been calculated
+    if (!meetup.calculated_venues || meetup.calculated_venues.length === 0) {
+      return res.status(400).json({ error: 'No venues calculated yet' });
+    }
+
+    // Update meetup status to 'confirmed'
+    await pool.query(
+      `UPDATE meetups
+       SET status = 'confirmed'
+       WHERE id = $1`,
+      [meetupId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Meetup confirmed successfully',
+      meetup_status: 'confirmed'
+    });
+
+  } catch (error) {
+    console.error('Error confirming meetup:', error);
+    res.status(500).json({ error: 'Failed to confirm meetup' });
   }
 });
 
