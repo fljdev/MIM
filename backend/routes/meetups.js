@@ -282,6 +282,113 @@ router.get('/code/:meetupCode', async (req, res) => {
 });
 
 /**
+ * GET /api/meetups/:shareableCode/invitation
+ * View invitation details (PUBLIC - no auth required)
+ * 
+ * Returns invitation details for unauthenticated users to view before deciding to register/login
+ * 
+ * Response: {
+ *   success: true,
+ *   meetup_id: number,
+ *   meetup_datetime: string (ISO format),
+ *   vibe: string,
+ *   status: string,
+ *   creator: {
+ *     name: string
+ *   },
+ *   creator_preferences: {
+ *     budget_level: string,
+ *     fairness_mode: string,
+ *     transit_mode: string,
+ *     location: object OR null  // Only include if privacy_mode is false
+ *   }
+ * }
+ */
+router.get('/:shareableCode/invitation', async (req, res) => {
+  const { shareableCode } = req.params;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Get meetup details with creator info and preferences
+    const meetupResult = await pool.query(
+      `SELECT 
+        m.id,
+        m.meetup_code,
+        m.meetup_vibe,
+        m.budget_level,
+        m.fairness_mode,
+        m.global_privacy,
+        m.status,
+        m.created_at,
+        u.name as creator_name,
+        mp.location_name,
+        mp.location_lat,
+        mp.location_lng,
+        mp.transit_mode
+      FROM meetups m
+      LEFT JOIN users u ON m.created_by = u.id
+      LEFT JOIN meetup_participants mp ON m.id = mp.meetup_id AND mp.user_id = m.created_by
+      WHERE m.meetup_code = $1`,
+      [shareableCode.toUpperCase()]
+    );
+
+    if (meetupResult.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Invitation not found' 
+      });
+    }
+
+    const meetup = meetupResult.rows[0];
+
+    // Check if invitation is still pending
+    if (meetup.status !== 'pending') {
+      return res.status(400).json({ 
+        success: false,
+        error: 'This invitation has already been accepted or is no longer available' 
+      });
+    }
+
+    // Build creator preferences object with privacy handling
+    const creatorPreferences = {
+      budget_level: meetup.budget_level,
+      fairness_mode: meetup.fairness_mode,
+      transit_mode: meetup.transit_mode || 'walking', // Default if not found
+      location: null
+    };
+
+    // Include location only if privacy_mode is false
+    if (!meetup.global_privacy && meetup.location_name && meetup.location_lat !== null && meetup.location_lng !== null) {
+      creatorPreferences.location = {
+        name: meetup.location_name,
+        lat: meetup.location_lat,
+        lng: meetup.location_lng
+      };
+    }
+
+    res.status(200).json({
+      success: true,
+      meetup_id: meetup.id,
+      meetup_datetime: meetup.created_at.toISOString(), // Use created_at as meetup datetime
+      vibe: meetup.meetup_vibe,
+      status: meetup.status,
+      creator: {
+        name: meetup.creator_name
+      },
+      creator_preferences: creatorPreferences
+    });
+
+  } catch (error) {
+    console.error('Error fetching invitation details:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to fetch invitation details' 
+    });
+  }
+});
+
+/**
  * POST /api/meetups/code/:meetupCode/join
  * Join a meetup (PUBLIC - no auth required)
  * 
