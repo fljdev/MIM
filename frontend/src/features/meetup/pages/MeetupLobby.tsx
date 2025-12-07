@@ -9,10 +9,31 @@ interface Participant {
   location_lat: number | null;
   location_lng: number | null;
   transit_mode: string;
+  budget_level: string;
+  fairness_mode: string;
   joined_at: string;
 }
 
+interface Venue {
+  id: number;
+  name: string;
+  address: string;
+  budget_level: string;
+  travel_times: {
+    [participantId: number]: number;
+  };
+  ranking: number;
+}
+
+interface Comment {
+  id: number;
+  user_name: string;
+  content: string;
+  created_at: string;
+}
+
 interface MeetupData {
+  id: number;
   code: string;
   title: string;
   vibe: string;
@@ -22,14 +43,17 @@ interface MeetupData {
   created_by_name: string;
   status: string;
   calculation_status: string;
+  meetup_datetime: string;
 }
 
 interface LobbyData {
   meetup: MeetupData;
   participants: Participant[];
+  venues: Venue[];
+  comments: Comment[];
   participant_count: number;
-  ready_to_calculate: boolean;
   is_organizer: boolean;
+  can_confirm: boolean;
 }
 
 const MeetupLobby: React.FC = () => {
@@ -45,7 +69,7 @@ const MeetupLobby: React.FC = () => {
   // Fetch lobby data
   const fetchLobbyData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/meetup/${code}/lobby`);
+      const response = await fetch(`${API_BASE_URL}/api/meetups/${code}/lobby`);
       if (!response.ok) {
         throw new Error('Failed to fetch lobby data');
       }
@@ -60,7 +84,7 @@ const MeetupLobby: React.FC = () => {
 
       // Check if calculation is ready and navigate
       if (data.meetup.calculation_status === 'ready') {
-        navigate(`/meetup/${code}/results`);
+        // Stay in lobby to show results
       }
     } catch (error) {
       console.error('Error fetching lobby:', error);
@@ -75,7 +99,7 @@ const MeetupLobby: React.FC = () => {
     }
   }, [code]);
 
-  // Poll every 5 seconds
+  // Poll every 5 seconds for real-time updates
   useEffect(() => {
     if (!code) return;
 
@@ -97,43 +121,71 @@ const MeetupLobby: React.FC = () => {
     }
   };
 
-  const handleCalculate = async () => {
-    if (!lobbyData) {
-      return;
-    }
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
-    const organizerName = localStorage.getItem(`meetup_organizer_${code}`);
-    if (!organizerName) {
-      alert('Unable to verify organizer status');
-      return;
-    }
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !code) return;
 
-    setCalculating(true);
-
+    setSubmittingComment(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/meetup/${code}/calculate`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/meetups/${code}/comments`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          organizer_name: organizerName
+          content: newComment
         })
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to calculate venues');
+        throw new Error('Failed to add comment');
       }
 
-      // Navigate to results
-      navigate(`/meetup/${code}/results`);
-
-    } catch (error: any) {
-      console.error('Error calculating:', error);
-      alert(error.message || 'Failed to calculate venues. Please try again.');
+      setNewComment('');
+      // Refresh comments
+      fetchLobbyData();
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Failed to add comment');
     } finally {
-      setCalculating(false);
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleConfirmVenue = async () => {
+    if (!code || !lobbyData || !lobbyData.venues.length) return;
+
+    setConfirming(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/meetups/${code}/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          venue_id: lobbyData.venues[0].id // Confirm top venue
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to confirm venue');
+      }
+
+      // Refresh data
+      fetchLobbyData();
+      alert('Venue confirmed! Meetup is now finalized.');
+    } catch (error) {
+      console.error('Error confirming venue:', error);
+      alert('Failed to confirm venue');
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -340,44 +392,118 @@ const MeetupLobby: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Section */}
-        {lobbyData.ready_to_calculate && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            {isOrganizer ? (
-              <button
-                onClick={handleCalculate}
-                disabled={calculating || lobbyData.participant_count < 2}
-                className="w-full bg-emerald-500 text-white py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {calculating ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Finding meeting spots...
-                  </span>
-                ) : (
-                  '🎯 Find Meeting Spots'
-                )}
-              </button>
-            ) : (
-              <div className="bg-gray-100 border-2 border-gray-300 rounded-lg p-6 text-center">
-                <p className="text-gray-600 text-lg">
-                  Waiting for <span className="font-bold">{lobbyData.meetup.created_by_name}</span> to find spots...
-                </p>
-              </div>
-            )}
+        {/* Top 3 Venues Section */}
+        {lobbyData.venues && lobbyData.venues.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Top Meeting Spots</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {lobbyData.venues.slice(0, 3).map((venue, index) => (
+                <div
+                  key={venue.id}
+                  className={`rounded-lg p-5 border-2 ${
+                    index === 0
+                      ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300 shadow-lg'
+                      : index === 1
+                      ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
+                      : 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300'
+                  }`}
+                >
+                  {/* Ranking Badge */}
+                  <div className="flex justify-between items-start mb-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                      index === 0 ? 'bg-yellow-500' :
+                      index === 1 ? 'bg-gray-400' :
+                      'bg-amber-700'
+                    }`}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    </div>
+                    <div className="text-2xl font-bold">
+                      {venue.budget_level}
+                    </div>
+                  </div>
+
+                  {/* Venue Name */}
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">{venue.name}</h3>
+                  
+                  {/* Address */}
+                  <p className="text-sm text-gray-600 mb-4">{venue.address}</p>
+
+                  {/* Travel Times */}
+                  <div className="space-y-2">
+                    {lobbyData.participants.map((participant) => (
+                      <div key={participant.id} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-700">{participant.participant_name}</span>
+                        <span className="font-semibold">
+                          {venue.travel_times[participant.id] || '?'} min
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {calculating && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-8 text-center max-w-md">
-              <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-emerald-600 mb-4"></div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Finding Fair Spots...</h3>
-              <p className="text-gray-600">This may take a few seconds</p>
-            </div>
+        {/* Comments Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Comments</h2>
+          
+          {/* Comments List */}
+          <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
+            {lobbyData.comments && lobbyData.comments.length > 0 ? (
+              lobbyData.comments.map((comment) => (
+                <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-semibold text-gray-800">{comment.user_name}</span>
+                    <span className="text-sm text-gray-500">
+                      {getTimeAgo(comment.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-gray-700">{comment.content}</p>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No comments yet. Start the conversation!
+              </div>
+            )}
+          </div>
+
+          {/* Add Comment */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+              className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
+              onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+            />
+            <button
+              onClick={handleAddComment}
+              disabled={!newComment.trim() || submittingComment}
+              className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submittingComment ? 'Posting...' : 'Post'}
+            </button>
+          </div>
+        </div>
+
+        {/* Confirm Button */}
+        {lobbyData.can_confirm && lobbyData.venues && lobbyData.venues.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <button
+              onClick={handleConfirmVenue}
+              disabled={confirming}
+              className="w-full bg-emerald-500 text-white py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {confirming ? 'Confirming...' : '✅ Confirm Venue #1'}
+            </button>
+            <p className="text-sm text-gray-500 text-center mt-2">
+              This will finalize the meetup at {lobbyData.venues[0].name}
+            </p>
           </div>
         )}
       </div>

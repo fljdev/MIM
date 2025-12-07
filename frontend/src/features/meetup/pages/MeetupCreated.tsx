@@ -9,8 +9,9 @@ const MeetupCreated: React.FC = () => {
 
   // Get meetup_code from location state or URL params
   const meetup_code = location.state?.meetup_code || params.code || '';
-
-  const shareLink = `${window.location.origin}/join/${meetup_code}`;
+  
+  // Get share_link from location state or construct it
+  const shareLink = location.state?.share_link || `${window.location.origin}/invite/${meetup_code}`;
 
   const handleCopyLink = async () => {
     try {
