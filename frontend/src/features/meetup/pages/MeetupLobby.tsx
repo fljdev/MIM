@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../../Config';
+import { 
+  getTrafficDisplayInfo, 
+  getTrafficEmoji, 
+  getCurrentTrafficCondition,
+  isRushHour
+} from '../../../lib/mockTrafficData';
+import { 
+  getMockWeather, 
+  getWeatherWarning 
+} from '../../../lib/mockWeatherData';
+import VenueDisplayTiers from './VenueDisplayTiers';
 
 // Participant structure from backend
 interface Participant {
@@ -21,6 +32,11 @@ interface Venue {
   name: string;
   address: string;
   priceLevel?: number;
+  latitude?: number;
+  longitude?: number;
+  rating?: number;
+  review_count?: number;
+  accessible?: boolean;
   travel_times?: {
     [key: string]: number;
   };
@@ -386,9 +402,19 @@ const MeetupLobby: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header Card */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          {/* Core Value Proposition */}
+          <div className="text-center mb-4 pb-4 border-b border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">
+              Meet in the Middle
+            </h1>
+            <p className="text-sm text-gray-600 italic">
+              Fair meetups based on <span className="font-semibold text-emerald-600">travel time</span>, not distance
+            </p>
+          </div>
+
           <div className="text-center mb-6">
             <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Meetup Code</p>
             <div className="flex items-center justify-center gap-3">
@@ -450,6 +476,7 @@ const MeetupLobby: React.FC = () => {
                     <h3 className="font-bold text-gray-800">
                       {participant.name}
                       {index === 0 && <span className="ml-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">Creator</span>}
+                      {index === 1 && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Joiner</span>}
                     </h3>
                   </div>
                 </div>
@@ -472,219 +499,53 @@ const MeetupLobby: React.FC = () => {
           </div>
         </div>
 
-        {/* Venues Section with Voting */}
-        {lobbyData.top_venues && lobbyData.top_venues.length > 0 && (
-          <>
-            {/* Top 3 Venues - Premium Display */}
+        {/* Venues Section with Voting - INTEGRATED WITH NEW COMPONENT */}
+        {lobbyData.top_venues && lobbyData.top_venues.length > 0 && (() => {
+          // Get current user ID from JWT token
+          const token = localStorage.getItem('token');
+          let currentUserId = 0;
+          if (token) {
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              currentUserId = payload.userId;
+            } catch (e) {
+              console.error('Failed to parse token');
+            }
+          }
+
+          return (
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                🏆 Top 3 Recommendations
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {lobbyData.top_venues.slice(0, 3).map((venue, index) => {
-                  // Get current user ID from auth token
-                  const token = localStorage.getItem('token');
-                  let currentUserId = 0;
-                  if (token) {
-                    try {
-                      const payload = JSON.parse(atob(token.split('.')[1]));
-                      currentUserId = payload.userId;
-                    } catch (e) {
-                      console.error('Failed to parse token');
-                    }
-                  }
-                  
-                  const voteInfo = getVoteInfo(venue.id);
-                  const isCurrentUserVote = voteInfo.voter_ids.includes(currentUserId);
-
-                  return (
-                    <div
-                      key={venue.id || index}
-                      className={`rounded-lg p-5 border-2 transition-all ${
-                        index === 0
-                          ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300 shadow-lg'
-                          : index === 1
-                            ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
-                            : 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300'
-                      } ${isCurrentUserVote ? 'ring-2 ring-green-500' : ''}`}
-                    >
-                      {/* Ranking Badge */}
-                      <div className="flex justify-between items-start mb-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                          index === 0 ? 'bg-yellow-500' :
-                          index === 1 ? 'bg-gray-400' :
-                          'bg-amber-700'
-                        }`}>
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                        </div>
-                        <div className="text-2xl font-bold">
-                          {'€'.repeat(venue.priceLevel || 2)}
-                        </div>
-                      </div>
-
-                      {/* Venue Name */}
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">{venue.name}</h3>
-
-                      {/* Address */}
-                      <p className="text-sm text-gray-600 mb-4">{venue.address}</p>
-
-                      {/* Travel Times */}
-                      {venue.travel_times && (
-                        <div className="space-y-2 mb-4">
-                          {participantsList.map((participant) => (
-                            <div key={participant.id} className="flex justify-between items-center">
-                              <span className="text-sm text-gray-700">{participant.name}</span>
-                              <span className="font-semibold">
-                                {venue.travel_times?.[participant.id] || '?'} min
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Vote Button and Vote Count */}
-                      <div className="flex flex-col gap-2">
-                        {(() => {
-                          const voteInfo = getVoteInfo(venue.id);
-                          return (
-                            <>
-                              <button
-                                onClick={() => handleVote(venue.id.toString())}
-                                disabled={votingInProgress}
-                                className={`w-full px-4 py-2 rounded font-semibold transition-colors ${
-                                  isCurrentUserVote
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                } ${votingInProgress ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              >
-                                {isCurrentUserVote ? '✓ Your Vote' : 'Vote'}
-                              </button>
-                              
-                              {/* Vote Count Display */}
-                              <div className="text-center text-sm">
-                                {voteInfo.count === 0 ? (
-                                  <span className="text-gray-500">0 votes</span>
-                                ) : voteInfo.count === 1 ? (
-                                  <span className="text-blue-700 font-semibold">
-                                    1 vote ({voteInfo.voters[0]})
-                                  </span>
-                                ) : (
-                                  <span className="text-green-700 font-bold">
-                                    ✓ 2 votes ({voteInfo.voters.join(' & ')})
-                                  </span>
-                                )}
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* More Venues Toggle Button */}
-            {lobbyData.top_venues.length > 3 && (
-              <div className="mb-4">
-                <button
-                  onClick={() => setShowAllVenues(!showAllVenues)}
-                  className="w-full py-3 px-4 bg-white rounded-lg font-semibold transition-colors hover:bg-gray-50 shadow-lg flex items-center justify-center gap-2"
-                >
-                  {showAllVenues ? (
-                    <>
-                      <span>▲</span>
-                      <span>Hide Additional Venues</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>▼</span>
-                      <span>Show {lobbyData.top_venues.length - 3} More Venues</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Remaining Venues - Compact List */}
-            {showAllVenues && lobbyData.top_venues.length > 3 && (
-              <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">More Options</h3>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {lobbyData.top_venues.slice(3).map((venue) => {
-                    // Get current user ID from auth token
-                    const token = localStorage.getItem('token');
-                    let currentUserId = 0;
-                    if (token) {
-                      try {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        currentUserId = payload.userId;
-                      } catch (e) {
-                        console.error('Failed to parse token');
-                      }
-                    }
-                    
-                    const voteInfo = getVoteInfo(venue.id);
-                    const isCurrentUserVote = voteInfo.voter_ids.includes(currentUserId);
-
-                    return (
-                      <div
-                        key={venue.id}
-                        className={`p-3 border rounded-lg bg-gray-50 flex justify-between items-center transition-all ${
-                          isCurrentUserVote ? 'ring-2 ring-green-500 bg-green-50' : ''
-                        }`}
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800">{venue.name}</h4>
-                          <p className="text-sm text-gray-600">
-                            {venue.address} • {'€'.repeat(venue.priceLevel || 2)}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-3 ml-4">
-                          {(() => {
-                            const voteInfo = getVoteInfo(venue.id);
-                            return (
-                              <>
-                                {/* Vote Count */}
-                                <div className="text-xs text-center min-w-[80px]">
-                                  {voteInfo.count === 0 ? (
-                                    <span className="text-gray-500">0 votes</span>
-                                  ) : voteInfo.count === 1 ? (
-                                    <span className="text-blue-700 font-semibold">
-                                      1 vote<br/>({voteInfo.voters[0]})
-                                    </span>
-                                  ) : (
-                                    <span className="text-green-700 font-bold">
-                                      ✓ 2 votes<br/>({voteInfo.voters.join(' & ')})
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                <button
-                                  onClick={() => handleVote(venue.id.toString())}
-                                  disabled={votingInProgress}
-                                  className={`px-3 py-1.5 text-sm rounded font-semibold transition-colors ${
-                                    isCurrentUserVote
-                                      ? 'bg-green-600 text-white'
-                                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                                  } ${votingInProgress ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                  {isCurrentUserVote ? '✓ Voted' : 'Vote'}
-                                </button>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    );
-                  })}
+              {/* Fairness Mode Banner */}
+              <div className="mb-6 flex items-center justify-between text-sm bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div>
+                  <span className="font-semibold text-blue-900">
+                    {getFairnessIcon(lobbyData.preferences.fairness)} {lobbyData.preferences.fairness.toUpperCase()} MODE
+                  </span>
+                  <span className="text-blue-700 ml-2">
+                    {lobbyData.preferences.fairness === 'fastest' && '• Minimizing max travel time'}
+                    {lobbyData.preferences.fairness === 'sustainable' && '• Promoting green transport'}
+                    {lobbyData.preferences.fairness === 'accessible' && '• Wheelchair accessible only'}
+                  </span>
+                </div>
+                <div className="text-xs text-blue-700">
+                  {getTrafficEmoji()} {getCurrentTrafficCondition().description}
                 </div>
               </div>
-            )}
-          </>
-        )}
+
+              {/* THE NEW COMPONENT! */}
+              <VenueDisplayTiers
+                venues={lobbyData.top_venues}
+                participants={participantsList}
+                getTransitIcon={getTransitIcon}
+                votes={votes}
+                getVoteInfo={getVoteInfo}
+                handleVote={handleVote}
+                votingInProgress={votingInProgress}
+                currentUserId={currentUserId}
+              />
+            </div>
+          );
+        })()}
 
         {/* Comments Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
