@@ -825,7 +825,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
     }
 
     // Limit to top 3 venues
-    const topVenues = calculatedVenues.slice(0, 3);
+    const topVenues = calculatedVenues.slice(0, 20);
 
     // Store results in database
     await pool.query(
