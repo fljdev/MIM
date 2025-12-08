@@ -824,7 +824,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    // Limit to top 3 venues
+    // Limit to top 20 venues
     const topVenues = calculatedVenues.slice(0, 20);
 
     // Store results in database
@@ -1160,6 +1160,97 @@ router.get('/:id/comments', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching comments:', error);
     res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+/**
+ * POST /api/meetups/:code/vote
+ * Record a user's vote for a venue
+ */
+router.post('/:code/vote', authenticateToken, async (req, res) => {
+  const { code } = req.params;
+  const { venue_id } = req.body;
+  const userId = req.user.userId;
+
+  if (!venue_id) {
+    return res.status(400).json({ error: 'venue_id is required' });
+  }
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Resolve meetup ID from code
+    const meetupId = await resolveMeetupId(pool, code);
+    if (!meetupId) {
+      console.error('[VOTE] Meetup not found:', code);
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    // Check if user is a participant
+    const participantCheck = await pool.query(
+      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      [meetupId, userId]
+    );
+
+    if (participantCheck.rows.length === 0) {
+      console.error('[VOTE] User is not a participant');
+      return res.status(403).json({ error: 'You are not a participant in this meetup' });
+    }
+
+    // Insert or update vote (UPSERT)
+    const result = await pool.query(
+      `INSERT INTO meetup_venue_votes (meetup_id, user_id, venue_id)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (meetup_id, user_id)
+       DO UPDATE SET venue_id = $3, voted_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [meetupId, userId, venue_id]
+    );
+
+    console.log(`[VOTE] User ${userId} voted for venue ${venue_id}`);
+    res.json({ success: true, message: 'Vote recorded', vote: result.rows[0] });
+
+  } catch (error) {
+    console.error('[VOTE] Error recording vote:', error);
+    res.status(500).json({ error: 'Failed to record vote' });
+  }
+});
+
+/**
+ * GET /api/meetups/:code/votes
+ * Get all votes for a meetup
+ */
+router.get('/:code/votes', authenticateToken, async (req, res) => {
+  const { code } = req.params;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Resolve meetup ID from code
+    const meetupId = await resolveMeetupId(pool, code);
+    if (!meetupId) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    // Get all votes with user info
+    const votesResult = await pool.query(
+      `SELECT 
+        v.venue_id, 
+        v.voted_at, 
+        u.name as voter_name, 
+        u.id as voter_id
+       FROM meetup_venue_votes v
+       JOIN users u ON v.user_id = u.id
+       WHERE v.meetup_id = $1
+       ORDER BY v.voted_at DESC`,
+      [meetupId]
+    );
+
+    res.json({ votes: votesResult.rows });
+
+  } catch (error) {
+    console.error('[VOTES] Error fetching votes:', error);
+    res.status(500).json({ error: 'Failed to fetch votes' });
   }
 });
 
