@@ -111,7 +111,7 @@ const CreateMeetup: React.FC = () => {
       navigate('/meetup/created', {
         state: {
           meetup_code: data.meetup.meetup_code,
-          share_link: `http://localhost:3000/invite/${data.meetup.meetup_code}`
+          share_link: `${window.location.origin}/invite/${data.meetup.meetup_code}`
         }
       });
 
