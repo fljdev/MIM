@@ -74,6 +74,11 @@ const MeetupLobby: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  
+  // NEW: Voting state
+  const [votes, setVotes] = useState<{[venueId: string]: Array<{voter_name: string, voter_id: number}>}>({});
+  const [showAllVenues, setShowAllVenues] = useState(false);
+  const [votingInProgress, setVotingInProgress] = useState(false);
 
   // Fetch lobby data
   const fetchLobbyData = async () => {
@@ -104,9 +109,81 @@ const MeetupLobby: React.FC = () => {
     }
   };
 
+  // Fetch votes for the meetup
+  const fetchVotes = async () => {
+    if (!code) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/meetups/${code}/votes`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[VOTES] Fetched votes:', data.votes);
+        
+        // Convert array to object with ARRAYS of voters per venue (don't overwrite!)
+        const votesMap: {[key: string]: Array<{voter_name: string, voter_id: number}>} = {};
+        data.votes.forEach((vote: any) => {
+          if (!votesMap[vote.venue_id]) {
+            votesMap[vote.venue_id] = [];
+          }
+          votesMap[vote.venue_id].push({
+            voter_name: vote.voter_name,
+            voter_id: vote.voter_id
+          });
+        });
+        setVotes(votesMap);
+      } else {
+        console.error('[VOTES] Failed to fetch votes:', response.status);
+      }
+    } catch (error) {
+      console.error('[VOTES] Error fetching votes:', error);
+    }
+  };
+
+  // Handle voting for a venue
+  const handleVote = async (venueId: string) => {
+    if (!code || votingInProgress) return;
+
+    setVotingInProgress(true);
+    console.log('[VOTE] Voting for venue:', venueId);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/meetups/${code}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ venue_id: venueId })
+      });
+
+      if (response.ok) {
+        console.log('[VOTE] Vote recorded successfully');
+        // Refresh votes immediately
+        await fetchVotes();
+      } else {
+        const error = await response.json();
+        console.error('[VOTE] Failed to record vote:', error);
+        alert('Failed to record vote: ' + (error.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('[VOTE] Error voting:', error);
+      alert('Failed to record vote. Please try again.');
+    } finally {
+      setVotingInProgress(false);
+    }
+  };
+
   useEffect(() => {
     if (code) {
       fetchLobbyData();
+      fetchVotes();
     }
   }, [code]);
 
@@ -116,6 +193,7 @@ const MeetupLobby: React.FC = () => {
 
     const interval = setInterval(() => {
       fetchLobbyData();
+      fetchVotes();
     }, 5000);
 
     return () => clearInterval(interval);
@@ -217,6 +295,18 @@ const MeetupLobby: React.FC = () => {
       accessible: '♿'
     };
     return icons[mode?.toLowerCase()] || '⚖️';
+  };
+
+  // Helper function to get vote info for a venue
+  const getVoteInfo = (venueId: number | string) => {
+    const venueIdStr = venueId.toString();
+    const votersForVenue = votes[venueIdStr] || [];
+    
+    return {
+      count: votersForVenue.length,
+      voters: votersForVenue.map(v => v.voter_name),
+      voter_ids: votersForVenue.map(v => v.voter_id)
+    };
   };
 
   const getTransitIcon = (mode: string) => {
@@ -382,60 +472,218 @@ const MeetupLobby: React.FC = () => {
           </div>
         </div>
 
-        {/* Top 3 Venues Section */}
+        {/* Venues Section with Voting */}
         {lobbyData.top_venues && lobbyData.top_venues.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Top Meeting Spots</h2>
+          <>
+            {/* Top 3 Venues - Premium Display */}
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                🏆 Top 3 Recommendations
+              </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {lobbyData.top_venues.slice(0, 3).map((venue, index) => (
-                <div
-                  key={venue.id || index}
-                  className={`rounded-lg p-5 border-2 ${
-                    index === 0
-                      ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300 shadow-lg'
-                      : index === 1
-                        ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
-                        : 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300'
-                  }`}
-                >
-                  {/* Ranking Badge */}
-                  <div className="flex justify-between items-start mb-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                      index === 0 ? 'bg-yellow-500' :
-                      index === 1 ? 'bg-gray-400' :
-                      'bg-amber-700'
-                    }`}>
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                    </div>
-                    <div className="text-2xl font-bold">
-                      {'€'.repeat(venue.priceLevel || 2)}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {lobbyData.top_venues.slice(0, 3).map((venue, index) => {
+                  // Get current user ID from auth token
+                  const token = localStorage.getItem('token');
+                  let currentUserId = 0;
+                  if (token) {
+                    try {
+                      const payload = JSON.parse(atob(token.split('.')[1]));
+                      currentUserId = payload.userId;
+                    } catch (e) {
+                      console.error('Failed to parse token');
+                    }
+                  }
+                  
+                  const voteInfo = getVoteInfo(venue.id);
+                  const isCurrentUserVote = voteInfo.voter_ids.includes(currentUserId);
 
-                  {/* Venue Name */}
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">{venue.name}</h3>
-
-                  {/* Address */}
-                  <p className="text-sm text-gray-600 mb-4">{venue.address}</p>
-
-                  {/* Travel Times */}
-                  {venue.travel_times && (
-                    <div className="space-y-2">
-                      {participantsList.map((participant) => (
-                        <div key={participant.id} className="flex justify-between items-center">
-                          <span className="text-sm text-gray-700">{participant.name}</span>
-                          <span className="font-semibold">
-                            {venue.travel_times?.[participant.id] || '?'} min
-                          </span>
+                  return (
+                    <div
+                      key={venue.id || index}
+                      className={`rounded-lg p-5 border-2 transition-all ${
+                        index === 0
+                          ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300 shadow-lg'
+                          : index === 1
+                            ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'
+                            : 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-300'
+                      } ${isCurrentUserVote ? 'ring-2 ring-green-500' : ''}`}
+                    >
+                      {/* Ranking Badge */}
+                      <div className="flex justify-between items-start mb-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                          index === 0 ? 'bg-yellow-500' :
+                          index === 1 ? 'bg-gray-400' :
+                          'bg-amber-700'
+                        }`}>
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                         </div>
-                      ))}
+                        <div className="text-2xl font-bold">
+                          {'€'.repeat(venue.priceLevel || 2)}
+                        </div>
+                      </div>
+
+                      {/* Venue Name */}
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">{venue.name}</h3>
+
+                      {/* Address */}
+                      <p className="text-sm text-gray-600 mb-4">{venue.address}</p>
+
+                      {/* Travel Times */}
+                      {venue.travel_times && (
+                        <div className="space-y-2 mb-4">
+                          {participantsList.map((participant) => (
+                            <div key={participant.id} className="flex justify-between items-center">
+                              <span className="text-sm text-gray-700">{participant.name}</span>
+                              <span className="font-semibold">
+                                {venue.travel_times?.[participant.id] || '?'} min
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Vote Button and Vote Count */}
+                      <div className="flex flex-col gap-2">
+                        {(() => {
+                          const voteInfo = getVoteInfo(venue.id);
+                          return (
+                            <>
+                              <button
+                                onClick={() => handleVote(venue.id.toString())}
+                                disabled={votingInProgress}
+                                className={`w-full px-4 py-2 rounded font-semibold transition-colors ${
+                                  isCurrentUserVote
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                } ${votingInProgress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                {isCurrentUserVote ? '✓ Your Vote' : 'Vote'}
+                              </button>
+                              
+                              {/* Vote Count Display */}
+                              <div className="text-center text-sm">
+                                {voteInfo.count === 0 ? (
+                                  <span className="text-gray-500">0 votes</span>
+                                ) : voteInfo.count === 1 ? (
+                                  <span className="text-blue-700 font-semibold">
+                                    1 vote ({voteInfo.voters[0]})
+                                  </span>
+                                ) : (
+                                  <span className="text-green-700 font-bold">
+                                    ✓ 2 votes ({voteInfo.voters.join(' & ')})
+                                  </span>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+
+            {/* More Venues Toggle Button */}
+            {lobbyData.top_venues.length > 3 && (
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowAllVenues(!showAllVenues)}
+                  className="w-full py-3 px-4 bg-white rounded-lg font-semibold transition-colors hover:bg-gray-50 shadow-lg flex items-center justify-center gap-2"
+                >
+                  {showAllVenues ? (
+                    <>
+                      <span>▲</span>
+                      <span>Hide Additional Venues</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>▼</span>
+                      <span>Show {lobbyData.top_venues.length - 3} More Venues</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Remaining Venues - Compact List */}
+            {showAllVenues && lobbyData.top_venues.length > 3 && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">More Options</h3>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {lobbyData.top_venues.slice(3).map((venue) => {
+                    // Get current user ID from auth token
+                    const token = localStorage.getItem('token');
+                    let currentUserId = 0;
+                    if (token) {
+                      try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        currentUserId = payload.userId;
+                      } catch (e) {
+                        console.error('Failed to parse token');
+                      }
+                    }
+                    
+                    const voteInfo = getVoteInfo(venue.id);
+                    const isCurrentUserVote = voteInfo.voter_ids.includes(currentUserId);
+
+                    return (
+                      <div
+                        key={venue.id}
+                        className={`p-3 border rounded-lg bg-gray-50 flex justify-between items-center transition-all ${
+                          isCurrentUserVote ? 'ring-2 ring-green-500 bg-green-50' : ''
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800">{venue.name}</h4>
+                          <p className="text-sm text-gray-600">
+                            {venue.address} • {'€'.repeat(venue.priceLevel || 2)}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-3 ml-4">
+                          {(() => {
+                            const voteInfo = getVoteInfo(venue.id);
+                            return (
+                              <>
+                                {/* Vote Count */}
+                                <div className="text-xs text-center min-w-[80px]">
+                                  {voteInfo.count === 0 ? (
+                                    <span className="text-gray-500">0 votes</span>
+                                  ) : voteInfo.count === 1 ? (
+                                    <span className="text-blue-700 font-semibold">
+                                      1 vote<br/>({voteInfo.voters[0]})
+                                    </span>
+                                  ) : (
+                                    <span className="text-green-700 font-bold">
+                                      ✓ 2 votes<br/>({voteInfo.voters.join(' & ')})
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                <button
+                                  onClick={() => handleVote(venue.id.toString())}
+                                  disabled={votingInProgress}
+                                  className={`px-3 py-1.5 text-sm rounded font-semibold transition-colors ${
+                                    isCurrentUserVote
+                                      ? 'bg-green-600 text-white'
+                                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                                  } ${votingInProgress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  {isCurrentUserVote ? '✓ Voted' : 'Vote'}
+                                </button>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Comments Section */}
@@ -483,21 +731,65 @@ const MeetupLobby: React.FC = () => {
           </div>
         </div>
 
-        {/* Confirm Button - Only show for organizer when status is preferences_set */}
-        {isOrganizer && lobbyData.meetup.status === 'preferences_set' && lobbyData.top_venues && lobbyData.top_venues.length > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <button
-              onClick={handleConfirmVenue}
-              disabled={confirming}
-              className="w-full bg-emerald-500 text-white py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {confirming ? 'Confirming...' : '✅ Confirm Venue #1'}
-            </button>
-            <p className="text-sm text-gray-500 text-center mt-2">
-              This will finalize the meetup at {lobbyData.top_venues[0].name}
-            </p>
-          </div>
-        )}
+        {/* Confirm Button - Only show when BOTH users voted for SAME venue */}
+        {lobbyData.meetup.status === 'preferences_set' && lobbyData.top_venues && lobbyData.top_venues.length > 0 && (() => {
+          // Check if both users voted for the same venue
+          // Find a venue that has 2 votes
+          let agreedVenueId: string | null = null;
+          let totalVotes = 0;
+          
+          Object.entries(votes).forEach(([venueId, voters]) => {
+            totalVotes += voters.length;
+            if (voters.length === 2) {
+              agreedVenueId = venueId;
+            }
+          });
+          
+          if (agreedVenueId) {
+            // Both voted for SAME venue - show confirm button!
+            const agreedVenue = lobbyData.top_venues.find(v => v.id.toString() === agreedVenueId);
+            if (agreedVenue) {
+              return (
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <button
+                    onClick={handleConfirmVenue}
+                    disabled={confirming}
+                    className="w-full bg-emerald-500 text-white py-4 rounded-lg font-bold text-xl hover:bg-emerald-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {confirming ? 'Confirming...' : `✅ Confirm ${agreedVenue.name}`}
+                  </button>
+                  <p className="text-sm text-green-700 text-center mt-2 font-semibold">
+                    🎉 Both participants agreed on this venue!
+                  </p>
+                </div>
+              );
+            }
+          } else if (totalVotes === 2) {
+            // Both voted but for DIFFERENT venues
+            return (
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 text-center">
+                <div className="text-3xl mb-2">⏳</div>
+                <h3 className="text-lg font-bold text-yellow-800 mb-2">Waiting for Agreement</h3>
+                <p className="text-yellow-700 text-sm">
+                  Both participants need to vote for the same venue before confirming.
+                </p>
+              </div>
+            );
+          } else {
+            // Less than 2 votes total
+            return (
+              <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6 text-center">
+                <div className="text-3xl mb-2">🗳️</div>
+                <h3 className="text-lg font-bold text-blue-800 mb-2">Cast Your Votes</h3>
+                <p className="text-blue-700 text-sm">
+                  Both participants need to vote for the same venue to confirm the meetup.
+                </p>
+              </div>
+            );
+          }
+          
+          return null;
+        })()}
 
         {/* Status indicator for confirmed meetups */}
         {lobbyData.meetup.status === 'confirmed' && (
