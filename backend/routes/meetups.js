@@ -42,6 +42,28 @@ function generateMeetupCode() {
 }
 
 /**
+ * Helper function to resolve meetup ID from either numeric ID or meetup code
+ */
+async function resolveMeetupId(pool, idOrCode) {
+  // Check if it's a numeric ID
+  if (!isNaN(idOrCode) && Number.isInteger(Number(idOrCode))) {
+    return parseInt(idOrCode);
+  }
+  
+  // It's a meetup code, look up the actual ID
+  const result = await pool.query(
+    'SELECT id FROM meetups WHERE meetup_code = $1',
+    [idOrCode.toUpperCase()]
+  );
+  
+  if (result.rows.length === 0) {
+    return null;
+  }
+  
+  return result.rows[0].id;
+}
+
+/**
  * POST /api/meetups/create
  * Create a new meetup (AUTHENTICATED - requires JWT)
  * 
@@ -753,7 +775,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
 
     // Get meetup details for calculation
     const meetupDetails = await pool.query(
-      `SELECT meetup_vibe, budget_level, fairness_mode
+      `SELECT meetup_vibe, budget_level, fairness_mode, meetup_code
        FROM meetups WHERE id = $1`,
       [meetupId]
     );
@@ -826,7 +848,8 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
       success: true,
       message: 'Preferences saved and venues calculated',
       venues_calculated: topVenues.length,
-      meetup_status: 'preferences_set'
+      meetup_status: 'preferences_set',
+      meetup_code: meetupInfo.meetup_code
     });
 
   } catch (error) {
@@ -839,6 +862,8 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
  * GET /api/meetups/:id/lobby
  * Get lobby data for meetup (AUTHENTICATED)
  * 
+ * Note: :id can be either numeric ID or meetup code (e.g., "BNVKX8")
+ * 
  * Response: {
  *   participants: [user info],
  *   creator_preferences: { ... },
@@ -848,16 +873,23 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
  * }
  */
 router.get('/:id/lobby', authenticateToken, async (req, res) => {
-  const meetupId = req.params.id;
+  const idOrCode = req.params.id;
   const userId = req.user.userId;
 
   try {
     const pool = req.app.locals.pool;
 
+    // Resolve the actual numeric meetup ID (handles both numeric ID and meetup code)
+    const actualMeetupId = await resolveMeetupId(pool, idOrCode);
+    
+    if (!actualMeetupId) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
     // Check if user is a participant
     const participantCheck = await pool.query(
       'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
-      [meetupId, userId]
+      [actualMeetupId, userId]
     );
 
     if (participantCheck.rows.length === 0) {
@@ -879,7 +911,7 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
         created_by
       FROM meetups
       WHERE id = $1`,
-      [meetupId]
+      [actualMeetupId]
     );
 
     if (meetupResult.rows.length === 0) {
@@ -909,7 +941,7 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
       LEFT JOIN users u ON mp.user_id = u.id
       WHERE mp.meetup_id = $1
       ORDER BY mp.joined_at ASC`,
-      [meetupId]
+      [actualMeetupId]
     );
 
     const participants = participantsResult.rows;
@@ -918,9 +950,8 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Not enough participants' });
     }
 
-    // Separate creator and joiner
-    const creator = participants[0]; // First participant is creator
-    const joiner = participants[1]; // Second participant is joiner
+    const creator = participants[0];
+    const joiner = participants[1];
 
     // Apply privacy mode
     const applyPrivacy = (participant) => {
@@ -953,7 +984,7 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
       LEFT JOIN users u ON mc.user_id = u.id
       WHERE mc.meetup_id = $1
       ORDER BY mc.created_at ASC`,
-      [meetupId]
+      [actualMeetupId]
     );
 
     const comments = commentsResult.rows;
@@ -1012,12 +1043,19 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
  * Request body: { comment: string }
  */
 router.post('/:id/comments', authenticateToken, async (req, res) => {
-  const meetupId = req.params.id;
+  const idOrCode = req.params.id;
   const userId = req.user.userId;
   const { comment } = req.body;
 
   try {
     const pool = req.app.locals.pool;
+
+    // Resolve the actual numeric meetup ID
+    const meetupId = await resolveMeetupId(pool, idOrCode);
+    
+    if (!meetupId) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
 
     // Validate comment
     if (!comment || comment.trim() === '') {
@@ -1032,16 +1070,6 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
 
     if (participantCheck.rows.length === 0) {
       return res.status(403).json({ error: 'You are not a participant in this meetup' });
-    }
-
-    // Check if meetup exists
-    const meetupCheck = await pool.query(
-      'SELECT id FROM meetups WHERE id = $1',
-      [meetupId]
-    );
-
-    if (meetupCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Meetup not found' });
     }
 
     // Insert comment
@@ -1084,11 +1112,18 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
  * Get all comments for meetup (AUTHENTICATED)
  */
 router.get('/:id/comments', authenticateToken, async (req, res) => {
-  const meetupId = req.params.id;
+  const idOrCode = req.params.id;
   const userId = req.user.userId;
 
   try {
     const pool = req.app.locals.pool;
+
+    // Resolve the actual numeric meetup ID
+    const meetupId = await resolveMeetupId(pool, idOrCode);
+    
+    if (!meetupId) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
 
     // Check if user is a participant
     const participantCheck = await pool.query(
@@ -1136,11 +1171,18 @@ router.get('/:id/comments', authenticateToken, async (req, res) => {
  * Response: success with updated status
  */
 router.post('/:id/confirm', authenticateToken, async (req, res) => {
-  const meetupId = req.params.id;
+  const idOrCode = req.params.id;
   const userId = req.user.userId;
 
   try {
     const pool = req.app.locals.pool;
+
+    // Resolve the actual numeric meetup ID
+    const meetupId = await resolveMeetupId(pool, idOrCode);
+    
+    if (!meetupId) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
 
     // Check if user is a participant
     const participantCheck = await pool.query(
@@ -1192,6 +1234,48 @@ router.post('/:id/confirm', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error confirming meetup:', error);
     res.status(500).json({ error: 'Failed to confirm meetup' });
+  }
+});
+
+/**
+ * GET /api/meetups/:id/info
+ * Get basic meetup info (AUTHENTICATED)
+ */
+router.get('/:id/info', authenticateToken, async (req, res) => {
+  const idOrCode = req.params.id;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Resolve the actual numeric meetup ID
+    const meetupId = await resolveMeetupId(pool, idOrCode);
+    
+    if (!meetupId) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    const meetupResult = await pool.query(
+      `SELECT id, meetup_code, meetup_vibe, created_at
+       FROM meetups WHERE id = $1`,
+      [meetupId]
+    );
+
+    if (meetupResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    const meetup = meetupResult.rows[0];
+
+    res.status(200).json({
+      id: meetup.id,
+      meetup_code: meetup.meetup_code,
+      vibe: meetup.meetup_vibe,
+      meetup_datetime: meetup.created_at
+    });
+
+  } catch (error) {
+    console.error('Error fetching meetup info:', error);
+    res.status(500).json({ error: 'Failed to fetch meetup info' });
   }
 });
 

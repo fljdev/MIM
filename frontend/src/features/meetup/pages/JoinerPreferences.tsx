@@ -23,23 +23,58 @@ const JoinerPreferences: React.FC = () => {
   const [meetupInfo, setMeetupInfo] = useState<{
     vibe: string;
     meetup_datetime: string;
+    meetup_code: string;
   } | null>(null);
 
   useEffect(() => {
-    // Check if user is authenticated
-    if (!user) {
+    // Check for token in localStorage first (handles race condition with AuthContext)
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      // No token at all - redirect to home
       navigate('/');
       return;
     }
-    
-    // In a real app, we might fetch meetup info here
-    // For now, we'll use placeholder data
-    setMeetupInfo({
-      vibe: 'coffee', // This would come from API
-      meetup_datetime: new Date().toISOString() // This would come from API
-    });
-    setLoading(false);
-  }, [id, user, navigate]);
+
+    // Fetch meetup info to verify this is a valid meetup
+    const fetchMeetupInfo = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/meetups/${id}/info`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setMeetupInfo({
+            vibe: data.vibe || 'coffee',
+            meetup_datetime: data.meetup_datetime || new Date().toISOString(),
+            meetup_code: data.meetup_code || ''
+          });
+        } else {
+          // If we can't get meetup info, use placeholder
+          setMeetupInfo({
+            vibe: 'coffee',
+            meetup_datetime: new Date().toISOString(),
+            meetup_code: ''
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching meetup info:', err);
+        // Use placeholder data
+        setMeetupInfo({
+          vibe: 'coffee',
+          meetup_datetime: new Date().toISOString(),
+          meetup_code: ''
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMeetupInfo();
+  }, [id, navigate]);
 
   const budgetOptions = [
     { value: '€', icon: '€', label: 'Budget', description: 'Save money' },
@@ -100,9 +135,9 @@ const JoinerPreferences: React.FC = () => {
           budget: budgetLevel,
           fairness: fairnessMode.toLowerCase(),
           location: {
-            name: userLocation.name,
-            lat: userLocation.lat,
-            lng: userLocation.lng
+            name: userLocation!.name,
+            lat: userLocation!.lat,
+            lng: userLocation!.lng
           },
           transport: transitMode.toLowerCase()
         })
@@ -115,8 +150,9 @@ const JoinerPreferences: React.FC = () => {
 
       const data = await response.json();
       
-      // Redirect to lobby
-      navigate(`/meetup/${id}/lobby`);
+      // Redirect to lobby using meetup_code if available, otherwise use id
+      const lobbyCode = meetupInfo?.meetup_code || data.meetup_code || id;
+      navigate(`/meetup/${lobbyCode}/lobby`);
       
     } catch (err: any) {
       setError(err.message || 'Failed to save preferences');

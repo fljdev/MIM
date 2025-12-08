@@ -42,6 +42,18 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Debug endpoint to test JSON body parsing
+app.post('/api/debug', (req, res) => {
+  res.json({
+    received: {
+      body: req.body,
+      bodyType: typeof req.body,
+      contentType: req.headers['content-type'],
+      bodyKeys: Object.keys(req.body || {})
+    }
+  });
+});
+
 // Saved locations routes
 app.use('/api/saved-locations', savedLocationsRouter);
 
@@ -80,11 +92,16 @@ app.post('/api/users', async (req, res) => {
 
 // Register new user
 app.post('/api/auth/register', async (req, res) => {
+  console.log('📝 Register request received');
+  console.log('📝 Content-Type:', req.headers['content-type']);
+  console.log('📝 Body:', JSON.stringify(req.body));
+  console.log('📝 Body type:', typeof req.body);
   const { email, name, password } = req.body;
 
   try {
     // Validate input
     if (!email || !name || !password) {
+      console.log('❌ Missing fields:', { email: !!email, name: !!name, password: !!password });
       return res.status(400).json({ error: 'Email, name, and password are required' });
     }
 
@@ -135,7 +152,7 @@ app.post('/api/auth/register', async (req, res) => {
 
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed. Please try again.' });
+    res.status(500).json({ error: 'Registration failed. Please try again.', details: error.message });
   }
 });
 
@@ -254,10 +271,36 @@ app.get('/api/auth/verify', async (req, res) => {
   }
 });
 
+// Global error handler - catches all unhandled errors
+app.use((err, req, res, next) => {
+  console.error('❌ Unhandled error:', err.message);
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal server error', details: err.message });
+});
+
 // Use PORT from environment variable (Railway provides this) or fallback to 5000 for local dev
 const PORT = process.env.PORT || 5000;
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  // Server started successfully
-});
+// Test database connection and start server
+async function startServer() {
+  try {
+    // Test database connection
+    console.log('🔌 Testing database connection...');
+    const dbTest = await pool.query('SELECT NOW() as time');
+    console.log('✅ Database connected:', dbTest.rows[0].time);
+    
+    // Start server
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`\n🚀 ===================================`);
+      console.log(`🚀 MiM Server running on port ${PORT}`);
+      console.log(`🚀 Health: http://localhost:${PORT}/health`);
+      console.log(`🚀 API: http://localhost:${PORT}/api`);
+      console.log(`🚀 ===================================\n`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
