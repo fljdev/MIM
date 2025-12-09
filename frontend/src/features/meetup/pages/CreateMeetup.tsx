@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../../Config';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import LocationAutocomplete from '../components/LocationAutocomplete';
+import { ProposedTimeSelector } from '../../../components/ProposedTimeSelector';
 
 const CreateMeetup: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,12 @@ const CreateMeetup: React.FC = () => {
   const [transitMode, setTransitMode] = useState('walking');
   const [isPrivate, setIsPrivate] = useState(false);
   const [needsAccessibility, setNeedsAccessibility] = useState(false);
+  const [proposedTimeData, setProposedTimeData] = useState({
+    proposed_date: '',
+    proposed_time_start: '',
+    proposed_time_end: null as string | null,
+    is_time_flexible: false
+  });
 
   useEffect(() => {
     if (user && user.name) {
@@ -62,7 +69,7 @@ const CreateMeetup: React.FC = () => {
     }
   };
 
-  const isFormValid = createdByName.trim() !== '' && meetupVibe !== '' && budgetLevel !== '' && userLocation !== null;
+  const isFormValid = createdByName.trim() !== '' && meetupVibe !== '' && budgetLevel !== '' && userLocation !== null && proposedTimeData.proposed_date !== '' && proposedTimeData.proposed_time_start !== '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +100,11 @@ const CreateMeetup: React.FC = () => {
             lng: userLocation.lng
           },
           transit_mode: transitMode.toLowerCase(), // Convert to lowercase for API
-          privacy_mode: isPrivate // Changed from is_private to privacy_mode
+          privacy_mode: isPrivate, // Changed from is_private to privacy_mode
+          proposed_date: proposedTimeData.proposed_date,
+          proposed_time_start: proposedTimeData.proposed_time_start,
+          proposed_time_end: proposedTimeData.proposed_time_end,
+          is_time_flexible: proposedTimeData.is_time_flexible
         })
       });
 
@@ -282,6 +293,11 @@ const CreateMeetup: React.FC = () => {
                 ))}
               </select>
             </div>
+
+            {/* Proposed Meetup Time */}
+            <ProposedTimeSelector 
+              onTimeChange={(timeData) => setProposedTimeData(timeData)}
+            />
 
             {/* Personal Settings */}
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">

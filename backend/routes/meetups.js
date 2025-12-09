@@ -85,7 +85,11 @@ router.post('/create', authenticateToken, async (req, res) => {
     fairness_mode,
     creator_location,
     transit_mode,
-    privacy_mode
+    privacy_mode,
+    proposed_date,
+    proposed_time_start,
+    proposed_time_end,
+    is_time_flexible
   } = req.body;
 
   try {
@@ -178,8 +182,12 @@ router.post('/create', authenticateToken, async (req, res) => {
         status,
         calculation_status,
         expires_at,
+        proposed_date,
+        proposed_time_start,
+        proposed_time_end,
+        is_time_flexible,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
       RETURNING id, meetup_code`,
       [
         meetup_code,
@@ -192,7 +200,11 @@ router.post('/create', authenticateToken, async (req, res) => {
         privacy_mode !== false, // Default to true if not specified
         'pending',
         'pending',
-        expiresAt
+        expiresAt,
+        proposed_date || null,
+        proposed_time_start || null,
+        proposed_time_end || null,
+        is_time_flexible || false
       ]
     );
 
@@ -260,6 +272,10 @@ router.get('/code/:meetupCode', async (req, res) => {
         created_by_name,
         status,
         calculation_status,
+        proposed_date,
+        proposed_time_start,
+        proposed_time_end,
+        is_time_flexible,
         created_at
       FROM meetups
       WHERE meetup_code = $1`,
@@ -343,6 +359,10 @@ router.get('/:shareableCode/invitation', async (req, res) => {
         m.global_privacy,
         m.status,
         m.created_at,
+        m.proposed_date,
+        m.proposed_time_start,
+        m.proposed_time_end,
+        m.is_time_flexible,
         u.name as creator_name,
         mp.location_name,
         mp.location_lat,
@@ -395,6 +415,10 @@ router.get('/:shareableCode/invitation', async (req, res) => {
       meetup_datetime: meetup.created_at.toISOString(), // Use created_at as meetup datetime
       vibe: meetup.meetup_vibe,
       status: meetup.status,
+      proposed_date: meetup.proposed_date,
+      proposed_time_start: meetup.proposed_time_start,
+      proposed_time_end: meetup.proposed_time_end,
+      is_time_flexible: meetup.is_time_flexible,
       creator: {
         name: meetup.creator_name
       },
@@ -908,7 +932,11 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
         global_privacy,
         status,
         calculated_venues,
-        created_by
+        created_by,
+        proposed_date,
+        proposed_time_start,
+        proposed_time_end,
+        is_time_flexible
       FROM meetups
       WHERE id = $1`,
       [actualMeetupId]
@@ -996,7 +1024,11 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
         code: meetup.meetup_code,
         title: meetup.meetup_title,
         vibe: meetup.meetup_vibe,
-        status: meetup.status
+        status: meetup.status,
+        proposed_date: meetup.proposed_date,
+        proposed_time_start: meetup.proposed_time_start,
+        proposed_time_end: meetup.proposed_time_end,
+        is_time_flexible: meetup.is_time_flexible
       },
       participants: {
         creator: {
