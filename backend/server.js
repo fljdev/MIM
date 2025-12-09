@@ -10,10 +10,12 @@ const meetupOrganizedRouter = require('./routes/meetupOrganized');
 const meetupsRouter = require('./routes/meetups');
 const app = express();
 const waitlistRoutes = require('./routes/waitlist');
+const meetupTimeSuggestionsRouter = require('./routes/meetupTimeSuggestions');
 
 app.use(cors());
 app.use(express.json());
 app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/meetup-time-suggestions', meetupTimeSuggestionsRouter);
 
 // JWT Secret - use environment variable in production, fallback for development
 const JWT_SECRET = process.env.JWT_SECRET || 'mimapp-dev-secret-2025';

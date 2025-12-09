@@ -12,6 +12,7 @@ import {
   getWeatherWarning 
 } from '../../../lib/mockWeatherData';
 import VenueDisplayTiers from './VenueDisplayTiers';
+import { TimeSuggestionForm } from '../../../components/TimeSuggestionForm';
 
 // Participant structure from backend
 interface Participant {
@@ -58,6 +59,10 @@ interface MeetupInfo {
   title?: string;
   vibe: string;
   status: string;
+  proposed_date?: string;
+  proposed_time_start?: string;
+  proposed_time_end?: string;
+  is_time_flexible?: boolean;
 }
 
 // Preferences from backend
@@ -90,6 +95,7 @@ const MeetupLobby: React.FC = () => {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [showSuggestTime, setShowSuggestTime] = useState(false);
   
   // NEW: Voting state
   const [votes, setVotes] = useState<{[venueId: string]: Array<{voter_name: string, voter_id: number}>}>({});
@@ -368,6 +374,37 @@ const MeetupLobby: React.FC = () => {
     return `${diffDays}d ago`;
   };
 
+  const formatProposedTime = (meetup: MeetupInfo) => {
+    if (!meetup.proposed_date) {
+      return null;
+    }
+
+    const date = new Date(meetup.proposed_date);
+    const dateString = date.toLocaleDateString('en-IE', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+    const formatTime = (timeStr: string) => {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
+
+    const startTime = formatTime(meetup.proposed_time_start!);
+    
+    if (meetup.is_time_flexible && meetup.proposed_time_end) {
+      const endTime = formatTime(meetup.proposed_time_end);
+      return `${dateString} between ${startTime} - ${endTime}`;
+    } else {
+      return `${dateString} at ${startTime}`;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
@@ -451,6 +488,43 @@ const MeetupLobby: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Proposed Time Section */}
+        {lobbyData.meetup.proposed_date && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Proposed Meeting Time</p>
+              <div className="p-4 bg-teal-50 rounded-lg border-2 border-teal-200">
+                <p className="text-xl font-bold text-teal-900">
+                  {formatProposedTime(lobbyData.meetup)}
+                </p>
+              </div>
+            </div>
+
+            {/* Can't Make It? Section */}
+            <div className="border-t border-gray-200 pt-4">
+              <button
+                onClick={() => setShowSuggestTime(!showSuggestTime)}
+                className="w-full text-left flex items-center justify-between text-gray-700 hover:text-teal-600 transition-colors"
+              >
+                <span className="font-medium">Can't make this time?</span>
+                <span className="text-sm text-teal-600">
+                  {showSuggestTime ? 'Hide ↑' : 'Suggest alternative →'}
+                </span>
+              </button>
+              
+              {showSuggestTime && (
+                <TimeSuggestionForm
+                  meetupId={lobbyData.meetup.id}
+                  onSuccess={() => {
+                    setShowSuggestTime(false);
+                  }}
+                  onCancel={() => setShowSuggestTime(false)}
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Participants Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">

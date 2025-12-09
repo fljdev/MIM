@@ -4,6 +4,7 @@ import { API_BASE_URL } from '../../../Config';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import LoginModal from '../../auth/components/LoginModal';
 import RegisterModal from '../../auth/components/RegisterModal';
+import { TimeSuggestionForm } from '../../../components/TimeSuggestionForm';
 
 interface CreatorPreferences {
   budget_level: string;
@@ -26,6 +27,10 @@ interface InvitationData {
     name: string;
   };
   creator_preferences: CreatorPreferences;
+  proposed_date?: string;
+  proposed_time_start?: string;
+  proposed_time_end?: string;
+  is_time_flexible?: boolean;
 }
 
 const InvitationView: React.FC = () => {
@@ -39,6 +44,7 @@ const InvitationView: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [showSuggestTime, setShowSuggestTime] = useState(false);
 
   const isAuthenticated = !!user;
 
@@ -172,6 +178,37 @@ const InvitationView: React.FC = () => {
     return icons[mode.toLowerCase()] || '🚶';
   };
 
+  const formatProposedTime = (invitation: InvitationData) => {
+    if (!invitation.proposed_date) {
+      return null;
+    }
+
+    const date = new Date(invitation.proposed_date);
+    const dateString = date.toLocaleDateString('en-IE', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+    const formatTime = (timeStr: string) => {
+      const [hours, minutes] = timeStr.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
+
+    const startTime = formatTime(invitation.proposed_time_start!);
+    
+    if (invitation.is_time_flexible && invitation.proposed_time_end) {
+      const endTime = formatTime(invitation.proposed_time_end);
+      return `${dateString} between ${startTime} - ${endTime}`;
+    } else {
+      return `${dateString} at ${startTime}`;
+    }
+  };
+
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);
     return date.toLocaleDateString('en-US', {
@@ -222,7 +259,21 @@ const InvitationView: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             {invitation.creator.name} invites you to {invitation.vibe.toLowerCase()}
           </h1>
-          <p className="text-gray-600">{formatDateTime(invitation.meetup_datetime)}</p>
+          
+          {/* PROPOSED TIME - PROMINENT DISPLAY */}
+          {invitation.proposed_date && (
+            <div className="mt-4 p-4 bg-teal-50 rounded-lg border-2 border-teal-200">
+              <p className="text-sm text-teal-700 font-medium mb-1">Proposed for:</p>
+              <p className="text-lg font-bold text-teal-900">
+                {formatProposedTime(invitation)}
+              </p>
+            </div>
+          )}
+
+          {/* INVITE SENT TIME - SMALLER, LESS PROMINENT */}
+          <p className="text-sm text-gray-500 mt-3">
+            Invite sent: {formatDateTime(invitation.meetup_datetime)}
+          </p>
         </div>
 
         {/* Creator's Preferences */}
@@ -276,6 +327,27 @@ const InvitationView: React.FC = () => {
             </p>
           </div>
         </div>
+
+
+        {/* Can't Make It? Section */}
+        {invitation.proposed_date && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="text-center py-2">
+              <p className="text-gray-600">
+                <span className="font-semibold">{invitation.creator.name}</span> suggests this time.
+              </p>
+              {isAuthenticated ? (
+                <p className="text-sm text-gray-500 mt-1">
+                  If you can't make it, you can suggest an alternative time after accepting.
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 mt-1">
+                  You can suggest an alternative time once you log in and accept.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Action Section */}
         <div className="bg-white rounded-xl shadow-lg p-6">
