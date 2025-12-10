@@ -10,6 +10,30 @@ import MeetupConfirmed from './features/meetup/pages/MeetupConfirmed';
 import InvitationView from './features/meetup/pages/InvitationView';
 import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
 import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
+import ProfileDashboard from './features/profile/pages/ProfileDashboard';
+import { useAuth } from './features/auth/contexts/AuthContext';
+
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 const AppRouter: React.FC = () => {
   // Coming Soon mode check
@@ -45,6 +69,9 @@ const AppRouter: React.FC = () => {
         <Route path="/meetup/:code/lobby" element={<MeetupLobby />} />
         <Route path="/meetup/:code/results" element={<MeetupResults />} />
         <Route path="/meetup/:code/confirmed" element={<MeetupConfirmed />} />
+
+        {/* Profile route */}
+        <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
