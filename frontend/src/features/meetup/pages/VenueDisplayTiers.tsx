@@ -7,11 +7,11 @@ import {
   getTrafficEmoji,
   getCurrentTrafficCondition,
   isRushHour
-} from '../../../lib/mockTrafficData';
+} from '../../../lib/mocks/mockTrafficData';
 import {
   getMockWeather,
   getWeatherWarning
-} from '../../../lib/mockWeatherData';
+} from '../../../lib/mocks/mockWeatherData';
 import {
   calculateTravelTime
 } from '../../../lib/calculations/travelTimeCalculator';

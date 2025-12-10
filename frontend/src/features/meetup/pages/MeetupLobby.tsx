@@ -6,13 +6,13 @@ import {
   getTrafficEmoji, 
   getCurrentTrafficCondition,
   isRushHour
-} from '../../../lib/mockTrafficData';
+} from '../../../lib/mocks/mockTrafficData';
 import { 
   getMockWeather, 
   getWeatherWarning 
-} from '../../../lib/mockWeatherData';
+} from '../../../lib/mocks/mockWeatherData';
 import VenueDisplayTiers from './VenueDisplayTiers';
-import { TimeSuggestionForm } from '../../../components/TimeSuggestionForm';
+import { TimeSuggestionForm } from '../components/TimeSuggestionForm';
 
 // Participant structure from backend
 interface Participant {

@@ -4,7 +4,7 @@ import { API_BASE_URL } from '../../../Config';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import LoginModal from '../../auth/components/LoginModal';
 import RegisterModal from '../../auth/components/RegisterModal';
-import { TimeSuggestionForm } from '../../../components/TimeSuggestionForm';
+import { TimeSuggestionForm } from '../components/TimeSuggestionForm';
 
 interface CreatorPreferences {
   budget_level: string;

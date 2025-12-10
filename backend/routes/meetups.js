@@ -812,7 +812,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
 
     // Import calculation functions
     const { calculateFairness, calculateMidpoint } = require('../utils/fairnessCalculator');
-    const { MOCK_VENUES } = require('./mockVenueData');
+    const { MOCK_VENUES } = require('../data/mocks/mockVenueData');
 
     // Filter venues by budget
     function filterVenuesByBudget(venues, budgetLevel) {
