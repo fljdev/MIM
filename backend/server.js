@@ -11,9 +11,19 @@ const meetupsRouter = require('./routes/meetups');
 const app = express();
 const waitlistRoutes = require('./routes/waitlist');
 const meetupTimeSuggestionsRouter = require('./routes/meetupTimeSuggestions');
+const profileRoutes = require('./routes/profile');
+const favoriteVenuesRoutes = require('./routes/favoriteVenues');
 
 app.use(cors());
 app.use(express.json());
+
+console.log('Registering test-early route');
+// Test route at the very beginning
+app.get('/api/test-early', (req, res) => {
+  console.log('Test early route hit');
+  res.json({ message: 'Early test route is working' });
+});
+
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/meetup-time-suggestions', meetupTimeSuggestionsRouter);
 
@@ -67,6 +77,17 @@ app.use('/api/meetup', meetupOrganizedRouter);
 
 // New Phase 1 meetups routes (2-person flow with shareable links)
 app.use('/api/meetups', meetupsRouter);
+
+// Test route
+app.get('/api/test-direct', (req, res) => {
+  res.json({ message: 'Direct test route is working' });
+});
+
+// Profile routes
+app.use('/api', profileRoutes);
+
+// Favorite venues routes
+app.use('/api', favoriteVenuesRoutes);
 
 // Get all users
 app.get('/api/users', async (req, res) => {

@@ -1402,4 +1402,160 @@ router.get('/:id/info', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/meetups/history
+ * Get user's meetup history (both as organizer and participant)
+ * Query param: ?filter=all|active|past (default: all)
+ * Active = status != 'completed' AND expires_at > NOW()
+ * Include: meetup basic info, participant count, confirmed venue if exists
+ * Order by created_at DESC
+ * Return array of meetup objects with participant_count field
+ */
+router.get('/history', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+  const filter = req.query.filter || 'all';
+
+  try {
+    let whereClause = '';
+    let queryParams = [userId];
+
+    if (filter === 'active') {
+      whereClause = `AND m.status != 'completed' AND m.expires_at > NOW()`;
+    } else if (filter === 'past') {
+      whereClause = `AND (m.status = 'completed' OR m.expires_at <= NOW())`;
+    }
+    // 'all' includes all meetups, no additional filter
+
+    const query = `
+      SELECT 
+        m.id,
+        m.meetup_code,
+        m.meetup_title,
+        m.meetup_vibe,
+        m.budget_level,
+        m.fairness_mode,
+        m.status,
+        m.created_at,
+        m.expires_at,
+        m.proposed_date,
+        m.proposed_time_start,
+        m.proposed_time_end,
+        m.is_time_flexible,
+        COUNT(DISTINCT mp.id) as participant_count,
+        CASE 
+          WHEN m.created_by = $1 THEN 'organizer'
+          ELSE 'participant'
+        END as user_role
+      FROM meetups m
+      JOIN meetup_participants mp ON m.id = mp.meetup_id
+      WHERE mp.user_id = $1
+        ${whereClause}
+      GROUP BY m.id
+      ORDER BY m.created_at DESC
+    `;
+
+    const result = await pool.query(query, queryParams);
+
+    const meetups = result.rows.map(meetup => ({
+      id: meetup.id,
+      meetup_code: meetup.meetup_code,
+      title: meetup.meetup_title,
+      vibe: meetup.meetup_vibe,
+      budget_level: meetup.budget_level,
+      fairness_mode: meetup.fairness_mode,
+      status: meetup.status,
+      created_at: meetup.created_at,
+      expires_at: meetup.expires_at,
+      proposed_date: meetup.proposed_date,
+      proposed_time_start: meetup.proposed_time_start,
+      proposed_time_end: meetup.proposed_time_end,
+      is_time_flexible: meetup.is_time_flexible,
+      participant_count: parseInt(meetup.participant_count),
+      user_role: meetup.user_role
+    }));
+
+    res.json(meetups);
+
+  } catch (error) {
+    console.error('Error fetching meetup history:', error);
+    res.status(500).json({ error: 'Failed to fetch meetup history' });
+  }
+});
+
+/**
+ * GET /api/meetups/:id/messages
+ * Get chat message history for a specific meetup
+ * Verify user is participant or organizer
+ * Query params: ?limit=50&offset=0 (pagination)
+ * Order by created_at ASC (oldest first)
+ * Return: { messages: [...], total: X, hasMore: boolean }
+ */
+router.get('/:id/messages', authenticateToken, async (req, res) => {
+  const idOrCode = req.params.id;
+  const userId = req.user.userId;
+  const limit = parseInt(req.query.limit) || 50;
+  const offset = parseInt(req.query.offset) || 0;
+
+  try {
+    const pool = req.app.locals.pool;
+
+    // Resolve the actual numeric meetup ID
+    const meetupId = await resolveMeetupId(pool, idOrCode);
+    
+    if (!meetupId) {
+      return res.status(404).json({ error: 'Meetup not found' });
+    }
+
+    // Check if user is a participant
+    const participantCheck = await pool.query(
+      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      [meetupId, userId]
+    );
+
+    if (participantCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a participant in this meetup' });
+    }
+
+    // Get total count of messages
+    const countResult = await pool.query(
+      'SELECT COUNT(*) as total FROM meetup_messages WHERE meetup_id = $1',
+      [meetupId]
+    );
+
+    const total = parseInt(countResult.rows[0].total);
+
+    // Get paginated messages
+    const messagesResult = await pool.query(
+      `SELECT 
+        mm.id,
+        mm.meetup_id,
+        mm.user_id,
+        mm.user_name,
+        mm.message,
+        mm.message_type,
+        mm.created_at
+      FROM meetup_messages mm
+      WHERE mm.meetup_id = $1
+      ORDER BY mm.created_at ASC
+      LIMIT $2 OFFSET $3`,
+      [meetupId, limit, offset]
+    );
+
+    const messages = messagesResult.rows;
+
+    res.json({
+      messages: messages,
+      total: total,
+      hasMore: (offset + messages.length) < total,
+      limit: limit,
+      offset: offset
+    });
+
+  } catch (error) {
+    console.error('Error fetching meetup messages:', error);
+    res.status(500).json({ error: 'Failed to fetch meetup messages' });
+  }
+});
+
 module.exports = router;
