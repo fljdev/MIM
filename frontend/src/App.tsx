@@ -80,12 +80,16 @@ function App() {
     const token = localStorage.getItem('token') || '';
     login(newUser, token);
     setIsRegisterModalOpen(false);
+    // Redirect to profile page after registration
+    navigate('/profile');
   };
 
   const handleLoginSuccess = (loggedInUser: { id: number; email: string; name: string }) => {
     const token = localStorage.getItem('token') || '';
     login(loggedInUser, token);
     setIsLoginModalOpen(false);
+    // Redirect to profile page after login
+    navigate('/profile');
   };
 
   const handleLogout = () => {
@@ -98,7 +102,7 @@ function App() {
   };
 
   const handleGetStarted = () => {
-    navigate('/create-meetup');
+    navigate('/profile');
   };
 
   // Person management functions
@@ -324,6 +328,12 @@ function App() {
                   <span className="hidden md:inline text-brand-cream font-medium">
                     Hi, {user.name}!
                   </span>
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="px-4 py-2 bg-white text-brand-turquoise rounded-lg font-semibold hover:bg-brand-cream transition-all"
+                  >
+                    Profile
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="px-4 py-2 bg-white text-brand-turquoise rounded-lg font-semibold hover:bg-brand-cream transition-all"
