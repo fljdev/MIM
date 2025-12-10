@@ -1,4 +1,4 @@
-const { calculateDistance, getSpeedForMode } = require('../routes/mockVenueData');
+const { calculateDistance, getSpeedForMode } = require('../data/mocks/mockVenueData');
 
 /**
  * Calculate travel time in minutes for a participant to reach a venue

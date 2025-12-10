@@ -2,14 +2,14 @@
 // This file provides a clean interface to switch between mock and real APIs
 // Simply change USE_REAL_APIS to true when you're ready to use real API calls
 
-import { getMockWeather, isWeatherGoodForOutdoorTransit, getWeatherWarning } from './mockWeatherData';
+import { getMockWeather, isWeatherGoodForOutdoorTransit, getWeatherWarning } from './mocks/mockWeatherData';
 import { 
   getMockDirectionsWithTraffic, 
   getTrafficDelay, 
   getTrafficDisplayInfo,
   getCurrentTrafficCondition,
   isRushHour 
-} from './mockTrafficData';
+} from './mocks/mockTrafficData';
 
 // ============================================
 // CONFIGURATION - FLIP THIS TO SWITCH TO REAL APIS

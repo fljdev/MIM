@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { MOCK_VENUES, calculateDistance, getSpeedForMode } = require('./mockVenueData');
+const { MOCK_VENUES, calculateDistance, getSpeedForMode } = require('../data/mocks/mockVenueData');
 
 // POST /api/midpoint - Find meeting spot based on locations and preferences
 router.post('/', async (req, res) => {

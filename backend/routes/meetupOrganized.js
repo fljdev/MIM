@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { calculateFairness, calculateMidpoint } = require('../utils/fairnessCalculator');
-const { MOCK_VENUES } = require('./mockVenueData');
+const { MOCK_VENUES } = require('../data/mocks/mockVenueData');
 
 /**
  * Generate a unique 6-character meetup code
