@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../../Config';
+import Navbar from '../../../components/Navbar';
 import ProfileEditModal from '../components/ProfileEditModal';
 import FavoriteVenueCard from '../components/FavoriteVenueCard';
 import MeetupHistoryItem from '../components/MeetupHistoryItem';
 import SavedLocationCard from '../components/SavedLocationCard';
+import SaveLocationModal from '../../meetup/components/SaveLocationModal';
+import LocationAutocomplete from '../../meetup/components/LocationAutocomplete';
 
 // Types
 interface UserProfile {
@@ -75,6 +78,9 @@ interface MeetupHistoryItemType {
   user_role: 'organizer' | 'participant';
 }
 
+const LOCATION_LABELS = ['Home', 'Work', 'Gym', 'Café', 'Other'];
+const MEETUP_HISTORY_LIMIT = 5;
+
 const ProfileDashboard: React.FC = () => {
   const navigate = useNavigate();
   
@@ -87,6 +93,35 @@ const ProfileDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'past'>('all');
+  
+  // Meetup history expansion
+  const [showAllMeetups, setShowAllMeetups] = useState(false);
+  
+  // Save Location Modal state
+  const [showSaveLocationModal, setShowSaveLocationModal] = useState(false);
+  const [locationToSave, setLocationToSave] = useState<{
+    address: string;
+    placeId?: string;
+    coordinates?: { lat: number; lng: number };
+  } | null>(null);
+  const [savedLocationsRefresh, setSavedLocationsRefresh] = useState(0);
+  
+  // Edit Location state
+  const [editingLocation, setEditingLocation] = useState<SavedLocation | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [customLabel, setCustomLabel] = useState('');
+  const [editError, setEditError] = useState('');
+  
+  // Add Venue state
+  const [showAddVenueModal, setShowAddVenueModal] = useState(false);
+  const [venueName, setVenueName] = useState('');
+  const [venueToAdd, setVenueToAdd] = useState<{
+    address: string;
+    placeId?: string;
+    coordinates?: { lat: number; lng: number };
+  } | null>(null);
+  const [venueNotes, setVenueNotes] = useState('');
+  const [addingVenue, setAddingVenue] = useState(false);
   
   // Fetch profile data
   const fetchProfileData = async () => {
@@ -157,7 +192,7 @@ const ProfileDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchProfileData();
-  }, [activeFilter]);
+  }, [activeFilter, savedLocationsRefresh]);
 
   const handleRemoveFavorite = async (venueId: number) => {
     try {
@@ -171,7 +206,6 @@ const ProfileDashboard: React.FC = () => {
 
       if (response.ok) {
         setFavoriteVenues(prev => prev.filter(venue => venue.id !== venueId));
-        // Update stats
         if (stats) {
           setStats({
             ...stats,
@@ -211,49 +245,165 @@ const ProfileDashboard: React.FC = () => {
     setProfile(updatedUser);
   };
 
+  // Handle location save
+  const handleLocationSave = () => {
+    setSavedLocationsRefresh(prev => prev + 1);
+    setLocationToSave(null);
+  };
+
+  // Handle delete location
+  const handleDeleteLocation = async (locationId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/saved-locations/${locationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setSavedLocations(prev => prev.filter(loc => loc.id !== locationId));
+        if (stats) {
+          setStats({
+            ...stats,
+            savedLocations: stats.savedLocations - 1
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting location:', error);
+    }
+  };
+
+  // Handle edit location - open modal
+  const handleEditLocation = (location: SavedLocation) => {
+    setEditingLocation(location);
+    if (LOCATION_LABELS.includes(location.label)) {
+      setEditLabel(location.label);
+      setCustomLabel('');
+    } else {
+      setEditLabel('Other');
+      setCustomLabel(location.label);
+    }
+    setEditError('');
+  };
+
+  // Handle save edited location
+  const handleSaveEditedLocation = async () => {
+    if (!editingLocation) return;
+    
+    const finalLabel = editLabel === 'Other' ? customLabel.trim() : editLabel;
+    
+    if (!finalLabel) {
+      setEditError('Please enter a label');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/saved-locations/${editingLocation.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ label: finalLabel })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSavedLocations(prev => 
+          prev.map(loc => loc.id === editingLocation.id ? data.location : loc)
+        );
+        setEditingLocation(null);
+        setEditLabel('');
+        setCustomLabel('');
+        setEditError('');
+      } else {
+        const errorData = await response.json();
+        setEditError(errorData.error || 'Failed to update location');
+      }
+    } catch (error) {
+      console.error('Error updating location:', error);
+      setEditError('Failed to update location');
+    }
+  };
+
+  // Handle add favorite venue
+  const handleAddFavoriteVenue = async () => {
+    if (!venueToAdd || !venueName.trim()) return;
+    
+    setAddingVenue(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/favorite-venues`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          venue_id: venueToAdd.placeId || `manual-${Date.now()}`,
+          venue_name: venueName.trim(),
+          venue_address: venueToAdd.address,
+          venue_lat: venueToAdd.coordinates?.lat || null,
+          venue_lng: venueToAdd.coordinates?.lng || null,
+          venue_type: 'other',
+          notes: venueNotes.trim() || null
+        })
+      });
+
+      if (response.ok) {
+        const newVenue = await response.json();
+        setFavoriteVenues(prev => [...prev, newVenue]);
+        if (stats) {
+          setStats({
+            ...stats,
+            favoriteVenues: stats.favoriteVenues + 1
+          });
+        }
+        // Reset modal
+        setShowAddVenueModal(false);
+        setVenueToAdd(null);
+        setVenueName('');
+        setVenueNotes('');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to add venue');
+      }
+    } catch (error) {
+      console.error('Error adding venue:', error);
+      alert('Failed to add venue');
+    } finally {
+      setAddingVenue(false);
+    }
+  };
+
   const getTransitIcon = (mode: string) => {
     const icons: { [key: string]: string } = {
-      walking: '🚶',
       driving: '🚗',
       transit: '🚇',
-      bicycling: '🚴'
+      walking: '🚶',
+      bicycling: '🚴',
     };
-    return icons[mode?.toLowerCase()] || '🚶';
+    return icons[mode] || '🚶';
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return '?';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-  };
-
-  const getColorForName = (name: string) => {
-    const colors = [
-      'bg-emerald-500',
-      'bg-blue-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-orange-500',
-      'bg-teal-500'
-    ];
-    const index = name ? name.charCodeAt(0) % colors.length : 0;
-    return colors[index];
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IE', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  // Get meetups to display (limited or all)
+  const displayedMeetups = showAllMeetups 
+    ? meetupHistory 
+    : meetupHistory.slice(0, MEETUP_HISTORY_LIMIT);
+  
+  const hasMoreMeetups = meetupHistory.length > MEETUP_HISTORY_LIMIT;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading your profile...</p>
         </div>
       </div>
     );
@@ -261,16 +411,14 @@ const ProfileDashboard: React.FC = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Authentication Required</h2>
-          <p className="text-gray-600 mb-6">Please log in to view your profile.</p>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 text-lg">Failed to load profile</p>
           <button
             onClick={() => navigate('/login')}
-            className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-600 transition-all"
+            className="mt-4 bg-emerald-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Go to Login
+            Return to Login
           </button>
         </div>
       </div>
@@ -278,65 +426,19 @@ const ProfileDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Profile Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            {/* Avatar */}
-            <div className="flex-shrink-0">
-              <div className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold ${getColorForName(profile.name)}`}>
-                {profile.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt={profile.name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  getInitials(profile.name)
-                )}
-              </div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
+      {/* Navbar */}
+      <Navbar 
+        userName={profile.name}
+        avatarUrl={profile.avatar_url}
+        activeMeetupsCount={stats?.activeMeetups || 0}
+      />
 
-            {/* Profile Info */}
-            <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-800">{profile.name}</h1>
-                  <p className="text-gray-600">{profile.email}</p>
-                  {profile.bio && (
-                    <p className="text-gray-700 mt-2">{profile.bio}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  className="bg-emerald-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-emerald-600 transition-all"
-                >
-                  Edit Profile
-                </button>
-              </div>
-
-              {/* Stats and Badges */}
-              <div className="flex flex-wrap items-center gap-4">
-                {profile.default_transit_mode && (
-                  <div className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
-                    <span className="text-xl">{getTransitIcon(profile.default_transit_mode)}</span>
-                    <span className="font-medium capitalize">{profile.default_transit_mode}</span>
-                  </div>
-                )}
-                {profile.phone && (
-                  <div className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                    <span>📱</span>
-                    <span>{profile.phone}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
-                  <span>👤</span>
-                  <span className="capitalize">{profile.role}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        {/* Welcome Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {profile.name.split(' ')[0]}!</h1>
+          <p className="text-gray-600 mt-1">Here's your MiM dashboard</p>
         </div>
 
         {/* Stats Cards */}
@@ -378,14 +480,81 @@ const ProfileDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Profile Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.name}
+                  className="w-20 h-20 rounded-full border-4 border-emerald-100 shadow-lg object-cover"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full border-4 border-emerald-100 shadow-lg bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center">
+                  <span className="text-white text-3xl font-bold">
+                    {profile.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
+                  <p className="text-gray-600">{profile.email}</p>
+                  {profile.bio && (
+                    <p className="text-gray-700 mt-2">{profile.bio}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-all flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Profile
+                </button>
+              </div>
+
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                {profile.default_transit_mode && (
+                  <div className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm">
+                    <span>{getTransitIcon(profile.default_transit_mode)}</span>
+                    <span className="font-medium capitalize">{profile.default_transit_mode}</span>
+                  </div>
+                )}
+                {profile.phone && (
+                  <div className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                    <span>📱</span>
+                    <span>{profile.phone}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                  <span>👤</span>
+                  <span className="capitalize">{profile.role}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Saved Locations Section */}
         <div id="saved-locations" className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Saved Locations</h2>
             <button
-              onClick={() => navigate('/create-meetup')}
-              className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600 transition-all"
+              onClick={() => setShowSaveLocationModal(true)}
+              className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600 transition-all flex items-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
               Add Location
             </button>
           </div>
@@ -396,8 +565,8 @@ const ProfileDashboard: React.FC = () => {
                 <SavedLocationCard
                   key={location.id}
                   location={location}
-                  onEdit={() => {/* TODO: Implement edit */}}
-                  onDelete={() => {/* TODO: Implement delete */}}
+                  onEdit={handleEditLocation}
+                  onDelete={handleDeleteLocation}
                 />
               ))}
             </div>
@@ -414,6 +583,15 @@ const ProfileDashboard: React.FC = () => {
         <div id="favorite-venues" className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800">Favorite Venues</h2>
+            <button
+              onClick={() => setShowAddVenueModal(true)}
+              className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600 transition-all flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Venue
+            </button>
           </div>
 
           {favoriteVenues.length > 0 ? (
@@ -431,7 +609,7 @@ const ProfileDashboard: React.FC = () => {
             <div className="text-center py-8">
               <div className="text-6xl mb-4">⭐</div>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">No favorite venues yet</h3>
-              <p className="text-gray-500">Star venues during meetup planning to save them here.</p>
+              <p className="text-gray-500">Star venues during meetup planning or add them here.</p>
             </div>
           )}
         </div>
@@ -463,15 +641,43 @@ const ProfileDashboard: React.FC = () => {
           </div>
 
           {meetupHistory.length > 0 ? (
-            <div className="space-y-4">
-              {meetupHistory.map((meetup) => (
-                <MeetupHistoryItem
-                  key={meetup.id}
-                  meetup={meetup}
-                  onClick={() => navigate(`/meetup/${meetup.meetup_code}`)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="space-y-4">
+                {displayedMeetups.map((meetup) => (
+                  <MeetupHistoryItem
+                    key={meetup.id}
+                    meetup={meetup}
+                    onClick={() => navigate(`/meetup/${meetup.meetup_code}`)}
+                  />
+                ))}
+              </div>
+              
+              {/* Show More/Less Button */}
+              {hasMoreMeetups && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => setShowAllMeetups(!showAllMeetups)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all"
+                  >
+                    {showAllMeetups ? (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                        Show All ({meetupHistory.length - MEETUP_HISTORY_LIMIT} more)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-8">
               <div className="text-6xl mb-4">👥</div>
@@ -479,30 +685,6 @@ const ProfileDashboard: React.FC = () => {
               <p className="text-gray-500">Create your first meetup to get started!</p>
             </div>
           )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              onClick={() => navigate('/create-meetup')}
-              className="bg-emerald-500 text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"
-            >
-              <span className="text-2xl">➕</span>
-              <span>Create New Meetup</span>
-            </button>
-            
-            {stats && stats.activeMeetups > 0 && (
-              <button
-                onClick={() => navigate('/meetups')}
-                className="bg-blue-500 text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-blue-600 transition-all flex items-center justify-center gap-3"
-              >
-                <span className="text-2xl">👥</span>
-                <span>View Active Meetups ({stats.activeMeetups})</span>
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -513,6 +695,241 @@ const ProfileDashboard: React.FC = () => {
           onClose={() => setShowEditModal(false)}
           onSave={handleProfileUpdate}
         />
+      )}
+
+      {/* Add Location Modal - Step 1: Search */}
+      {showSaveLocationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowSaveLocationModal(false)}
+          ></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Add Location</h2>
+            <p className="text-gray-600 mb-4 text-sm">
+              Search for and save a location you use frequently
+            </p>
+            <LocationAutocomplete
+              value=""
+              onChange={(address, placeId, coordinates) => {
+                setLocationToSave({ address, placeId, coordinates });
+              }}
+              placeholder="Search for an address..."
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 mb-4"
+            />
+            {locationToSave && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
+                <div className="text-xs text-emerald-600 font-semibold mb-1">Selected:</div>
+                <div className="text-sm text-emerald-900">{locationToSave.address}</div>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowSaveLocationModal(false);
+                  setLocationToSave(null);
+                }}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (locationToSave) {
+                    setShowSaveLocationModal(false);
+                  }
+                }}
+                disabled={!locationToSave}
+                className="flex-1 px-4 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Location Modal - Step 2: Choose Label */}
+      {locationToSave && !showSaveLocationModal && (
+        <SaveLocationModal
+          isOpen={true}
+          onClose={() => setLocationToSave(null)}
+          onSave={handleLocationSave}
+          address={locationToSave.address}
+          placeId={locationToSave.placeId}
+          coordinates={locationToSave.coordinates}
+        />
+      )}
+
+      {/* Edit Location Modal */}
+      {editingLocation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setEditingLocation(null)}
+          ></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Location</h2>
+            
+            <div className="bg-gray-50 rounded-lg p-3 mb-4">
+              <div className="text-xs text-gray-500 font-semibold mb-1">Address</div>
+              <div className="text-sm text-gray-800">{editingLocation.address}</div>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Label</label>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {LOCATION_LABELS.map((label) => (
+                  <button
+                    key={label}
+                    onClick={() => {
+                      setEditLabel(label);
+                      if (label !== 'Other') setCustomLabel('');
+                    }}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      editLabel === label
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              
+              {editLabel === 'Other' && (
+                <input
+                  type="text"
+                  value={customLabel}
+                  onChange={(e) => setCustomLabel(e.target.value)}
+                  placeholder="Enter custom label"
+                  className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
+                  maxLength={50}
+                />
+              )}
+            </div>
+            
+            {editError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm">
+                {editError}
+              </div>
+            )}
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setEditingLocation(null);
+                  setEditLabel('');
+                  setCustomLabel('');
+                  setEditError('');
+                }}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEditedLocation}
+                className="flex-1 px-4 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Venue Modal */}
+      {showAddVenueModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => {
+              setShowAddVenueModal(false);
+              setVenueToAdd(null);
+              setVenueName('');
+              setVenueNotes('');
+            }}
+          ></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Add Favorite Venue</h2>
+            <p className="text-gray-600 mb-4 text-sm">
+              Search for a venue to add to your favorites
+            </p>
+            
+            {/* Venue Name Input */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Venue Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={venueName}
+                onChange={(e) => setVenueName(e.target.value)}
+                placeholder="e.g., Two Pups, The Brazen Head..."
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
+                maxLength={100}
+              />
+            </div>
+            
+            {/* Address Search */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Search Address <span className="text-red-500">*</span>
+              </label>
+              <LocationAutocomplete
+                value=""
+                onChange={(address, placeId, coordinates) => {
+                  setVenueToAdd({ address, placeId, coordinates });
+                }}
+                placeholder="Search for venue address..."
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            
+            {venueToAdd && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
+                <div className="text-xs text-emerald-600 font-semibold mb-1">Selected Address:</div>
+                <div className="text-sm text-emerald-900">{venueToAdd.address}</div>
+              </div>
+            )}
+            
+            {/* Notes */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Notes (optional)
+              </label>
+              <textarea
+                value={venueNotes}
+                onChange={(e) => setVenueNotes(e.target.value)}
+                placeholder="e.g., Great for group meetups, Quiet atmosphere..."
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-emerald-500 resize-none"
+                rows={3}
+                maxLength={200}
+              />
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowAddVenueModal(false);
+                  setVenueToAdd(null);
+                  setVenueName('');
+                  setVenueNotes('');
+                }}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddFavoriteVenue}
+                disabled={!venueToAdd || !venueName.trim() || addingVenue}
+                className="flex-1 px-4 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addingVenue ? 'Adding...' : 'Add Venue'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

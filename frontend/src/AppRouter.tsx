@@ -35,15 +35,39 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Home Route - redirects logged-in users to profile
+const HomeRoute: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If logged in, redirect to profile/dashboard
+  if (user) {
+    return <Navigate to="/profile" replace />;
+  }
+  
+  // If not logged in, show landing page
+  return <App />;
+};
+
 const AppRouter: React.FC = () => {
   // Coming Soon mode check
   const isComingSoonMode = process.env.REACT_APP_COMING_SOON === 'true';
   const bypassKey = new URLSearchParams(window.location.search).get('dev');
   const hasDevAccess = bypassKey === 'mimdev2025';
   
-    // Allow meetup-related paths to bypass Coming Soon
-    const currentPath = window.location.pathname;
-    const isMeetupPath = currentPath.startsWith('/meetup/') || 
+  // Allow meetup-related paths to bypass Coming Soon
+  const currentPath = window.location.pathname;
+  const isMeetupPath = currentPath.startsWith('/meetup/') || 
                        currentPath.startsWith('/join/') ||
                        currentPath.startsWith('/invite/') ||
                        currentPath.startsWith('/create-meetup');
@@ -56,8 +80,8 @@ const AppRouter: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Main app route */}
-        <Route path="/" element={<App />} />
+        {/* Main app route - redirects to profile if logged in */}
+        <Route path="/" element={<HomeRoute />} />
 
         {/* Meetup flow routes */}
         <Route path="/create-meetup" element={<CreateMeetup />} />
