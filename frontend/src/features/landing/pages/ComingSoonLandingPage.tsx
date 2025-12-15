@@ -49,7 +49,7 @@ const ComingSoonLandingPage: React.FC = () => {
       lineHeight: '1.6',
       color: '#44403C',
     }}>
-      {/* Header */}
+      {/* Header with Logos */}
       <header style={{
         background: 'linear-gradient(135deg, #17a398 0%, #14b8a6 100%)',
         padding: '1rem 2rem',
@@ -61,7 +61,10 @@ const ComingSoonLandingPage: React.FC = () => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
         }}>
+          {/* Logo Section */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -83,6 +86,46 @@ const ComingSoonLandingPage: React.FC = () => {
               🌍
             </div>
             <span>Meet in Middle</span>
+          </div>
+
+          {/* Partner Logos */}
+          <div style={{
+            display: 'flex',
+            gap: '1rem',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}>
+            {/* Enterprise Ireland Logo */}
+            <div style={{
+              background: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <img 
+                src="https://www.enterprise-ireland.com/images/default-source/header-images/ei_horizontal_logo_rgb.svg" 
+                alt="Enterprise Ireland"
+                style={{ height: '32px' }}
+              />
+            </div>
+
+            {/* New Frontiers Logo */}
+            <div style={{
+              background: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              <img 
+                src="https://www.newfrontiers.ie/wp-content/uploads/2021/03/NF_Logo_Horizontal.png" 
+                alt="New Frontiers"
+                style={{ height: '32px' }}
+              />
+            </div>
           </div>
         </nav>
       </header>
@@ -116,6 +159,41 @@ const ComingSoonLandingPage: React.FC = () => {
             The only Dublin app that calculates real travel time AND environmental impact to optimize urban mobility and reduce unnecessary emissions.
           </p>
 
+          {/* SDG Badges */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '1.5rem',
+            marginBottom: '2rem',
+            flexWrap: 'wrap',
+          }}>
+            {/* SDG 11 Badge */}
+            <div style={{
+              background: 'linear-gradient(135deg, #FF9B00 0%, #FD9D24 100%)',
+              color: 'white',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '12px',
+              fontWeight: '700',
+              fontSize: '1rem',
+              boxShadow: '0 4px 6px rgba(255, 155, 0, 0.3)',
+            }}>
+              🏙️ UN SDG 11: Sustainable Cities
+            </div>
+
+            {/* SDG 13 Badge */}
+            <div style={{
+              background: 'linear-gradient(135deg, #3F7E44 0%, #48773C 100%)',
+              color: 'white',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '12px',
+              fontWeight: '700',
+              fontSize: '1rem',
+              boxShadow: '0 4px 6px rgba(63, 126, 68, 0.3)',
+            }}>
+              🌍 UN SDG 13: Climate Action
+            </div>
+          </div>
+
           <button
             onClick={() => document.getElementById('join')?.scrollIntoView({ behavior: 'smooth' })}
             style={{
@@ -138,7 +216,7 @@ const ComingSoonLandingPage: React.FC = () => {
             color: '#6b7280',
             fontSize: '1.125rem',
           }}>
-            Launching Q1 2026
+            Launching 2026
           </p>
         </div>
       </section>
@@ -219,6 +297,116 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Carbon Karma Feature Section - NEW */}
+      <section style={{
+        padding: '5rem 2rem',
+        background: 'linear-gradient(135deg, #3F7E44 0%, #48773C 100%)',
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{
+            fontSize: '3rem',
+            fontWeight: '900',
+            color: 'white',
+            marginBottom: '1.5rem',
+          }}>
+            ✨ Introducing Carbon Karma
+          </h2>
+          <p style={{
+            fontSize: '1.5rem',
+            color: 'rgba(255,255,255,0.9)',
+            marginBottom: '3rem',
+            maxWidth: '800px',
+            margin: '0 auto 3rem',
+          }}>
+            See the real impact of your sustainable choices. Every fair meetup earns you Carbon Karma - track your CO₂ savings and unlock badges for consistent sustainable transport use.
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '2rem',
+            marginTop: '3rem',
+          }}>
+            {/* Monthly Savings */}
+            <div style={{
+              background: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255,255,255,0.2)',
+              borderRadius: '20px',
+              padding: '2rem',
+              color: 'white',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+                Monthly CO₂ Savings
+              </h3>
+              <p style={{ fontSize: '1rem', opacity: 0.9 }}>
+                Track your carbon footprint reduction each month
+              </p>
+            </div>
+
+            {/* Achievement Badges */}
+            <div style={{
+              background: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255,255,255,0.2)',
+              borderRadius: '20px',
+              padding: '2rem',
+              color: 'white',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏆</div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+                Sustainability Badges
+              </h3>
+              <p style={{ fontSize: '1rem', opacity: 0.9 }}>
+                Earn badges for consistent green transport choices
+              </p>
+            </div>
+
+            {/* Impact Leaderboard */}
+            <div style={{
+              background: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255,255,255,0.2)',
+              borderRadius: '20px',
+              padding: '2rem',
+              color: 'white',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌟</div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+                Community Impact
+              </h3>
+              <p style={{ fontSize: '1rem', opacity: 0.9 }}>
+                See Dublin's collective carbon reduction in real-time
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            background: 'rgba(255,255,255,0.15)',
+            borderRadius: '16px',
+            padding: '2rem',
+            marginTop: '3rem',
+            border: '2px solid rgba(255,255,255,0.3)',
+          }}>
+            <p style={{
+              fontSize: '1.25rem',
+              color: 'white',
+              fontWeight: '600',
+              marginBottom: '1rem',
+            }}>
+              🎯 Example Impact
+            </p>
+            <p style={{
+              fontSize: '1.125rem',
+              color: 'rgba(255,255,255,0.95)',
+            }}>
+              If you prevent just 2 unnecessary car journeys per month (10km each), you'll save approximately <strong>4.8kg of CO₂</strong> - that's <strong>57.6kg per year</strong>, equivalent to planting 3 trees annually!
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section style={{
         padding: '5rem 2rem',
@@ -241,142 +429,82 @@ const ComingSoonLandingPage: React.FC = () => {
             gap: '2rem',
           }}>
             {[
-              { num: '1', title: 'Enter Locations', desc: 'Each person enters their starting point (home, work, gym, etc.)' },
-              { num: '2', title: 'Choose Transit Mode', desc: 'Select your preferred transport: Luas, bus, bike, walk, or drive' },
-              { num: '3', title: 'MiM Calculates', desc: 'We find venues with fair journey times AND lowest environmental impact' },
-              { num: '4', title: 'Track Your Impact', desc: 'See exactly how much CO₂ you saved by choosing sustainable transport' },
+              { num: '1', icon: '📍', title: 'Enter Locations', desc: 'Everyone adds their starting point in Dublin' },
+              { num: '2', icon: '🚇', title: 'Choose Transport Mode', desc: 'Each person selects: Luas, Bus, Cycling, Walking, or Driving' },
+              { num: '3', icon: '🎯', title: 'Find Fair Midpoint', desc: 'MiM calculates the optimal location using real Dublin transport data' },
+              { num: '4', icon: '🌱', title: 'Earn Carbon Karma', desc: 'Track your CO₂ savings and build your sustainability profile' },
             ].map((step) => (
               <div key={step.num} style={{
                 background: 'white',
-                borderRadius: '16px',
+                borderRadius: '20px',
                 padding: '2rem',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                 textAlign: 'center',
                 border: '2px solid #99f6e4',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
               }}>
                 <div style={{
-                  width: '80px',
-                  height: '80px',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
                   background: 'linear-gradient(135deg, #17a398 0%, #14b8a6 100%)',
-                  borderRadius: '16px',
+                  color: 'white',
+                  fontWeight: '900',
+                  fontSize: '1.5rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  margin: '0 auto 1.5rem',
-                  fontSize: '2.5rem',
-                  color: 'white',
-                  fontWeight: '900',
+                  margin: '0 auto 1rem',
                 }}>
                   {step.num}
                 </div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{step.icon}</div>
                 <h3 style={{
                   fontSize: '1.25rem',
                   fontWeight: '700',
                   color: '#1f2937',
-                  marginBottom: '0.75rem',
+                  marginBottom: '0.5rem',
                 }}>
                   {step.title}
                 </h3>
-                <p style={{ color: '#6b7280' }}>{step.desc}</p>
+                <p style={{ color: '#6b7280', fontSize: '1rem' }}>{step.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Impact on Dublin Section */}
       <section style={{ padding: '5rem 2rem', background: 'white' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{
-            fontSize: '2.5rem',
-            fontWeight: '900',
-            color: '#1f2937',
-            textAlign: 'center',
-            marginBottom: '3rem',
-          }}>
-            Why MiM Makes Meeting Easy
-          </h2>
-          
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2rem',
-          }}>
-            {[
-              { icon: '⚖️', title: 'Fair Journeys for Everyone', desc: 'No more situations where one person travels 5 minutes and another travels an hour. Everyone gets a balanced journey time.' },
-              { icon: '🚌', title: 'Budget-Friendly Venues', desc: 'Filter venues by price level and find options that work for everyone\'s budget. Sustainable transport = money saved too.' },
-              { icon: '🔒', title: 'Zero Tracking, No Location History', desc: 'We only use your location for the current meetup calculation. No tracking, no history, no surveillance.' },
-            ].map((feature) => (
-              <div key={feature.title} style={{
-                background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
-                borderRadius: '16px',
-                padding: '2rem',
-                border: '2px solid #99f6e4',
-              }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{feature.icon}</div>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '700',
-                  color: '#1f2937',
-                  marginBottom: '0.75rem',
-                }}>
-                  {feature.title}
-                </h3>
-                <p style={{ color: '#374151' }}>{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* UN SDG Section */}
-      <section style={{
-        padding: '5rem 2rem',
-        background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
-      }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '24px',
-            padding: '3rem',
-            border: '4px solid #5eead4',
-            boxShadow: '0 20px 25px rgba(0,0,0,0.1)',
-          }}>
-            <div style={{ fontSize: '5rem', marginBottom: '2rem' }}>🏙️</div>
+          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <h2 style={{
               fontSize: '2.5rem',
               fontWeight: '900',
               color: '#1f2937',
-              marginBottom: '1.5rem',
+              marginBottom: '1rem',
             }}>
-              Aligned with UN SDG 11
+              Our Impact on Dublin's Climate Goals
             </h2>
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: '#14b8a6',
-              marginBottom: '1.5rem',
-            }}>
-              Sustainable Cities and Communities
-            </h3>
             <p style={{
               fontSize: '1.25rem',
-              color: '#374151',
-              lineHeight: '1.75',
-              marginBottom: '2rem',
+              color: '#6b7280',
+              maxWidth: '800px',
+              margin: '0 auto',
             }}>
-              MiM directly supports <strong>Target 11.2</strong>: "By 2030, provide access to safe, affordable, accessible and sustainable transport systems for all, improving road safety, notably by expanding public transport."
+              Aligned with Dublin City Council's EarthCheck Programme and Tourism Strategy 2023-2028
             </p>
+          </div>
+
+          <div>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1.5rem',
-              textAlign: 'left',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '2rem',
             }}>
               {[
                 { icon: '🚌', title: 'Promote Public Transport', desc: 'Makes Luas, bus, and cycling the default choice for Dublin meetups' },
                 { icon: '📊', title: 'Measurable Impact', desc: 'Track CO₂ reduction and sustainable transport adoption with real data' },
-                { icon: '🎯', title: 'Dublin Climate Action', desc: 'Supports Dublin City\'s 2030 climate neutrality goals' },
+                { icon: '🎯', title: 'Dublin Climate Action', desc: 'Supports Dublin City\'s 2030 climate neutrality goals and UN SDG commitments' },
               ].map((item) => (
                 <div key={item.title} style={{
                   background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
@@ -416,7 +544,7 @@ const ComingSoonLandingPage: React.FC = () => {
             color: '#6b7280',
             marginBottom: '3rem',
           }}>
-            Supported by Enterprise Ireland and Climate Ready Academy
+            Supported by Enterprise Ireland New Frontiers Programme
           </p>
           
           <div style={{
@@ -425,9 +553,9 @@ const ComingSoonLandingPage: React.FC = () => {
             gap: '2rem',
           }}>
             {[
-              { icon: '🚀', title: 'Enterprise Ireland', desc: 'New Frontiers Programme Phase 1' },
-              { icon: '🎓', title: 'SETU Carlow', desc: 'Innovation & Entrepreneurship Support' },
-              { icon: '🌱', title: 'Climate Ready Academy', desc: 'Skillnet Climate Action Programme' },
+              { title: 'Enterprise Ireland', desc: 'New Frontiers Programme Phase 1', logo: '🚀' },
+              { title: 'SETU Carlow', desc: 'Innovation & Entrepreneurship Support', logo: '🎓' },
+              { title: 'Dublin City Council', desc: 'EarthCheck Sustainable Destinations Partner', logo: '🌱' },
             ].map((org) => (
               <div key={org.title} style={{
                 background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
@@ -435,7 +563,7 @@ const ComingSoonLandingPage: React.FC = () => {
                 padding: '2rem',
                 border: '2px solid #99f6e4',
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{org.icon}</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{org.logo}</div>
                 <h3 style={{
                   fontSize: '1.25rem',
                   fontWeight: '700',
@@ -485,7 +613,7 @@ const ComingSoonLandingPage: React.FC = () => {
               color: '#1f2937',
               marginBottom: '1.5rem',
             }}>
-              Be the first to know when we launch in Q1 2026
+              Be the first to know when we launch in 2026
             </h3>
 
             {status === 'success' ? (
@@ -588,14 +716,17 @@ const ComingSoonLandingPage: React.FC = () => {
               Meet in Middle
             </span>
           </div>
-          <p style={{ marginBottom: '1.5rem' }}>
+          <p style={{ marginBottom: '1rem' }}>
             Reducing Dublin's carbon footprint, one fair meetup at a time.
+          </p>
+          <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+            Aligned with UN SDG 11 (Sustainable Cities) & SDG 13 (Climate Action)
           </p>
           <p style={{
             fontSize: '0.875rem',
             color: '#9ca3af',
           }}>
-            © 2025 CasaFlynn. Part of Enterprise Ireland New Frontiers Programme.
+            © 2025 CasaFlynn Ltd. Enterprise Ireland New Frontiers Programme Phase 1.
           </p>
         </div>
       </footer>
