@@ -127,6 +127,71 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
+// PATCH /api/saved-locations/:id - Update a saved location's label
+router.patch('/:id', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const locationId = parseInt(req.params.id);
+  const { label } = req.body;
+
+  try {
+    // Validate ID
+    if (isNaN(locationId)) {
+      return res.status(400).json({ error: 'Invalid location ID' });
+    }
+
+    // Validate label
+    if (!label || label.trim().length === 0) {
+      return res.status(400).json({ error: 'Label is required' });
+    }
+
+    if (label.length > 50) {
+      return res.status(400).json({ error: 'Label must be 50 characters or less' });
+    }
+
+    // Check if location exists and belongs to user
+    const checkResult = await pool.query(
+      'SELECT id FROM saved_locations WHERE id = $1 AND user_id = $2',
+      [locationId, req.user.userId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Location not found or does not belong to you' 
+      });
+    }
+
+    // Check if new label already exists for another location
+    const labelCheck = await pool.query(
+      'SELECT id FROM saved_locations WHERE user_id = $1 AND label = $2 AND id != $3',
+      [req.user.userId, label.trim(), locationId]
+    );
+
+    if (labelCheck.rows.length > 0) {
+      return res.status(409).json({ 
+        error: `A location with the label "${label}" already exists` 
+      });
+    }
+
+    // Update the location
+    const result = await pool.query(
+      `UPDATE saved_locations 
+       SET label = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND user_id = $3
+       RETURNING *`,
+      [label.trim(), locationId, req.user.userId]
+    );
+
+    res.json({
+      message: 'Location updated successfully',
+      location: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error updating location:', error);
+    res.status(500).json({ error: 'Failed to update location' });
+  }
+});
+
 // DELETE /api/saved-locations/:id - Delete a saved location
 router.delete('/:id', authenticateToken, async (req, res) => {
   const pool = req.app.locals.pool;
