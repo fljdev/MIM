@@ -59,12 +59,10 @@ const ComingSoonLandingPage: React.FC = () => {
           maxWidth: '1200px',
           margin: '0 auto',
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
         }}>
-          {/* Logo Section */}
+          {/* Logo Section - Centered */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -86,46 +84,6 @@ const ComingSoonLandingPage: React.FC = () => {
               🌍
             </div>
             <span>Meet in Middle</span>
-          </div>
-
-          {/* Partner Logos */}
-          <div style={{
-            display: 'flex',
-            gap: '1rem',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}>
-            {/* Enterprise Ireland Logo */}
-            <div style={{
-              background: 'white',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}>
-              <img 
-                src="https://www.enterprise-ireland.com/images/default-source/header-images/ei_horizontal_logo_rgb.svg" 
-                alt="Enterprise Ireland"
-                style={{ height: '32px' }}
-              />
-            </div>
-
-            {/* New Frontiers Logo */}
-            <div style={{
-              background: 'white',
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}>
-              <img 
-                src="https://www.newfrontiers.ie/wp-content/uploads/2021/03/NF_Logo_Horizontal.png" 
-                alt="New Frontiers"
-                style={{ height: '32px' }}
-              />
-            </div>
           </div>
         </nav>
       </header>
@@ -515,14 +473,14 @@ const ComingSoonLandingPage: React.FC = () => {
             color: '#1f2937',
             marginBottom: '1rem',
           }}>
-            Backed By Ireland's Leading Innovation Programs
+            Built in Dublin, For Dublin
           </h2>
           <p style={{
             fontSize: '1.25rem',
             color: '#6b7280',
             marginBottom: '3rem',
           }}>
-            Supported by Enterprise Ireland New Frontiers Programme
+            Developed with support from Enterprise Ireland's New Frontiers Programme
           </p>
           
           <div style={{
@@ -531,9 +489,9 @@ const ComingSoonLandingPage: React.FC = () => {
             gap: '2rem',
           }}>
             {[
-              { title: 'Enterprise Ireland', desc: 'New Frontiers Programme Phase 1', logo: '🚀' },
-              { title: 'SETU Carlow', desc: 'Innovation & Entrepreneurship Support', logo: '🎓' },
-              { title: 'Dublin City Council', desc: 'EarthCheck Sustainable Destinations Partner', logo: '🌱' },
+              { icon: '🚀', title: 'Enterprise Ireland', desc: 'New Frontiers Programme Phase 1' },
+              { icon: '🎓', title: 'SETU Carlow', desc: 'Innovation & Entrepreneurship Support' },
+              { icon: '🌍', title: 'Dublin-First', desc: 'Built specifically for Dublin\'s transport infrastructure' },
             ].map((org) => (
               <div key={org.title} style={{
                 background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
@@ -541,7 +499,7 @@ const ComingSoonLandingPage: React.FC = () => {
                 padding: '2rem',
                 border: '2px solid #99f6e4',
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{org.logo}</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{org.icon}</div>
                 <h3 style={{
                   fontSize: '1.25rem',
                   fontWeight: '700',
