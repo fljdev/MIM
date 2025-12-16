@@ -337,7 +337,7 @@ const ComingSoonLandingPage: React.FC = () => {
               fontSize: '1.125rem',
               color: '#374151',
             }}>
-              If you prevent just 2 unnecessary car journeys per month (10km each), you'll save approximately <strong style={{ color: '#14B8A6' }}>4.8kg of CO₂</strong> - that's <strong style={{ color: '#14B8A6' }}>57.6kg per year</strong>, equivalent to planting 3 trees annually!
+              If you prevent just 2 unnecessary car journeys per month (10km each), you'll save approximately <strong style={{ color: '#14B8A6' }}>2.4kg of CO₂</strong> - that's <strong style={{ color: '#14B8A6' }}>28.8kg per year</strong>, equivalent to planting 1-2 trees annually!
             </p>
           </div>
         </div>
