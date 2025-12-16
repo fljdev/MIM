@@ -159,41 +159,6 @@ const ComingSoonLandingPage: React.FC = () => {
             The only Dublin app that calculates real travel time AND environmental impact to optimize urban mobility and reduce unnecessary emissions.
           </p>
 
-          {/* SDG Badges */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '1.5rem',
-            marginBottom: '2rem',
-            flexWrap: 'wrap',
-          }}>
-            {/* SDG 11 Badge */}
-            <div style={{
-              background: 'linear-gradient(135deg, #FF9B00 0%, #FD9D24 100%)',
-              color: 'white',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px',
-              fontWeight: '700',
-              fontSize: '1rem',
-              boxShadow: '0 4px 6px rgba(255, 155, 0, 0.3)',
-            }}>
-              🏙️ UN SDG 11: Sustainable Cities
-            </div>
-
-            {/* SDG 13 Badge */}
-            <div style={{
-              background: 'linear-gradient(135deg, #3F7E44 0%, #48773C 100%)',
-              color: 'white',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px',
-              fontWeight: '700',
-              fontSize: '1rem',
-              boxShadow: '0 4px 6px rgba(63, 126, 68, 0.3)',
-            }}>
-              🌍 UN SDG 13: Climate Action
-            </div>
-          </div>
-
           <button
             onClick={() => document.getElementById('join')?.scrollIntoView({ behavior: 'smooth' })}
             style={{
@@ -297,28 +262,28 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Carbon Karma Feature Section - NEW */}
+      {/* Your Green Impact Feature Section - NEW */}
       <section style={{
         padding: '5rem 2rem',
-        background: 'linear-gradient(135deg, #3F7E44 0%, #48773C 100%)',
+        background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
             fontSize: '3rem',
             fontWeight: '900',
-            color: 'white',
+            color: '#1f2937',
             marginBottom: '1.5rem',
           }}>
-            ✨ Introducing Carbon Karma
+            ✨ Your Green Impact
           </h2>
           <p style={{
             fontSize: '1.5rem',
-            color: 'rgba(255,255,255,0.9)',
+            color: '#374151',
             marginBottom: '3rem',
             maxWidth: '800px',
             margin: '0 auto 3rem',
           }}>
-            See the real impact of your sustainable choices. Every fair meetup earns you Carbon Karma - track your CO₂ savings and unlock badges for consistent sustainable transport use.
+            See the real impact of your sustainable choices. Track your CO₂ savings and unlock badges for consistent sustainable transport use.
           </p>
 
           <div style={{
@@ -329,79 +294,92 @@ const ComingSoonLandingPage: React.FC = () => {
           }}>
             {/* Monthly Savings */}
             <div style={{
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255,255,255,0.2)',
+              background: 'white',
+              border: '3px solid #14B8A6',
               borderRadius: '20px',
               padding: '2rem',
-              color: 'white',
+              boxShadow: '0 4px 6px rgba(20, 184, 166, 0.1)',
             }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700', 
+                marginBottom: '0.5rem',
+                color: '#1f2937',
+              }}>
                 Monthly CO₂ Savings
               </h3>
-              <p style={{ fontSize: '1rem', opacity: 0.9 }}>
+              <p style={{ fontSize: '1rem', color: '#6b7280' }}>
                 Track your carbon footprint reduction each month
               </p>
             </div>
 
             {/* Achievement Badges */}
             <div style={{
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255,255,255,0.2)',
+              background: 'white',
+              border: '3px solid #14B8A6',
               borderRadius: '20px',
               padding: '2rem',
-              color: 'white',
+              boxShadow: '0 4px 6px rgba(20, 184, 166, 0.1)',
             }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏆</div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700', 
+                marginBottom: '0.5rem',
+                color: '#1f2937',
+              }}>
                 Sustainability Badges
               </h3>
-              <p style={{ fontSize: '1rem', opacity: 0.9 }}>
+              <p style={{ fontSize: '1rem', color: '#6b7280' }}>
                 Earn badges for consistent green transport choices
               </p>
             </div>
 
             {/* Impact Leaderboard */}
             <div style={{
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255,255,255,0.2)',
+              background: 'white',
+              border: '3px solid #14B8A6',
               borderRadius: '20px',
               padding: '2rem',
-              color: 'white',
+              boxShadow: '0 4px 6px rgba(20, 184, 166, 0.1)',
             }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌟</div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>
+              <h3 style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: '700', 
+                marginBottom: '0.5rem',
+                color: '#1f2937',
+              }}>
                 Community Impact
               </h3>
-              <p style={{ fontSize: '1rem', opacity: 0.9 }}>
+              <p style={{ fontSize: '1rem', color: '#6b7280' }}>
                 See Dublin's collective carbon reduction in real-time
               </p>
             </div>
           </div>
 
           <div style={{
-            background: 'rgba(255,255,255,0.15)',
+            background: 'white',
             borderRadius: '16px',
             padding: '2rem',
             marginTop: '3rem',
-            border: '2px solid rgba(255,255,255,0.3)',
+            border: '3px solid #14B8A6',
+            boxShadow: '0 4px 6px rgba(20, 184, 166, 0.1)',
           }}>
             <p style={{
               fontSize: '1.25rem',
-              color: 'white',
-              fontWeight: '600',
+              color: '#14B8A6',
+              fontWeight: '700',
               marginBottom: '1rem',
             }}>
               🎯 Example Impact
             </p>
             <p style={{
               fontSize: '1.125rem',
-              color: 'rgba(255,255,255,0.95)',
+              color: '#374151',
             }}>
-              If you prevent just 2 unnecessary car journeys per month (10km each), you'll save approximately <strong>4.8kg of CO₂</strong> - that's <strong>57.6kg per year</strong>, equivalent to planting 3 trees annually!
+              If you prevent just 2 unnecessary car journeys per month (10km each), you'll save approximately <strong style={{ color: '#14B8A6' }}>4.8kg of CO₂</strong> - that's <strong style={{ color: '#14B8A6' }}>57.6kg per year</strong>, equivalent to planting 3 trees annually!
             </p>
           </div>
         </div>
@@ -719,9 +697,37 @@ const ComingSoonLandingPage: React.FC = () => {
           <p style={{ marginBottom: '1rem' }}>
             Reducing Dublin's carbon footprint, one fair meetup at a time.
           </p>
-          <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-            Aligned with UN SDG 11 (Sustainable Cities) & SDG 13 (Climate Action)
-          </p>
+          
+          {/* SDG Badges in Footer */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '1rem',
+            marginBottom: '1.5rem',
+            flexWrap: 'wrap',
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #FF9B00 0%, #FD9D24 100%)',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+            }}>
+              🏙️ UN SDG 11: Sustainable Cities
+            </div>
+            <div style={{
+              background: 'linear-gradient(135deg, #3F7E44 0%, #48773C 100%)',
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+            }}>
+              🌍 UN SDG 13: Climate Action
+            </div>
+          </div>
+          
           <p style={{
             fontSize: '0.875rem',
             color: '#9ca3af',
