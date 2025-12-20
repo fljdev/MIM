@@ -1,9 +1,11 @@
-// Speed constants (km/h)
+// Speed constants (km/h) - Updated with more realistic values
 const SPEEDS = {
-  walking: 5, // Updated from 3.5 to realistic brisk walking pace
-  cycling: 20,
-  driving: 40,
-  transit: 25
+  walking: 4.5,    // Realistic walking pace (4.5 km/h ≈ 2.8 mph)
+  cycling: 15,     // City cycling speed
+  driving: 35,     // City driving with traffic
+  transit: 20,     // Bus with stops
+  train: 50,       // Train/subway
+  car: 35          // Alias for driving
 };
 
 // Calculate travel time in minutes between two points
@@ -15,7 +17,13 @@ export function calculateTravelTime(
   mode: string = 'driving'
 ): number {
   const distance = calculateDistance(lat1, lng1, lat2, lng2);
-  const speed = SPEEDS[mode as keyof typeof SPEEDS] || SPEEDS.driving;
+  // Handle mode aliases
+  let speedMode = mode;
+  if (mode === 'car') speedMode = 'driving';
+  if (mode === 'bike' || mode === 'bicycling') speedMode = 'cycling';
+  if (mode === 'bus') speedMode = 'transit';
+  
+  const speed = SPEEDS[speedMode as keyof typeof SPEEDS] || SPEEDS.driving;
   return Math.round((distance / speed) * 60); // Convert to minutes, rounded
 }
 

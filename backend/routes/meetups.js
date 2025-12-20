@@ -138,8 +138,10 @@ router.post('/create', authenticateToken, async (req, res) => {
     }
 
     // Validate transit_mode (case-insensitive)
+    console.log(`[Meetup Debug] Received transit_mode from API: ${transit_mode}`);
     const validTransitModes = ['walking', 'driving', 'transit', 'bicycling'];
     const selectedTransitMode = (transit_mode || 'walking').toLowerCase();
+    console.log(`[Meetup Debug] Processed transit_mode (lowercased): ${selectedTransitMode}`);
     if (!validTransitModes.includes(selectedTransitMode)) {
       return res.status(400).json({ error: `Invalid transit_mode. Must be one of: ${validTransitModes.join(', ')}` });
     }
@@ -211,6 +213,8 @@ router.post('/create', authenticateToken, async (req, res) => {
     const meetup = meetupResult.rows[0];
 
     // Insert creator as first participant
+    console.log(`[Meetup Debug] Storing participant with transit_mode: ${selectedTransitMode}`);
+    console.log(`[Meetup Debug] Creator location coordinates: lat=${creator_location.lat}, lng=${creator_location.lng}`);
     await pool.query(
       `INSERT INTO meetup_participants (
         meetup_id,
