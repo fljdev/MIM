@@ -79,6 +79,11 @@ const CreateMeetup: React.FC = () => {
       return;
     }
 
+    // Debug logging
+    console.log(`[Meetup Debug] Selected transit mode in dropdown: ${transitMode}`);
+    console.log(`[Meetup Debug] Sending transit_mode to API: ${transitMode.toLowerCase()}`);
+    console.log(`[Meetup Debug] User location: ${JSON.stringify(userLocation)}`);
+
     setIsSubmitting(true);
 
     try {

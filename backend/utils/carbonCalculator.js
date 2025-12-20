@@ -17,7 +17,8 @@ const EMISSION_FACTORS = {
   driving: 0.12,    // Average car (petrol/diesel mix)
   transit: 0.06,    // Public transport (bus/train average)
   walking: 0.0,     // Zero emissions
-  bicycling: 0.0,   // Zero emissions
+  bicycling: 0.0,   // Zero emissions (alias: cycling)
+  cycling: 0.0,     // Alias for bicycling
   car: 0.12,        // Alias for driving
   bike: 0.0,        // Alias for bicycling
   bus: 0.06,        // Alias for transit
@@ -31,19 +32,23 @@ const EMISSION_FACTORS = {
  * @returns {number} Emission factor in kg CO2 per km
  */
 function getCarbonEmissionFactor(modeOfTransport) {
+  console.log(`[Carbon Calculator Debug] getCarbonEmissionFactor called with mode: "${modeOfTransport}"`);
+  
   if (!modeOfTransport) {
-    console.warn('No mode of transport provided, defaulting to driving');
+    console.warn('[Carbon Calculator Debug] No mode of transport provided, defaulting to driving');
     return EMISSION_FACTORS.driving;
   }
 
   const mode = modeOfTransport.toLowerCase().trim();
   
   if (EMISSION_FACTORS.hasOwnProperty(mode)) {
-    return EMISSION_FACTORS[mode];
+    const factor = EMISSION_FACTORS[mode];
+    console.log(`[Carbon Calculator Debug] Using emission factor for "${mode}": ${factor} kg CO₂/km`);
+    return factor;
   }
 
   // Default to driving if mode is unknown
-  console.warn(`Unknown mode of transport: ${modeOfTransport}, defaulting to driving`);
+  console.warn(`[Carbon Calculator Debug] Unknown mode of transport: "${modeOfTransport}", defaulting to driving`);
   return EMISSION_FACTORS.driving;
 }
 
@@ -60,20 +65,27 @@ function getCarbonEmissionFactor(modeOfTransport) {
  * calculateCarbonEmission(10, 'walking') // Returns 0.0000
  */
 function calculateCarbonEmission(distanceKm, modeOfTransport) {
+  console.log(`[Carbon Calculator Debug] calculateCarbonEmission called with distance: ${distanceKm} km, mode: "${modeOfTransport}"`);
+  
   // Validate distance
   if (typeof distanceKm !== 'number' || distanceKm < 0 || isNaN(distanceKm)) {
-    console.error(`Invalid distance: ${distanceKm}`);
+    console.error(`[Carbon Calculator Debug] Invalid distance: ${distanceKm}`);
     return 0;
   }
 
   // Get emission factor
   const emissionFactor = getCarbonEmissionFactor(modeOfTransport);
+  console.log(`[Carbon Calculator Debug] Emission factor for "${modeOfTransport}": ${emissionFactor} kg CO₂/km`);
 
   // Calculate emissions
   const carbonEmitted = distanceKm * emissionFactor;
+  console.log(`[Carbon Calculator Debug] Calculation: ${distanceKm} km × ${emissionFactor} kg CO₂/km = ${carbonEmitted} kg CO₂`);
 
   // Round to 4 decimal places for precision
-  return Math.round(carbonEmitted * 10000) / 10000;
+  const roundedCarbon = Math.round(carbonEmitted * 10000) / 10000;
+  console.log(`[Carbon Calculator Debug] Rounded carbon emission: ${roundedCarbon} kg CO₂`);
+  
+  return roundedCarbon;
 }
 
 /**

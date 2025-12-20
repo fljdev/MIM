@@ -172,16 +172,21 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
   const targetUserId = parseInt(req.params.id);
   const requestingUserId = req.user.userId;
 
+  console.log(`[Carbon API Debug] GET /api/carbon/user/${targetUserId} called by user ${requestingUserId}`);
+  console.log(`[Carbon API Debug] Authentication check: ${targetUserId === requestingUserId ? 'PASS' : 'FAIL'}`);
+
   try {
     const pool = req.app.locals.pool;
 
     // Users can only view their own carbon data (privacy)
     if (targetUserId !== requestingUserId) {
+      console.log(`[Carbon API Debug] Authorization failed: User ${requestingUserId} cannot access data for user ${targetUserId}`);
       return res.status(403).json({ 
         error: 'You can only view your own carbon emission data' 
       });
     }
 
+    console.log(`[Carbon API Debug] Querying journeys for user ${targetUserId}`);
     // Get user's journey history from meetup_participants
     const journeysResult = await pool.query(
       `SELECT 
@@ -195,18 +200,35 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
         m.meetup_code
       FROM meetup_participants mp
       LEFT JOIN meetups m ON mp.meetup_id = m.id
-      WHERE mp.user_id = $1 AND mp.carbon_emitted > 0
+      WHERE mp.user_id = $1 AND mp.carbon_emitted IS NOT NULL
       ORDER BY mp.joined_at DESC`,
       [targetUserId]
     );
 
     const journeys = journeysResult.rows;
+    console.log(`[Carbon API Debug] Query returned ${journeys.length} journeys for user ${targetUserId}`);
+    
+    // Log each journey found
+    journeys.forEach((journey, index) => {
+      console.log(`[Carbon API Debug] Journey ${index + 1}:`);
+      console.log(`  - Meetup ID: ${journey.meetup_id}`);
+      console.log(`  - Distance: ${journey.distance_km} km`);
+      console.log(`  - Mode: ${journey.mode}`);
+      console.log(`  - Carbon: ${journey.carbon_emitted} kg CO₂`);
+      console.log(`  - Date: ${journey.date}`);
+    });
 
     // Calculate totals and aggregations
     const totalCarbonKg = journeys.reduce((sum, j) => sum + parseFloat(j.carbon_emitted), 0);
     const totalDistanceKm = journeys.reduce((sum, j) => sum + parseFloat(j.distance_km), 0);
     const journeyCount = journeys.length;
     const averagePerJourney = journeyCount > 0 ? totalCarbonKg / journeyCount : 0;
+
+    console.log(`[Carbon API Debug] Aggregation results:`);
+    console.log(`  - Total carbon: ${totalCarbonKg} kg CO₂`);
+    console.log(`  - Total distance: ${totalDistanceKm} km`);
+    console.log(`  - Journey count: ${journeyCount}`);
+    console.log(`  - Average per journey: ${averagePerJourney} kg CO₂`);
 
     // Calculate breakdown by mode
     const byMode = {};
@@ -224,9 +246,11 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
     Object.keys(byMode).forEach(mode => {
       byMode[mode].emissions = Math.round(byMode[mode].emissions * 10000) / 10000;
       byMode[mode].distance = Math.round(byMode[mode].distance * 100) / 100;
+      console.log(`  - Mode ${mode}: ${byMode[mode].count} journeys, ${byMode[mode].emissions} kg CO₂, ${byMode[mode].distance} km`);
     });
 
-    res.status(200).json({
+    console.log(`[Carbon API Debug] Sending response with ${journeys.length} journeys`);
+    const response = {
       user_id: targetUserId,
       total_carbon_kg: Math.round(totalCarbonKg * 10000) / 10000,
       total_distance_km: Math.round(totalDistanceKm * 100) / 100,
@@ -243,10 +267,13 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
         date: j.date
       })),
       by_mode: byMode
-    });
+    };
+    
+    console.log(`[Carbon API Debug] Response payload:`, JSON.stringify(response, null, 2));
+    res.status(200).json(response);
 
   } catch (error) {
-    console.error('Error fetching user carbon data:', error);
+    console.error('[Carbon API Debug] Error fetching user carbon data:', error);
     res.status(500).json({ error: 'Failed to fetch carbon data' });
   }
 });

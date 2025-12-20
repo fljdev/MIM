@@ -66,11 +66,14 @@ function toRadians(degrees) {
  * @returns {boolean} True if valid coordinates
  */
 function isValidCoordinate(lat, lng) {
+  // Convert to numbers if they are strings
+  const numLat = Number(lat);
+  const numLng = Number(lng);
+
   return (
-    typeof lat === 'number' && !isNaN(lat) &&
-    typeof lng === 'number' && !isNaN(lng) &&
-    lat >= -90 && lat <= 90 &&
-    lng >= -180 && lng <= 180
+    !isNaN(numLat) && !isNaN(numLng) &&
+    numLat >= -90 && numLat <= 90 &&
+    numLng >= -180 && numLng <= 180
   );
 }
 

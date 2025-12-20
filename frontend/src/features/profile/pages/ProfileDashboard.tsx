@@ -78,6 +78,11 @@ interface MeetupHistoryItemType {
   user_role: 'organizer' | 'participant';
 }
 
+interface CarbonStats {
+  distanceKm: number;
+  carbonKg: number;
+}
+
 const LOCATION_LABELS = ['Home', 'Work', 'Gym', 'Café', 'Other'];
 const MEETUP_HISTORY_LIMIT = 5;
 
@@ -93,6 +98,10 @@ const ProfileDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'past'>('all');
+  
+  // Carbon tracking state
+  const [carbonStats, setCarbonStats] = useState<CarbonStats | null>(null);
+  const [carbonError, setCarbonError] = useState<string | null>(null);
   
   // Meetup history expansion
   const [showAllMeetups, setShowAllMeetups] = useState(false);
@@ -190,9 +199,53 @@ const ProfileDashboard: React.FC = () => {
     }
   };
 
+  // Fetch carbon stats
+  const fetchCarbonStats = async (userId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return;
+      }
+
+      setCarbonError(null);
+      const response = await fetch(`${API_BASE_URL}/api/carbon/user/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Map backend response to front-end interface
+        setCarbonStats({
+          distanceKm: data.total_distance_km || 0,
+          carbonKg: data.total_carbon_kg || 0
+        });
+      } else if (response.status === 403) {
+        setCarbonError('Unauthorized to view carbon data');
+      } else if (response.status === 404) {
+        setCarbonError('Carbon stats unavailable');
+      } else if (response.status === 503) {
+        setCarbonError('Carbon service temporarily unavailable');
+      } else {
+        setCarbonError('Failed to load carbon stats');
+      }
+    } catch (error) {
+      console.error('Error fetching carbon stats:', error);
+      setCarbonError('Failed to load carbon stats');
+    }
+  };
+
   useEffect(() => {
     fetchProfileData();
   }, [activeFilter, savedLocationsRefresh]);
+
+  // Fetch carbon stats when profile is available
+  useEffect(() => {
+    if (profile?.id) {
+      fetchCarbonStats(profile.id);
+    }
+  }, [profile]);
 
   const handleRemoveFavorite = async (venueId: number) => {
     try {
@@ -442,7 +495,7 @@ const ProfileDashboard: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div 
             className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
             onClick={() => document.getElementById('saved-locations')?.scrollIntoView({ behavior: 'smooth' })}
@@ -477,6 +530,31 @@ const ProfileDashboard: React.FC = () => {
             </div>
             <div className="text-4xl font-bold text-emerald-600">{stats?.activeMeetups || 0}</div>
             <p className="text-gray-500 text-sm mt-2">Meetups in progress</p>
+          </div>
+
+          <div 
+            className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
+            onClick={() => document.getElementById('carbon-tracking')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-700">Carbon Tracking</h3>
+              <div className="text-3xl">🌱</div>
+            </div>
+            {carbonError ? (
+              <div className="text-red-500 text-sm font-medium">Carbon stats unavailable</div>
+            ) : carbonStats ? (
+              <>
+                <div className="text-2xl font-bold text-emerald-600">
+                  {carbonStats.distanceKm.toFixed(2)} km
+                </div>
+                <div className="text-lg font-semibold text-gray-700 mt-1">
+                  {carbonStats.carbonKg.toFixed(1)} kg CO₂
+                </div>
+                <p className="text-gray-500 text-sm mt-2">Distance traveled / Carbon emitted</p>
+              </>
+            ) : (
+              <div className="text-4xl font-bold text-emerald-600">--</div>
+            )}
           </div>
         </div>
 
@@ -610,6 +688,51 @@ const ProfileDashboard: React.FC = () => {
               <div className="text-6xl mb-4">⭐</div>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">No favorite venues yet</h3>
               <p className="text-gray-500">Star venues during meetup planning or add them here.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Carbon Tracking Section */}
+        <div id="carbon-tracking" className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Carbon Tracking</h2>
+          </div>
+          
+          {carbonError ? (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">🌱</div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Carbon stats unavailable</h3>
+              <p className="text-gray-500">We're unable to load your carbon tracking data at the moment.</p>
+            </div>
+          ) : carbonStats ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-emerald-50 rounded-xl p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-4xl">🚗</div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">Distance Traveled</h3>
+                    <p className="text-gray-600">Total distance from all meetups</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-emerald-700">{carbonStats.distanceKm.toFixed(2)} km</div>
+              </div>
+              
+              <div className="bg-teal-50 rounded-xl p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-4xl">🌍</div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">Carbon Emitted</h3>
+                    <p className="text-gray-600">Total carbon emissions</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-teal-700">{carbonStats.carbonKg.toFixed(1)} kg CO₂</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">🌱</div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No carbon data yet</h3>
+              <p className="text-gray-500">Your carbon statistics will appear here after you participate in meetups.</p>
             </div>
           )}
         </div>
