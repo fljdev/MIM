@@ -13,6 +13,7 @@ const waitlistRoutes = require('./routes/waitlist');
 const meetupTimeSuggestionsRouter = require('./routes/meetupTimeSuggestions');
 const profileRoutes = require('./routes/profile');
 const favoriteVenuesRoutes = require('./routes/favoriteVenues');
+const carbonRoutes = require('./routes/carbonRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -88,6 +89,9 @@ app.use('/api', profileRoutes);
 
 // Favorite venues routes
 app.use('/api', favoriteVenuesRoutes);
+
+// Carbon tracking routes
+app.use('/api/carbon', carbonRoutes);
 
 // Get all users
 app.get('/api/users', async (req, res) => {
