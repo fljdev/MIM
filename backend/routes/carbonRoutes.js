@@ -25,17 +25,23 @@ const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
+  console.log('[Auth Debug] Authorization header:', authHeader);
+  
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('[Auth Debug] No token or invalid format');
     return res.status(401).json({ error: 'No token provided' });
   }
   
   const token = authHeader.substring(7);
+  console.log('[Auth Debug] Token extracted (first 50 chars):', token.substring(0, 50) + '...');
   
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('[Auth Debug] Token decoded successfully. User ID:', decoded.userId, 'Email:', decoded.email);
     req.user = decoded;
     next();
   } catch (error) {
+    console.log('[Auth Debug] Token verification failed:', error.name, error.message);
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired' });
     }

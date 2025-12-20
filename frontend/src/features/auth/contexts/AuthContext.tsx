@@ -43,6 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
+      console.log('[Auth] Validating token...');
       const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
         method: 'GET',
         headers: {
@@ -52,18 +53,67 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[Auth] Token valid, user:', data.user.email);
         setUser(data.user);
+      } else if (response.status === 401) {
+        // Token expired or invalid, try to refresh
+        console.log('[Auth] Token invalid (401), attempting refresh...');
+        const refreshed = await refreshToken();
+        if (!refreshed) {
+          // Refresh failed, clear token
+          console.log('[Auth] Token refresh failed, logging out');
+          localStorage.removeItem('token');
+          setUser(null);
+        }
       } else {
-        // Token invalid, clear it
+        // Other error, clear token
+        console.log('[Auth] Token validation failed, logging out');
         localStorage.removeItem('token');
         setUser(null);
       }
     } catch (error) {
-      console.error('Token validation error:', error);
+      console.error('[Auth] Token validation error:', error);
       localStorage.removeItem('token');
       setUser(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const refreshToken = async (): Promise<boolean> => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('[Auth Refresh] No token to refresh');
+      return false;
+    }
+
+    try {
+      console.log('[Auth Refresh] Attempting token refresh...');
+      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[Auth Refresh] Token refreshed successfully for user:', data.user.email);
+        localStorage.setItem('token', data.token);
+        setUser(data.user);
+        return true;
+      } else {
+        console.log('[Auth Refresh] Refresh failed with status:', response.status);
+        // Refresh failed, clear token
+        localStorage.removeItem('token');
+        setUser(null);
+        return false;
+      }
+    } catch (error) {
+      console.error('[Auth Refresh] Error:', error);
+      localStorage.removeItem('token');
+      setUser(null);
+      return false;
     }
   };
 

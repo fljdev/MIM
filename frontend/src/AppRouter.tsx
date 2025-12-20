@@ -89,10 +89,10 @@ const AppRouter: React.FC = () => {
         <Route path="/meetup/created/:code" element={<MeetupCreated />} />
         <Route path="/join/:code" element={<JoinMeetup />} />
         <Route path="/invite/:shareableCode" element={<InvitationView />} />
-        <Route path="/meetup/:id/preferences" element={<JoinerPreferences />} />
-        <Route path="/meetup/:code/lobby" element={<MeetupLobby />} />
-        <Route path="/meetup/:code/results" element={<MeetupResults />} />
-        <Route path="/meetup/:code/confirmed" element={<MeetupConfirmed />} />
+        <Route path="/meetup/:id/preferences" element={<ProtectedRoute><JoinerPreferences /></ProtectedRoute>} />
+        <Route path="/meetup/:code/lobby" element={<ProtectedRoute><MeetupLobby /></ProtectedRoute>} />
+        <Route path="/meetup/:code/results" element={<ProtectedRoute><MeetupResults /></ProtectedRoute>} />
+        <Route path="/meetup/:code/confirmed" element={<ProtectedRoute><MeetupConfirmed /></ProtectedRoute>} />
 
         {/* Profile route */}
         <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />

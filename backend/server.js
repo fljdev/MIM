@@ -298,6 +298,93 @@ app.get('/api/auth/verify', async (req, res) => {
   }
 });
 
+// Token refresh endpoint
+console.log('[Server] Registering token refresh endpoint: POST /api/auth/refresh');
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.substring(7);
+    console.log('[Token Refresh] Attempting to refresh token');
+
+    // Try to verify the token, but ignore expiration for refresh
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      // If token is expired, we still allow refresh within grace period (24 hours)
+      if (error.name === 'TokenExpiredError') {
+        const decodedExpired = jwt.decode(token);
+        if (!decodedExpired || !decodedExpired.exp) {
+          return res.status(401).json({ error: 'Invalid token' });
+        }
+        
+        // Check if token expired within last 24 hours (grace period)
+        const expirationTime = decodedExpired.exp * 1000; // Convert to milliseconds
+        const currentTime = Date.now();
+        const gracePeriod = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        
+        if (currentTime - expirationTime > gracePeriod) {
+          console.log('[Token Refresh] Token expired beyond grace period');
+          return res.status(401).json({ error: 'Token expired, please login again' });
+        }
+        
+        decoded = decodedExpired;
+        console.log('[Token Refresh] Token expired but within grace period, allowing refresh');
+      } else {
+        console.log('[Token Refresh] Invalid token:', error.name);
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+    }
+
+    // Verify user still exists
+    const result = await pool.query(
+      'SELECT id, email, name, role, is_premium FROM users WHERE id = $1',
+      [decoded.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = result.rows[0];
+
+    // Generate new token with same payload but fresh expiration
+    const newToken = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    console.log('[Token Refresh] Token refreshed successfully for user:', user.email);
+
+    res.json({
+      message: 'Token refreshed successfully',
+      token: newToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        is_premium: user.is_premium
+      }
+    });
+
+  } catch (error) {
+    console.error('[Token Refresh] Error:', error);
+    res.status(500).json({ error: 'Failed to refresh token' });
+  }
+});
+
 // Global error handler - catches all unhandled errors
 app.use((err, req, res, next) => {
   console.error('❌ Unhandled error:', err.message);

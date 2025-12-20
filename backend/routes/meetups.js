@@ -905,6 +905,7 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
   const userId = req.user.userId;
 
   try {
+    console.log(`[LOBBY DEBUG] Request for idOrCode: ${idOrCode}, userId: ${userId}`);
     const pool = req.app.locals.pool;
 
     // Resolve the actual numeric meetup ID (handles both numeric ID and meetup code)
