@@ -203,16 +203,24 @@ const ProfileDashboard: React.FC = () => {
   const fetchCarbonStats = async (userId: number) => {
     try {
       const token = localStorage.getItem('token');
+      console.log('[Carbon Debug] Token from localStorage:', token ? 'Present' : 'Missing');
+      console.log('[Carbon Debug] User ID:', userId);
+      console.log('[Carbon Debug] API URL:', `${API_BASE_URL}/api/carbon/user/${userId}`);
+      
       if (!token) {
+        console.log('[Carbon Debug] No token, skipping carbon API call');
         return;
       }
 
       setCarbonError(null);
+      console.log('[Carbon Debug] Making carbon API request...');
       const response = await fetch(`${API_BASE_URL}/api/carbon/user/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
+      console.log('[Carbon Debug] Response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();

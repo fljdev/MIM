@@ -106,17 +106,26 @@ const MeetupLobby: React.FC = () => {
   const fetchLobbyData = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log(`[Frontend Debug] Fetching lobby for code: ${code}`);
+      console.log(`[Frontend Debug] API Base URL: ${API_BASE_URL}`);
+      console.log(`[Frontend Debug] Token present: ${!!token}`);
+      
       const response = await fetch(`${API_BASE_URL}/api/meetups/${code}/lobby`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
+      console.log(`[Frontend Debug] Response status: ${response.status}`);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch lobby data');
+        const errorText = await response.text();
+        console.error(`[Frontend Debug] Response not OK: ${errorText}`);
+        throw new Error(`Failed to fetch lobby data: ${response.status} ${errorText}`);
       }
       
       const data: LobbyData = await response.json();
+      console.log(`[Frontend Debug] Received lobby data:`, data);
       setLobbyData(data);
 
       // Check if current user is organizer
