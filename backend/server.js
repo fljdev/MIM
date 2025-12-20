@@ -322,6 +322,7 @@ async function startServer() {
       console.log(`🚀 MiM Server running on port ${PORT}`);
       console.log(`🚀 Health: http://localhost:${PORT}/health`);
       console.log(`🚀 API: http://localhost:${PORT}/api`);
+      console.log('Using DATABASE_URL:', process.env.DATABASE_URL);
       console.log(`🚀 ===================================\n`);
     });
   } catch (error) {
