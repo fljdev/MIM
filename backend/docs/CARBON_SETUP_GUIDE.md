@@ -25,7 +25,7 @@ The carbon tracking feature requires database schema changes. Run the migration 
 
 ```bash
 cd backend
-node db/run_migration.js
+node database/migrations/run_all_migrations.js
 ```
 
 #### Option B: Direct SQL execution
@@ -35,7 +35,7 @@ node db/run_migration.js
 psql -U your_username -d mim
 
 # Run migration
-\i backend/db/migrations/005_carbon_tracking.sql
+\i backend/database/migrations/005_carbon_tracking.sql
 ```
 
 #### Option C: Using the Node.js pg client
