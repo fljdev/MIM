@@ -230,6 +230,13 @@ const MeetupLobby: React.FC = () => {
     return () => clearInterval(interval);
   }, [code]);
 
+  // Navigate to confirmed page when meetup status changes to 'confirmed'
+  useEffect(() => {
+    if (lobbyData?.meetup?.status === 'confirmed' && code) {
+      navigate(`/meetup/${code}/confirmed`);
+    }
+  }, [lobbyData?.meetup?.status, code, navigate]);
+
   const handleCopyCode = async () => {
     if (!code) return;
     try {
