@@ -247,7 +247,7 @@ const ComingSoonLandingPage: React.FC = () => {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '1.5rem',
           }}>
             {[
@@ -571,7 +571,7 @@ const ComingSoonLandingPage: React.FC = () => {
               fontWeight: '900',
               marginBottom: '1.5rem',
             }}>
-              Own a Café, Bar, or Restaurant?
+              Own a Cafe, Bar, or Restaurant?
             </h2>
             <p style={{
               fontSize: '1.5rem',
@@ -583,7 +583,7 @@ const ComingSoonLandingPage: React.FC = () => {
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '1.5rem',
               textAlign: 'left',
               marginBottom: '2.5rem',
@@ -603,6 +603,14 @@ const ComingSoonLandingPage: React.FC = () => {
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💰</div>
                 <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Pay per verified customer only</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📊</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Access analytics dashboard</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎯</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Get featured placement in app</div>
               </div>
             </div>
 
@@ -843,22 +851,6 @@ const ComingSoonLandingPage: React.FC = () => {
           <p style={{ marginBottom: '1.5rem' }}>
             Fair meetups for everyone. Earn rewards along the way.
           </p>
-          
-          <div style={{
-            marginBottom: '1.5rem',
-          }}>
-            <a
-              href="mailto:hello@mim.town"
-              style={{
-                color: '#14b8a6',
-                textDecoration: 'none',
-                fontSize: '1.125rem',
-                fontWeight: '600',
-              }}
-            >
-              hello@mim.town
-            </a>
-          </div>
           
           <p style={{
             fontSize: '0.875rem',
