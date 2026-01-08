@@ -637,7 +637,7 @@ const ComingSoonLandingPage: React.FC = () => {
             </div>
 
             <button
-              onClick={() => window.location.href = 'mailto:hello@mim.town?subject=Venue Partnership Inquiry'}
+              onClick={() => window.location.href = 'mailto:jlflynn@mimtown.com?subject=Venue Partnership Inquiry&body=Hi,%0D%0A%0D%0AI\'m interested in learning more about partnering with MiM.%0D%0A%0D%0AVenue Name:%0D%0AYour Name:%0D%0APhone:%0D%0A%0D%0ABest time to call:'}
               style={{
                 padding: '1.25rem 2.5rem',
                 background: 'white',
