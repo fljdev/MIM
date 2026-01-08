@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../../Config';
 import { 
@@ -102,6 +102,22 @@ const MeetupLobby: React.FC = () => {
   const [showAllVenues, setShowAllVenues] = useState(false);
   const [votingInProgress, setVotingInProgress] = useState(false);
 
+  // Ref to track previous status for navigation
+  const prevStatusRef = useRef<string | undefined>(undefined);
+
+  // Auto-navigate to confirmed page when meetup status becomes 'confirmed'
+  useEffect(() => {
+    const currentStatus = lobbyData?.meetup?.status;
+    console.log('🔍 Effect running - Current:', currentStatus, 'Previous:', prevStatusRef.current);
+    
+    if (currentStatus === 'confirmed' && prevStatusRef.current !== 'confirmed' && code) {
+      console.log('✅ Status changed to confirmed - NAVIGATING');
+      navigate(`/meetup/${code}/confirmed`);
+    }
+    
+    prevStatusRef.current = currentStatus;
+  }, [lobbyData, code, navigate]);
+
   // Fetch lobby data
   const fetchLobbyData = async () => {
     try {
@@ -195,7 +211,16 @@ const MeetupLobby: React.FC = () => {
       });
 
       if (response.ok) {
-        console.log('[VOTE] Vote recorded successfully');
+        const data = await response.json();
+        console.log('[VOTE] Vote recorded successfully', data);
+        
+        // Check if meetup was auto-confirmed
+        if (data.auto_confirmed) {
+          console.log('[VOTE] Meetup auto-confirmed! Navigating to confirmed page...');
+          navigate(`/meetup/${code}/confirmed`);
+          return;
+        }
+        
         // Refresh votes immediately
         await fetchVotes();
       } else {
