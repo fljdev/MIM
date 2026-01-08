@@ -102,8 +102,8 @@ const ComingSoonLandingPage: React.FC = () => {
             lineHeight: '1.2',
             color: '#1f2937',
           }}>
-            Stop the "Where Should We Meet?"<br />
-            Back-and-Forth
+            Fair Meetups.<br />
+            Finally.
           </h1>
           
           <p style={{
@@ -114,7 +114,7 @@ const ComingSoonLandingPage: React.FC = () => {
             marginLeft: 'auto',
             marginRight: 'auto',
           }}>
-            MiM finds the perfect middle ground for your group. Fair for everyone. No more endless group chats.
+            MiM finds the perfect middle ground for your group. Check in to earn points. Unlock exclusive venue discounts. Everyone wins.
           </p>
 
           <button
@@ -247,8 +247,8 @@ const ComingSoonLandingPage: React.FC = () => {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '1.5rem',
           }}>
             {[
               {
@@ -258,22 +258,34 @@ const ComingSoonLandingPage: React.FC = () => {
                 desc: 'Each person drops a pin where they\'re coming from. MiM calculates real travel times.',
               },
               {
-                icon: '🎯',
+                icon: '☕',
                 step: 'Step 2',
                 title: 'Pick Your Vibe',
                 desc: 'Coffee? Drinks? Food? Filter by what you\'re in the mood for.',
               },
               {
-                icon: '✨',
+                icon: '🎯',
                 step: 'Step 3',
-                title: 'Get Smart Suggestions',
+                title: 'Get Fair Suggestions',
                 desc: 'MiM suggests venues that are genuinely fair for everyone - not just geographic "middle".',
               },
               {
-                icon: '☕',
+                icon: '✨',
                 step: 'Step 4',
-                title: 'Discover Great Spots',
+                title: 'Choose Your Spot',
                 desc: 'See current specials, events, and what makes each venue special. Support local.',
+              },
+              {
+                icon: '📲',
+                step: 'Step 5',
+                title: 'Check In & Earn Points',
+                desc: 'Check in at the venue via MiM. Every check-in earns you MiM Points.',
+              },
+              {
+                icon: '💎',
+                step: 'Step 6',
+                title: 'Unlock Discounts',
+                desc: 'Redeem your MiM Points for exclusive venue discounts and perks. The more you meet, the more you save.',
               },
             ].map((item) => (
               <div key={item.step} style={{
@@ -345,6 +357,11 @@ const ComingSoonLandingPage: React.FC = () => {
                 desc: 'See current promos, happy hours, events, and live music. Know before you go.',
               },
               {
+                icon: '💎',
+                title: 'Earn Rewards',
+                desc: 'Check in at venues to earn MiM Points. Redeem for exclusive discounts and perks.',
+              },
+              {
                 icon: '🎯',
                 title: 'Discover Hidden Gems',
                 desc: 'Find great local spots you\'ve never tried. Support Dublin\'s independent venues.',
@@ -353,11 +370,6 @@ const ComingSoonLandingPage: React.FC = () => {
                 icon: '💬',
                 title: 'No More Group Chat Chaos',
                 desc: 'One link. Everyone inputs. Done in 2 minutes. No more "anyone? anyone?" messages.',
-              },
-              {
-                icon: '💯',
-                title: '100% Free Forever',
-                desc: 'Always free for users. No premium tier. No catches. No hidden costs.',
               },
             ].map((feature) => (
               <div key={feature.title} style={{
@@ -435,6 +447,116 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* MiM Points Rewards Section */}
+      <section style={{ padding: '5rem 2rem', background: 'white' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <h2 style={{
+              fontSize: '3rem',
+              fontWeight: '900',
+              color: '#1f2937',
+              marginBottom: '1rem',
+            }}>
+              💎 Earn MiM Points, Get Real Rewards
+            </h2>
+            <p style={{
+              fontSize: '1.5rem',
+              color: '#374151',
+              maxWidth: '800px',
+              margin: '0 auto',
+            }}>
+              The more you use MiM, the more you save. Check in at venues to earn points, redeem for exclusive discounts.
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '2rem',
+            marginBottom: '3rem',
+          }}>
+            <div style={{
+              background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
+              borderRadius: '24px',
+              padding: '2rem',
+              border: '2px solid #99f6e4',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📲</div>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '900',
+                color: '#1f2937',
+                marginBottom: '1rem',
+              }}>
+                Check In to Earn
+              </h3>
+              <p style={{ color: '#374151', fontSize: '1.125rem' }}>
+                When you arrive at a venue via MiM, check in with a tap. Each check-in earns you MiM Points automatically.
+              </p>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
+              borderRadius: '24px',
+              padding: '2rem',
+              border: '2px solid #99f6e4',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💰</div>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '900',
+                color: '#1f2937',
+                marginBottom: '1rem',
+              }}>
+                Redeem for Discounts
+              </h3>
+              <p style={{ color: '#374151', fontSize: '1.125rem' }}>
+                Use your points for exclusive venue discounts - 10% off, free desserts, priority seating, and more.
+              </p>
+            </div>
+
+            <div style={{
+              background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
+              borderRadius: '24px',
+              padding: '2rem',
+              border: '2px solid #99f6e4',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎁</div>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '900',
+                color: '#1f2937',
+                marginBottom: '1rem',
+              }}>
+                Unlock Perks
+              </h3>
+              <p style={{ color: '#374151', fontSize: '1.125rem' }}>
+                Hit milestones to unlock VIP perks - early event access, exclusive promos, and surprise rewards.
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(135deg, #17a398 0%, #14b8a6 100%)',
+            borderRadius: '16px',
+            padding: '2rem',
+            textAlign: 'center',
+            color: 'white',
+          }}>
+            <h3 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              marginBottom: '1rem',
+            }}>
+              Free to Use. Rewards to Earn.
+            </h3>
+            <p style={{ fontSize: '1.125rem', opacity: 0.95 }}>
+              MiM is 100% free for users. No subscription. No hidden fees. Just fair meetups and real rewards.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* For Venues Section */}
       <section style={{ padding: '5rem 2rem', background: 'white' }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
@@ -456,31 +578,53 @@ const ComingSoonLandingPage: React.FC = () => {
               marginBottom: '2rem',
               opacity: 0.95,
             }}>
-              Get discovered by groups actively planning to meet right now.
+              Get discovered by groups actively planning to meet right now. Only pay for verified new customers.
             </p>
             
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
               gap: '1.5rem',
               textAlign: 'left',
-              marginBottom: '2rem',
+              marginBottom: '2.5rem',
             }}>
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Highlight current specials & promos</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Highlight specials & promos</div>
               </div>
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎵</div>
                 <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Promote events & live music</div>
               </div>
               <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🌱</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Showcase dietary options</div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📲</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Track real customer check-ins</div>
               </div>
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💰</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Only pay for verified check-ins</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Pay per verified customer only</div>
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(255,255,255,0.15)',
+              borderRadius: '16px',
+              padding: '2rem',
+              marginBottom: '2rem',
+              textAlign: 'left',
+            }}>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                marginBottom: '1rem',
+              }}>
+                How It Works for Venues:
+              </h3>
+              <div style={{ fontSize: '1.125rem', lineHeight: '1.8' }}>
+                <p style={{ marginBottom: '0.75rem' }}>📍 Your venue appears in MiM's fair meetup suggestions</p>
+                <p style={{ marginBottom: '0.75rem' }}>📲 Users check in via MiM when they arrive (earning them MiM Points)</p>
+                <p style={{ marginBottom: '0.75rem' }}>💎 Users redeem points for your exclusive in-venue discounts</p>
+                <p>📊 You only pay based on verified new customer check-ins - 100% trackable ROI</p>
               </div>
             </div>
 
@@ -498,7 +642,7 @@ const ComingSoonLandingPage: React.FC = () => {
                 boxShadow: '0 10px 15px rgba(0,0,0,0.2)',
               }}
             >
-              Learn More for Venues
+              Partner With MiM
             </button>
           </div>
         </div>
@@ -516,14 +660,15 @@ const ComingSoonLandingPage: React.FC = () => {
             color: '#1f2937',
             marginBottom: '1rem',
           }}>
-            Built in Dublin, For Dublin
+            Built for Your City
           </h2>
           <p style={{
             fontSize: '1.25rem',
             color: '#6b7280',
             marginBottom: '3rem',
           }}>
-            Developed with support from Enterprise Ireland's New Frontiers Programme
+            Starting in Dublin. Expanding to Cork, Galway, and beyond.<br />
+            Supported by Enterprise Ireland's New Frontiers Programme
           </p>
           
           <div style={{
@@ -534,7 +679,7 @@ const ComingSoonLandingPage: React.FC = () => {
             {[
               { icon: '🚀', title: 'Enterprise Ireland', desc: 'New Frontiers Programme Phase 1' },
               { icon: '🎓', title: 'SETU Carlow', desc: 'Innovation & Entrepreneurship Support' },
-              { icon: '🌍', title: 'Dublin-First', desc: 'Built specifically for Dublin\'s transport infrastructure' },
+              { icon: '🌍', title: 'City-First Design', desc: 'Built to work with any city\'s transport infrastructure' },
             ].map((org) => (
               <div key={org.title} style={{
                 background: 'white',
@@ -570,14 +715,14 @@ const ComingSoonLandingPage: React.FC = () => {
             color: 'white',
             marginBottom: '1.5rem',
           }}>
-            Stop Planning. Start Meeting.
+            Fair Meetups. Real Rewards.
           </h2>
           <p style={{
             fontSize: '1.5rem',
             color: 'rgba(255,255,255,0.9)',
             marginBottom: '3rem',
           }}>
-            Be the first to know when MiM launches in 2026. Free forever. Works on any device.
+            Be the first to know when MiM launches in 2026. Earn points, unlock discounts, meet in the middle.
           </p>
           
           <div style={{
@@ -665,7 +810,7 @@ const ComingSoonLandingPage: React.FC = () => {
               color: '#6b7280',
               fontSize: '0.875rem',
             }}>
-              📍 Join hundreds of Dubliners tired of the "where should we meet?" debate
+              📍 Join Dubliners ready for fair meetups and real rewards
             </p>
           </div>
         </div>
@@ -696,7 +841,7 @@ const ComingSoonLandingPage: React.FC = () => {
             </span>
           </div>
           <p style={{ marginBottom: '1.5rem' }}>
-            Fair meetups for everyone. No more group chat chaos.
+            Fair meetups for everyone. Earn rewards along the way.
           </p>
           
           <div style={{
