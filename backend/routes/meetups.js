@@ -1245,6 +1245,49 @@ router.post('/:code/vote', authenticateToken, async (req, res) => {
     );
 
     console.log(`[VOTE] User ${userId} voted for venue ${venue_id}`);
+
+    // AUTO-CONFIRMATION: Check if both participants voted for the same venue
+    const allVotesResult = await pool.query(
+      `SELECT user_id, venue_id FROM meetup_venue_votes WHERE meetup_id = $1`,
+      [meetupId]
+    );
+
+    const votes = allVotesResult.rows;
+    console.log(`[VOTE AUTO-CONFIRM] Checking votes for meetup ${meetupId}:`, votes);
+
+    // Check if we have exactly 2 votes (both participants voted)
+    if (votes.length === 2) {
+      const venue1 = votes[0].venue_id;
+      const venue2 = votes[1].venue_id;
+      
+      // Check if both voted for the same venue
+      if (venue1 === venue2) {
+        console.log(`[VOTE AUTO-CONFIRM] Both users voted for venue ${venue1} - auto-confirming meetup`);
+        
+        // Update meetup status to confirmed
+        await pool.query(
+          `UPDATE meetups SET status = 'confirmed' WHERE id = $1`,
+          [meetupId]
+        );
+        
+        console.log(`[VOTE AUTO-CONFIRM] Meetup ${meetupId} auto-confirmed with venue ${venue1}`);
+        
+        // Return response indicating auto-confirmation
+        return res.json({ 
+          success: true, 
+          message: 'Vote recorded and meetup auto-confirmed!',
+          auto_confirmed: true,
+          confirmed_venue: venue1,
+          vote: result.rows[0] 
+        });
+      } else {
+        console.log(`[VOTE AUTO-CONFIRM] Votes don't match - venue ${venue1} vs ${venue2}`);
+      }
+    } else {
+      console.log(`[VOTE AUTO-CONFIRM] Only ${votes.length} vote(s) recorded - waiting for second participant`);
+    }
+
+    // If not auto-confirmed, return standard success response
     res.json({ success: true, message: 'Vote recorded', vote: result.rows[0] });
 
   } catch (error) {
