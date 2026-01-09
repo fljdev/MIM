@@ -114,7 +114,7 @@ const ComingSoonLandingPage: React.FC = () => {
             marginLeft: 'auto',
             marginRight: 'auto',
           }}>
-            MiM finds the perfect middle ground for your group. Check in to earn points. Unlock exclusive venue discounts. Everyone wins.
+            MiM finds the perfect middle ground for your group. Private, safe, and fair for everyone. Check in to earn points. Unlock exclusive venue discounts.
           </p>
 
           <button
@@ -362,14 +362,14 @@ const ComingSoonLandingPage: React.FC = () => {
                 desc: 'Check in at venues to earn MiM Points. Redeem for exclusive discounts and perks.',
               },
               {
+                icon: '🔒',
+                title: 'Privacy First',
+                desc: 'Optional location privacy keeps your exact address private. Perfect for first dates, new friends, or anyone who values discretion and safety.',
+              },
+              {
                 icon: '🎯',
                 title: 'Discover Hidden Gems',
                 desc: 'Find great local spots you\'ve never tried. Support Dublin\'s independent venues.',
-              },
-              {
-                icon: '💬',
-                title: 'No More Group Chat Chaos',
-                desc: 'One link. Everyone inputs. Done in 2 minutes. No more "anyone? anyone?" messages.',
               },
             ].map((feature) => (
               <div key={feature.title} style={{
@@ -422,7 +422,7 @@ const ComingSoonLandingPage: React.FC = () => {
               { icon: '🏃', title: 'Running Clubs', desc: 'Post-run coffee that works for everyone' },
               { icon: '💼', title: 'Casual Work Meetings', desc: '"Let\'s grab coffee" - no email tennis' },
               { icon: '🎂', title: 'Celebrations', desc: 'Birthday drinks where everyone can actually make it' },
-              { icon: '👨‍👩‍👧‍👦', title: 'Family Meetups', desc: 'Fair for all generations and mobilities' },
+              { icon: '🏳️‍🌈', title: 'LGBTQ+ Social Groups', desc: 'Safe spaces for community meetups with venue inclusivity filters' },
             ].map((use) => (
               <div key={use.title} style={{
                 background: 'white',
@@ -597,6 +597,10 @@ const ComingSoonLandingPage: React.FC = () => {
                 <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Promote events & live music</div>
               </div>
               <div>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏳️‍🌈</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Flag as LGBTQ+ friendly</div>
+              </div>
+              <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📲</div>
                 <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Track real customer check-ins</div>
               </div>
@@ -607,10 +611,6 @@ const ComingSoonLandingPage: React.FC = () => {
               <div>
                 <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📊</div>
                 <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Access analytics dashboard</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎯</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Get featured placement in app</div>
               </div>
             </div>
 
