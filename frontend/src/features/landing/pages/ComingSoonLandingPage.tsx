@@ -144,6 +144,115 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Values Badges Section */}
+      <section style={{
+        padding: '2rem',
+        background: 'white',
+        borderBottom: '2px solid #e5e7eb',
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '3rem',
+          flexWrap: 'wrap',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}>
+            <div style={{
+              fontSize: '2rem',
+              background: 'linear-gradient(135deg, #f0fdfa 0%, #cffafe 100%)',
+              padding: '0.75rem',
+              borderRadius: '12px',
+              border: '2px solid #99f6e4',
+            }}>
+              🏳️‍🌈
+            </div>
+            <div>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: '#1f2937',
+              }}>
+                LGBTQ+ Friendly
+              </div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+              }}>
+                Safe spaces & inclusivity
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}>
+            <div style={{
+              fontSize: '2rem',
+              background: 'linear-gradient(135deg, #f0fdfa 0%, #cffafe 100%)',
+              padding: '0.75rem',
+              borderRadius: '12px',
+              border: '2px solid #99f6e4',
+            }}>
+              🌱
+            </div>
+            <div>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: '#1f2937',
+              }}>
+                Sustainable Transport
+              </div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+              }}>
+                Luas, bus, bike, walking
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}>
+            <div style={{
+              fontSize: '2rem',
+              background: 'linear-gradient(135deg, #f0fdfa 0%, #cffafe 100%)',
+              padding: '0.75rem',
+              borderRadius: '12px',
+              border: '2px solid #99f6e4',
+            }}>
+              🔒
+            </div>
+            <div>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: '#1f2937',
+              }}>
+                Privacy First
+              </div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: '#6b7280',
+              }}>
+                Your location stays private
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Problem vs Solution Section */}
       <section style={{ padding: '5rem 2rem', background: 'white' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
