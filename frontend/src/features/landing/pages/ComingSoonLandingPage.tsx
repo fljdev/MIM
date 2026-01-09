@@ -527,11 +527,11 @@ const ComingSoonLandingPage: React.FC = () => {
           }}>
             {[
               { icon: '👥', title: 'Friend Groups', desc: '"Let\'s meet for brunch" - sorted in 2 minutes' },
-              { icon: '📚', title: 'Book Clubs', desc: 'Fair rotation of venues across Dublin' },
+              { icon: '🏳️‍🌈', title: 'LGBTQ+ Social Groups', desc: 'Safe spaces for community meetups with venue inclusivity filters' },
               { icon: '🏃', title: 'Running Clubs', desc: 'Post-run coffee that works for everyone' },
               { icon: '💼', title: 'Casual Work Meetings', desc: '"Let\'s grab coffee" - no email tennis' },
               { icon: '🎂', title: 'Celebrations', desc: 'Birthday drinks where everyone can actually make it' },
-              { icon: '🏳️‍🌈', title: 'LGBTQ+ Social Groups', desc: 'Safe spaces for community meetups with venue inclusivity filters' },
+              { icon: '📚', title: 'Book Clubs', desc: 'Fair rotation of venues across Dublin' },
             ].map((use) => (
               <div key={use.title} style={{
                 background: 'white',
