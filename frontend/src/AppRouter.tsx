@@ -12,6 +12,7 @@ import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
 import ChoiceSelectorPage from './features/landing/pages/ChoiceSelectorPage';
 import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
 import VenuesLandingPage from './features/landing/pages/VenuesLandingPage';
+import LoginPage from './features/auth/pages/LoginPage';
 import ProfileDashboard from './features/profile/pages/ProfileDashboard';
 import { useAuth } from './features/auth/contexts/AuthContext';
 
@@ -31,7 +32,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
   
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return <>{children}</>;
@@ -49,6 +50,9 @@ const AppRouter: React.FC = () => {
 
         {/* Business landing page */}
         <Route path="/venues" element={<VenuesLandingPage />} />
+
+        {/* Login/Signup page */}
+        <Route path="/login" element={<LoginPage />} />
 
         {/* Meetup flow routes */}
         <Route path="/create-meetup" element={<CreateMeetup />} />
