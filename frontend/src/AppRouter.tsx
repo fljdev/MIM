@@ -9,6 +9,7 @@ import MeetupResults from './features/meetup/pages/MeetupResults';
 import MeetupConfirmed from './features/meetup/pages/MeetupConfirmed';
 import InvitationView from './features/meetup/pages/InvitationView';
 import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
+import ChoiceSelectorPage from './features/landing/pages/ChoiceSelectorPage';
 import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
 import VenuesLandingPage from './features/landing/pages/VenuesLandingPage';
 import ProfileDashboard from './features/profile/pages/ProfileDashboard';
@@ -36,53 +37,18 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// Home Route - redirects logged-in users to profile
-const HomeRoute: React.FC = () => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // If logged in, redirect to profile/dashboard
-  if (user) {
-    return <Navigate to="/profile" replace />;
-  }
-  
-  // If not logged in, show landing page
-  return <App />;
-};
-
 const AppRouter: React.FC = () => {
-  // Coming Soon mode check
-  const isComingSoonMode = process.env.REACT_APP_COMING_SOON === 'true';
-  const bypassKey = new URLSearchParams(window.location.search).get('dev');
-  const hasDevAccess = bypassKey === 'mimdev2025';
-  
-  // Allow meetup-related paths to bypass Coming Soon
-  const currentPath = window.location.pathname;
-  const isMeetupPath = currentPath.startsWith('/meetup/') || 
-                       currentPath.startsWith('/join/') ||
-                       currentPath.startsWith('/invite/') ||
-                       currentPath.startsWith('/create-meetup');
-
-  // Show Coming Soon page ONLY for homepage, not meetup paths
-  if (isComingSoonMode && !hasDevAccess && !isMeetupPath) {
-    return <ComingSoonLandingPage />;
-  }
-
   return (
     <Router>
       <Routes>
-        {/* Main app route - redirects to profile if logged in */}
-        <Route path="/" element={<HomeRoute />} />
+        {/* Choice selector - main landing */}
+        <Route path="/" element={<ChoiceSelectorPage />} />
+
+        {/* Consumer landing page */}
+        <Route path="/app" element={<ComingSoonLandingPage />} />
+
+        {/* Business landing page */}
+        <Route path="/venues" element={<VenuesLandingPage />} />
 
         {/* Meetup flow routes */}
         <Route path="/create-meetup" element={<CreateMeetup />} />
@@ -97,9 +63,6 @@ const AppRouter: React.FC = () => {
 
         {/* Profile route */}
         <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
-
-        {/* Venues landing page */}
-        <Route path="/venues" element={<VenuesLandingPage />} />
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
