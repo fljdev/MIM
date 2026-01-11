@@ -62,7 +62,7 @@ const AppRouter: React.FC = () => {
         <Route path="/meetup/:code/confirmed" element={<ProtectedRoute><MeetupConfirmed /></ProtectedRoute>} />
 
         {/* Profile route */}
-        <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProfileDashboard />} />
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
