@@ -10,6 +10,7 @@ import MeetupConfirmed from './features/meetup/pages/MeetupConfirmed';
 import InvitationView from './features/meetup/pages/InvitationView';
 import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
 import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
+import VenuesLandingPage from './features/landing/pages/VenuesLandingPage';
 import ProfileDashboard from './features/profile/pages/ProfileDashboard';
 import { useAuth } from './features/auth/contexts/AuthContext';
 
@@ -96,6 +97,9 @@ const AppRouter: React.FC = () => {
 
         {/* Profile route */}
         <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
+
+        {/* Venues landing page */}
+        <Route path="/venues" element={<VenuesLandingPage />} />
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
