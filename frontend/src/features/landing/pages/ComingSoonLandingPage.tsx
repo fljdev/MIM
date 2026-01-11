@@ -253,83 +253,6 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Problem vs Solution Section */}
-      <section style={{ padding: '5rem 2rem', background: 'white' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <h2 style={{
-              fontSize: '2.5rem',
-              fontWeight: '900',
-              color: '#1f2937',
-              marginBottom: '1rem',
-            }}>
-              Sound Familiar?
-            </h2>
-            <p style={{
-              fontSize: '1.25rem',
-              color: '#6b7280',
-              maxWidth: '800px',
-              margin: '0 auto',
-            }}>
-              We've all been stuck in the endless "where should we meet?" group chat. There's a better way.
-            </p>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2rem',
-            marginBottom: '3rem',
-          }}>
-            {/* Old Way */}
-            <div style={{
-              background: '#fef2f2',
-              border: '4px solid #fecaca',
-              borderRadius: '24px',
-              padding: '2rem',
-            }}>
-              <h3 style={{
-                fontSize: '1.875rem',
-                fontWeight: '900',
-                color: '#dc2626',
-                marginBottom: '1.5rem',
-              }}>
-                ❌ The Old Way
-              </h3>
-              <div style={{ fontSize: '1.125rem', color: '#374151' }}>
-                <p style={{ marginBottom: '1rem' }}>💬 12 messages in the group chat, still no decision</p>
-                <p style={{ marginBottom: '1rem' }}>⏰ Someone always gets stuck with a 45-minute journey while others walk 5 minutes</p>
-                <p style={{ marginBottom: '1rem' }}>😤 "Anywhere central works" doesn't actually work for anyone</p>
-                <p>🤷 Eventually just pick Temple Bar because... Dublin?</p>
-              </div>
-            </div>
-
-            {/* MiM Way */}
-            <div style={{
-              background: '#f0fdf4',
-              border: '4px solid #bbf7d0',
-              borderRadius: '24px',
-              padding: '2rem',
-            }}>
-              <h3 style={{
-                fontSize: '1.875rem',
-                fontWeight: '900',
-                color: '#16a34a',
-                marginBottom: '1.5rem',
-              }}>
-                ✓ The MiM Way
-              </h3>
-              <div style={{ fontSize: '1.125rem', color: '#374151' }}>
-                <p style={{ marginBottom: '1rem' }}>🎯 Everyone inputs their location once</p>
-                <p style={{ marginBottom: '1rem' }}>⚖️ MiM calculates fair meeting spots based on actual travel time (Luas, bus, cycling, walking)</p>
-                <p style={{ marginBottom: '1rem' }}>☕ See venues with current promos, events, and specials</p>
-                <p>✅ Decided in 2 minutes. Everyone's happy.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* How It Works Section */}
       <section style={{
         padding: '5rem 2rem',
@@ -556,216 +479,7 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* MiM Points Rewards Section */}
-      <section style={{ padding: '5rem 2rem', background: 'white' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <h2 style={{
-              fontSize: '3rem',
-              fontWeight: '900',
-              color: '#1f2937',
-              marginBottom: '1rem',
-            }}>
-              💎 Earn MiM Points, Get Real Rewards
-            </h2>
-            <p style={{
-              fontSize: '1.5rem',
-              color: '#374151',
-              maxWidth: '800px',
-              margin: '0 auto',
-            }}>
-              The more you use MiM, the more you save. Check in at venues to earn points, redeem for exclusive discounts.
-            </p>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2rem',
-            marginBottom: '3rem',
-          }}>
-            <div style={{
-              background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
-              borderRadius: '24px',
-              padding: '2rem',
-              border: '2px solid #99f6e4',
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📲</div>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '900',
-                color: '#1f2937',
-                marginBottom: '1rem',
-              }}>
-                Check In to Earn
-              </h3>
-              <p style={{ color: '#374151', fontSize: '1.125rem' }}>
-                When you arrive at a venue via MiM, check in with a tap. Each check-in earns you MiM Points automatically.
-              </p>
-            </div>
-
-            <div style={{
-              background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
-              borderRadius: '24px',
-              padding: '2rem',
-              border: '2px solid #99f6e4',
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💰</div>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '900',
-                color: '#1f2937',
-                marginBottom: '1rem',
-              }}>
-                Redeem for Discounts
-              </h3>
-              <p style={{ color: '#374151', fontSize: '1.125rem' }}>
-                Use your points for exclusive venue discounts - 10% off, free desserts, priority seating, and more.
-              </p>
-            </div>
-
-            <div style={{
-              background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
-              borderRadius: '24px',
-              padding: '2rem',
-              border: '2px solid #99f6e4',
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎁</div>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '900',
-                color: '#1f2937',
-                marginBottom: '1rem',
-              }}>
-                Unlock Perks
-              </h3>
-              <p style={{ color: '#374151', fontSize: '1.125rem' }}>
-                Hit milestones to unlock VIP perks - early event access, exclusive promos, and surprise rewards.
-              </p>
-            </div>
-          </div>
-
-          <div style={{
-            background: 'linear-gradient(135deg, #17a398 0%, #14b8a6 100%)',
-            borderRadius: '16px',
-            padding: '2rem',
-            textAlign: 'center',
-            color: 'white',
-          }}>
-            <h3 style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              marginBottom: '1rem',
-            }}>
-              Free to Use. Rewards to Earn.
-            </h3>
-            <p style={{ fontSize: '1.125rem', opacity: 0.95 }}>
-              MiM is 100% free for users. No subscription. No hidden fees. Just fair meetups and real rewards.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* For Venues Section */}
-      <section style={{ padding: '5rem 2rem', background: 'white' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #17a398 0%, #14b8a6 100%)',
-            borderRadius: '24px',
-            padding: '4rem 2rem',
-            color: 'white',
-          }}>
-            <h2 style={{
-              fontSize: '3rem',
-              fontWeight: '900',
-              marginBottom: '1.5rem',
-            }}>
-              Own a Cafe, Bar, or Restaurant?
-            </h2>
-            <p style={{
-              fontSize: '1.5rem',
-              marginBottom: '2rem',
-              opacity: 0.95,
-            }}>
-              Get discovered by groups actively planning to meet right now. Only pay for verified new customers.
-            </p>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1.5rem',
-              textAlign: 'left',
-              marginBottom: '2.5rem',
-            }}>
-              <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Highlight specials & promos</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎵</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Promote events & live music</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏳️‍🌈</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Flag as LGBTQ+ friendly</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📲</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Track real customer check-ins</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💰</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Pay per verified customer only</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📊</div>
-                <div style={{ fontSize: '1.125rem', fontWeight: '600' }}>Access analytics dashboard</div>
-              </div>
-            </div>
-
-            <div style={{
-              background: 'rgba(255,255,255,0.15)',
-              borderRadius: '16px',
-              padding: '2rem',
-              marginBottom: '2rem',
-              textAlign: 'left',
-            }}>
-              <h3 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '1rem',
-              }}>
-                How It Works for Venues:
-              </h3>
-              <div style={{ fontSize: '1.125rem', lineHeight: '1.8' }}>
-                <p style={{ marginBottom: '0.75rem' }}>📍 Your venue appears in MiM's fair meetup suggestions</p>
-                <p style={{ marginBottom: '0.75rem' }}>📲 Users check in via MiM when they arrive (earning them MiM Points)</p>
-                <p style={{ marginBottom: '0.75rem' }}>💎 Users redeem points for your exclusive in-venue discounts</p>
-                <p>📊 You only pay based on verified new customer check-ins - 100% trackable ROI</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => window.location.href = 'mailto:jlflynn@mimtown.com?subject=Venue Partnership Inquiry&body=Hi,%0D%0A%0D%0AI\'m interested in learning more about partnering with MiM.%0D%0A%0D%0AVenue Name:%0D%0AYour Name:%0D%0APhone:%0D%0A%0D%0ABest time to call:'}
-              style={{
-                padding: '1.25rem 2.5rem',
-                background: 'white',
-                color: '#14b8a6',
-                fontSize: '1.25rem',
-                borderRadius: '12px',
-                border: 'none',
-                fontWeight: '700',
-                cursor: 'pointer',
-                boxShadow: '0 10px 15px rgba(0,0,0,0.2)',
-              }}
-            >
-              Partner With MiM
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Backed By Section */}
+      {/* Built for Your City Section */}
       <section style={{
         padding: '5rem 2rem',
         background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
@@ -931,6 +645,29 @@ const ComingSoonLandingPage: React.FC = () => {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Venue Owner Link Section */}
+      <section style={{
+        padding: '2rem',
+        textAlign: 'center',
+        background: '#f0fdfa',
+      }}>
+        <p style={{
+          fontSize: '0.875rem',
+          color: '#6b7280',
+        }}>
+          Venue owner?{' '}
+          <a
+            href="/venues"
+            style={{
+              color: '#14b8a6',
+              textDecoration: 'underline',
+            }}
+          >
+            Learn more about partnerships →
+          </a>
+        </p>
       </section>
 
       {/* Footer */}
