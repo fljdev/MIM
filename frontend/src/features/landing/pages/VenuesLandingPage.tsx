@@ -453,7 +453,7 @@ export default function VenuesLandingPage() {
                 color: colors.textLight,
               }}
             >
-              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 100 check-ins/month</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 200 check-ins/month</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ Everything in Free</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ Analytics dashboard</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ LGBTQ+ friendly badge</li>
@@ -508,7 +508,7 @@ export default function VenuesLandingPage() {
                 color: colors.textLight,
               }}
             >
-              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 300 check-ins/month</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 500 check-ins/month</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ Everything in Growth</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ Featured placement in app</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ Dedicated account manager</li>
@@ -606,7 +606,7 @@ export default function VenuesLandingPage() {
                 MiM:
               </h4>
               <div style={{ fontSize: '1rem', color: colors.textLight, lineHeight: '1.8' }}>
-                <p style={{ marginBottom: '0.5rem' }}>✅ €29/month for 100 verified customers</p>
+                <p style={{ marginBottom: '0.5rem' }}>✅ €19/month for 200 verified customers</p>
                 <p style={{ marginBottom: '0.5rem' }}>✅ 100% trackable attribution</p>
                 <p style={{ marginBottom: '0.5rem' }}>✅ Pay only for people who actually show up</p>
                 <p style={{ marginBottom: '0.5rem' }}>✅ Cancel anytime, no contracts</p>
