@@ -110,7 +110,7 @@ export default function VenuesLandingPage() {
           >
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📱</div>
             <p style={{ fontSize: '1.125rem', color: colors.textDark }}>
-              You post on Instagram hoping someone sees it
+              Organic reach on social media keeps declining
             </p>
           </div>
           <div
@@ -124,7 +124,7 @@ export default function VenuesLandingPage() {
           >
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>💸</div>
             <p style={{ fontSize: '1.125rem', color: colors.textDark }}>
-              You pay for ads with unclear ROI
+              Ad spend doesn't guarantee customers walk through the door
             </p>
           </div>
           <div
@@ -138,7 +138,7 @@ export default function VenuesLandingPage() {
           >
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📅</div>
             <p style={{ fontSize: '1.125rem', color: colors.textDark }}>
-              Group bookings are unpredictable
+              Group bookings are hard to predict and track
             </p>
           </div>
         </div>
