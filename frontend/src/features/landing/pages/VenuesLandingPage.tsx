@@ -442,7 +442,7 @@ export default function VenuesLandingPage() {
                 color: colors.textDark,
               }}
             >
-              €29<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
+              €19<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
             </div>
             <ul
               style={{
@@ -497,7 +497,7 @@ export default function VenuesLandingPage() {
                 color: colors.textDark,
               }}
             >
-              €79<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
+              €39<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
             </div>
             <ul
               style={{
