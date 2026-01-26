@@ -3,15 +3,11 @@ import React from 'react';
 // Design Tokens
 const colors = {
   tealGradient: 'linear-gradient(135deg, #17a398 0%, #14b8a6 100%)',
-  greenGradient: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
   lightCyan: '#f0fdfa',
   lightCyanAlt: '#cffafe',
-  lightGreen: '#ecfdf5',
   border: '#99f6e4',
-  greenBorder: '#6ee7b7',
   textDark: '#1f2937',
   textLight: '#6b7280',
-  greenText: '#047857',
   white: '#ffffff',
 };
 
@@ -47,7 +43,7 @@ export default function VenuesLandingPage() {
             lineHeight: '1.2',
           }}
         >
-          Get Discovered By Eco-Conscious Groups Planning Meetups Right Now
+          Get Discovered By Groups Planning Meetups Right Now
         </h1>
         <h2
           style={{
@@ -57,7 +53,7 @@ export default function VenuesLandingPage() {
             lineHeight: '1.4',
           }}
         >
-          Connect with sustainable customers actively choosing where to go. Boost your ESG credentials with verified carbon reduction data. Pay only for visits.
+          Connect with customers actively choosing where to go. Pay only for verified visits. No upfront costs.
         </h2>
         <button
           onClick={scrollToPricing}
@@ -75,182 +71,6 @@ export default function VenuesLandingPage() {
         >
           See How It Works ↓
         </button>
-      </section>
-
-      {/* ESG & Sustainability Benefits Section - NEW */}
-      <section
-        style={{
-          background: colors.greenGradient,
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '4rem 2rem',
-        }}
-      >
-        <h2
-          style={{
-            fontSize: '36px',
-            fontWeight: 'bold',
-            marginBottom: '1.5rem',
-            textAlign: 'center',
-            color: colors.textDark,
-          }}
-        >
-          🌱 Strengthen Your Sustainability Profile
-        </h2>
-        <p
-          style={{
-            fontSize: '1.25rem',
-            marginBottom: '3rem',
-            textAlign: 'center',
-            color: colors.textLight,
-            maxWidth: '900px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-          }}
-        >
-          MiM customers travel by public transport, bike, or on foot—95%+ lower emissions than car travel. Every visit to your venue through MiM generates verified carbon reduction data for your ESG reporting.
-        </p>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2rem',
-          }}
-        >
-          <div
-            style={{
-              background: colors.white,
-              border: `3px solid ${colors.greenBorder}`,
-              borderRadius: '16px',
-              padding: '2rem',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            }}
-          >
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📊</div>
-            <h3
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '1rem',
-                color: colors.textDark,
-              }}
-            >
-              Verified Carbon Data
-            </h3>
-            <p style={{ fontSize: '1.125rem', color: colors.textLight, lineHeight: '1.6' }}>
-              Get detailed carbon reduction metrics from every MiM visit. Export data for your annual sustainability reports, ESG frameworks, and climate compliance requirements.
-            </p>
-          </div>
-          <div
-            style={{
-              background: colors.white,
-              border: `3px solid ${colors.greenBorder}`,
-              borderRadius: '16px',
-              padding: '2rem',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            }}
-          >
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎯</div>
-            <h3
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '1rem',
-                color: colors.textDark,
-              }}
-            >
-              UN SDG Alignment
-            </h3>
-            <p style={{ fontSize: '1.125rem', color: colors.textLight, lineHeight: '1.6' }}>
-              Being on MiM aligns your venue with UN Sustainable Development Goals 11 (Sustainable Cities) and 13 (Climate Action). Perfect for grant applications and corporate partnerships.
-            </p>
-          </div>
-          <div
-            style={{
-              background: colors.white,
-              border: `3px solid ${colors.greenBorder}`,
-              borderRadius: '16px',
-              padding: '2rem',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            }}
-          >
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏛️</div>
-            <h3
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '1rem',
-                color: colors.textDark,
-              }}
-            >
-              Dublin Climate Action
-            </h3>
-            <p style={{ fontSize: '1.125rem', color: colors.textLight, lineHeight: '1.6' }}>
-              Support Dublin City Council's Climate Action Plan by promoting sustainable transport. Show your commitment to local climate goals with real data.
-            </p>
-          </div>
-        </div>
-
-        {/* ESG Reporting Callout */}
-        <div
-          style={{
-            background: colors.white,
-            border: `3px solid ${colors.greenBorder}`,
-            borderRadius: '20px',
-            padding: '2.5rem',
-            marginTop: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          <h3
-            style={{
-              fontSize: '1.75rem',
-              fontWeight: '700',
-              color: colors.textDark,
-              marginBottom: '1rem',
-            }}
-          >
-            ESG Reporting Made Easy
-          </h3>
-          <p
-            style={{
-              fontSize: '1.125rem',
-              color: colors.textLight,
-              marginBottom: '1.5rem',
-              maxWidth: '800px',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              lineHeight: '1.7',
-            }}
-          >
-            Every MiM customer visit generates quantifiable carbon reduction data that you can include in your Scope 3 emissions reporting, B Corp certification, and sustainability statements.
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              gap: '1.5rem',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
-            {['ESG Frameworks', 'B Corp Certification', 'GRI Standards', 'CSRD Compliance'].map((item) => (
-              <div
-                key={item}
-                style={{
-                  background: colors.greenGradient,
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '12px',
-                  border: `2px solid ${colors.greenBorder}`,
-                  fontWeight: '700',
-                  color: colors.greenText,
-                  fontSize: '1rem',
-                }}
-              >
-                ✓ {item}
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* Problem Section */}
@@ -361,7 +181,7 @@ export default function VenuesLandingPage() {
               100% Trackable ROI
             </h3>
             <p style={{ fontSize: '1.125rem', color: colors.textLight }}>
-              Every customer who visits through MiM is verified and attributed. You know exactly what you're paying for—plus bonus carbon data for your reports.
+              Every customer who visits through MiM is verified and attributed. You know exactly what you're paying for.
             </p>
           </div>
           <div
@@ -406,10 +226,10 @@ export default function VenuesLandingPage() {
                 color: colors.textDark,
               }}
             >
-              Sustainable, Active Intent
+              Active Intent
             </h3>
             <p style={{ fontSize: '1.125rem', color: colors.textLight }}>
-              These aren't random impressions. These are eco-conscious groups actively deciding where to meet right now using sustainable transport.
+              These aren't random impressions. These are groups actively deciding where to meet right now.
             </p>
           </div>
         </div>
@@ -437,67 +257,55 @@ export default function VenuesLandingPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '3rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '2rem',
           }}
         >
           {[
             {
-              step: '1',
-              icon: '🏢',
-              title: 'Claim Your Listing',
-              desc: 'Already on the map. Free verification. Add photos, hours, specials.',
+              icon: '📝',
+              title: 'List Your Venue (Free)',
+              description: 'Create your profile. Add photos, location, basic details. No cost to be on the platform.',
             },
             {
-              step: '2',
-              icon: '🎯',
-              title: 'Groups Discover You',
-              desc: 'MiM recommends your venue to groups meeting in your area via sustainable transport.',
+              icon: '✨',
+              title: 'Highlight What Makes You Special',
+              description: 'Post your happy hours, quiz nights, live music, vegan menu, LGBTQ+ friendly status. Keep it updated.',
             },
             {
-              step: '3',
-              icon: '✅',
-              title: 'Customers Check In',
-              desc: 'Groups choose your venue, visit, check in. You get verified foot traffic + carbon data.',
+              icon: '🔍',
+              title: 'Get Discovered',
+              description: 'When groups coordinate meetups, MiM suggests venues based on travel fairness. You appear when you\'re actually convenient.',
             },
             {
-              step: '4',
-              icon: '📈',
-              title: 'Track Everything',
-              desc: 'Dashboard shows visits, revenue attribution, and carbon reduction metrics for ESG reporting.',
+              icon: '💳',
+              title: 'Track & Pay for Results',
+              description: 'Customers check in via MiM. You see verified visits in your dashboard. Pay only for those check-ins.',
             },
-          ].map((item) => (
-            <div key={item.step} style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '50%',
-                  background: colors.tealGradient,
-                  color: colors.white,
-                  fontSize: '1.5rem',
-                  fontWeight: '900',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1rem',
-                }}
-              >
-                {item.step}
-              </div>
-              <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>{item.icon}</div>
+          ].map((step, index) => (
+            <div
+              key={index}
+              style={{
+                background: colors.lightCyan,
+                border: `2px solid ${colors.border}`,
+                borderRadius: '12px',
+                padding: '2rem',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{step.icon}</div>
               <h3
                 style={{
                   fontSize: '1.25rem',
                   fontWeight: '700',
+                  marginBottom: '1rem',
                   color: colors.textDark,
-                  marginBottom: '0.75rem',
                 }}
               >
-                {item.title}
+                {step.title}
               </h3>
-              <p style={{ fontSize: '1.125rem', color: colors.textLight }}>
-                {item.desc}
+              <p style={{ fontSize: '1rem', color: colors.textLight }}>
+                {step.description}
               </p>
             </div>
           ))}
@@ -518,159 +326,254 @@ export default function VenuesLandingPage() {
           style={{
             fontSize: '36px',
             fontWeight: 'bold',
-            marginBottom: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          Transparent Pricing
-        </h2>
-        <p
-          style={{
-            fontSize: '1.25rem',
-            color: colors.textLight,
-            textAlign: 'center',
             marginBottom: '3rem',
+            textAlign: 'center',
           }}
         >
-          Choose the plan that fits your business. Cancel anytime.
-        </p>
+          Simple, Performance-Based Pricing
+        </h2>
+        
+        {/* Pricing Cards */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '2rem',
+            marginBottom: '2rem',
+          }}
+        >
+          {/* Free Tier */}
+          <div
+            style={{
+              background: colors.white,
+              border: `2px solid ${colors.border}`,
+              borderRadius: '12px',
+              padding: '2rem',
+            }}
+          >
+            <h3
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                marginBottom: '0.5rem',
+                color: colors.textDark,
+              }}
+            >
+              Free
+            </h3>
+            <div
+              style={{
+                fontSize: '2.5rem',
+                fontWeight: '900',
+                marginBottom: '1.5rem',
+                color: colors.textDark,
+              }}
+            >
+              €0<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
+            </div>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                marginBottom: '1.5rem',
+                fontSize: '1rem',
+                color: colors.textLight,
+              }}
+            >
+              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 20 check-ins/month</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Basic venue listing</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Add promos & events</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Dashboard access</li>
+            </ul>
+            <p
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.textDark,
+              }}
+            >
+              Best for: Testing the platform
+            </p>
+          </div>
+
+          {/* Growth Tier - MOST POPULAR */}
+          <div
+            style={{
+              background: colors.white,
+              border: '3px solid #14b8a6',
+              borderRadius: '12px',
+              padding: '2rem',
+              position: 'relative',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: '-12px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#14b8a6',
+                color: colors.white,
+                padding: '0.5rem 1.5rem',
+                borderRadius: '12px',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                letterSpacing: '0.05em',
+              }}
+            >
+              MOST POPULAR
+            </div>
+            <h3
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                marginBottom: '0.5rem',
+                marginTop: '1rem',
+                color: colors.textDark,
+              }}
+            >
+              Growth
+            </h3>
+            <div
+              style={{
+                fontSize: '2.5rem',
+                fontWeight: '900',
+                marginBottom: '1.5rem',
+                color: colors.textDark,
+              }}
+            >
+              €19<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
+            </div>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                marginBottom: '1.5rem',
+                fontSize: '1rem',
+                color: colors.textLight,
+              }}
+            >
+              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 200 check-ins/month</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Everything in Free</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Analytics dashboard</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ LGBTQ+ friendly badge</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Priority support</li>
+            </ul>
+            <p
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.textDark,
+              }}
+            >
+              Best for: Active venues
+            </p>
+          </div>
+
+          {/* Pro Tier */}
+          <div
+            style={{
+              background: colors.white,
+              border: `2px solid ${colors.border}`,
+              borderRadius: '12px',
+              padding: '2rem',
+            }}
+          >
+            <h3
+              style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                marginBottom: '0.5rem',
+                color: colors.textDark,
+              }}
+            >
+              Pro
+            </h3>
+            <div
+              style={{
+                fontSize: '2.5rem',
+                fontWeight: '900',
+                marginBottom: '1.5rem',
+                color: colors.textDark,
+              }}
+            >
+              €39<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
+            </div>
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                marginBottom: '1.5rem',
+                fontSize: '1rem',
+                color: colors.textLight,
+              }}
+            >
+              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 500 check-ins/month</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Everything in Growth</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Featured placement in app</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Dedicated account manager</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Early access to new features</li>
+            </ul>
+            <p
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                color: colors.textDark,
+              }}
+            >
+              Best for: High-traffic venues
+            </p>
+          </div>
+        </div>
+
+        {/* Pay-As-You-Go Option */}
+        <div
+          style={{
+            background: colors.lightCyan,
+            border: `2px solid ${colors.border}`,
+            borderRadius: '12px',
+            padding: '2rem',
+            textAlign: 'center',
             marginBottom: '3rem',
           }}
         >
-          {[
-            {
-              name: 'Starter',
-              price: '€19/month',
-              checkins: 'Up to 200 check-ins/month',
-              features: ['Basic listing', 'Performance dashboard', 'Carbon reduction data', 'Email support'],
-            },
-            {
-              name: 'Growth',
-              price: '€49/month',
-              checkins: 'Up to 600 check-ins/month',
-              features: ['Priority listing', 'Advanced analytics', 'Detailed ESG metrics', 'Priority support'],
-              popular: true,
-            },
-            {
-              name: 'Premium',
-              price: '€99/month',
-              checkins: 'Up to 1,500 check-ins/month',
-              features: ['Featured placement', 'API access', 'Full ESG reporting suite', 'Dedicated account manager'],
-            },
-          ].map((tier) => (
-            <div
-              key={tier.name}
-              style={{
-                background: colors.white,
-                border: tier.popular ? `3px solid ${colors.greenBorder}` : `2px solid ${colors.border}`,
-                borderRadius: '16px',
-                padding: '2.5rem',
-                position: 'relative',
-                boxShadow: tier.popular ? '0 10px 20px rgba(0,0,0,0.15)' : '0 4px 6px rgba(0,0,0,0.1)',
-              }}
-            >
-              {tier.popular && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '-12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: colors.greenGradient,
-                    padding: '0.5rem 1.5rem',
-                    borderRadius: '20px',
-                    fontSize: '0.875rem',
-                    fontWeight: '700',
-                    color: colors.greenText,
-                    border: `2px solid ${colors.greenBorder}`,
-                  }}
-                >
-                  🌱 Most Popular
-                </div>
-              )}
-              <h3
-                style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '700',
-                  color: colors.textDark,
-                  marginBottom: '0.5rem',
-                }}
-              >
-                {tier.name}
-              </h3>
-              <div
-                style={{
-                  fontSize: '2.5rem',
-                  fontWeight: '900',
-                  color: '#14b8a6',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                {tier.price}
-              </div>
-              <p
-                style={{
-                  fontSize: '1rem',
-                  color: colors.textLight,
-                  marginBottom: '1.5rem',
-                }}
-              >
-                {tier.checkins}
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, marginBottom: '2rem' }}>
-                {tier.features.map((feature, idx) => (
-                  <li
-                    key={idx}
-                    style={{
-                      fontSize: '1rem',
-                      color: colors.textDark,
-                      marginBottom: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    <span style={{ color: '#14b8a6', fontWeight: '700' }}>✓</span> {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <p style={{ fontSize: '1.125rem', color: colors.textDark, fontWeight: '600' }}>
+            OR Pay-As-You-Go: €0.50 per verified check-in, no monthly fee. Perfect for seasonal venues or testing.
+          </p>
         </div>
 
-        {/* Pricing Comparison */}
-        <div style={{ marginBottom: '3rem' }}>
+        {/* ROI Comparison Box */}
+        <div
+          style={{
+            background: colors.white,
+            border: '3px solid #14b8a6',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '800px',
+            margin: '0 auto',
+          }}
+        >
           <h3
             style={{
-              fontSize: '24px',
+              fontSize: '1.75rem',
               fontWeight: '700',
               marginBottom: '2rem',
               textAlign: 'center',
               color: colors.textDark,
             }}
           >
-            Compare to Traditional Marketing
+            Replace Your Existing Marketing Spend
           </h3>
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '2rem',
+              marginBottom: '1.5rem',
             }}
           >
-            <div
-              style={{
-                background: colors.white,
-                borderRadius: '12px',
-                padding: '2rem',
-                border: `2px solid ${colors.border}`,
-              }}
-            >
+            {/* LEFT COLUMN - Current Costs */}
+            <div>
               <h4
                 style={{
                   fontSize: '1.25rem',
@@ -679,24 +582,19 @@ export default function VenuesLandingPage() {
                   color: colors.textDark,
                 }}
               >
-                Instagram/Facebook Ads:
+                Current Costs (Monthly):
               </h4>
               <div style={{ fontSize: '1rem', color: colors.textLight, lineHeight: '1.8' }}>
-                <p style={{ marginBottom: '0.5rem' }}>💸 €500-1,000/month for 20,000 impressions</p>
-                <p style={{ marginBottom: '0.5rem' }}>❓ 1-2% typical conversion to actual visits (200-400 customers)</p>
-                <p style={{ marginBottom: '0.5rem' }}>❌ Most arrive by car (high carbon footprint)</p>
-                <p style={{ marginBottom: '0.5rem' }}>❌ Impossible to verify actual visits</p>
-                <p style={{ marginBottom: '0.5rem' }}>❌ No ESG data for reporting</p>
+                <p style={{ marginBottom: '0.5rem' }}>❌ Instagram ads: €300-500 (unclear results)</p>
+                <p style={{ marginBottom: '0.5rem' }}>❌ Google ads: €200-400 (clicks, not customers)</p>
+                <p style={{ marginBottom: '0.5rem' }}>❌ Flyers/posters: €100-200 (impossible to track)</p>
+                <hr style={{ border: 'none', borderTop: '2px solid #e5e7eb', margin: '1rem 0' }} />
+                <p style={{ fontWeight: '700', color: colors.textDark }}>Total: €600-1,100/month</p>
               </div>
             </div>
-            <div
-              style={{
-                background: colors.white,
-                borderRadius: '12px',
-                padding: '2rem',
-                border: `3px solid ${colors.greenBorder}`,
-              }}
-            >
+
+            {/* RIGHT COLUMN - MiM */}
+            <div>
               <h4
                 style={{
                   fontSize: '1.25rem',
@@ -710,11 +608,10 @@ export default function VenuesLandingPage() {
               <div style={{ fontSize: '1rem', color: colors.textLight, lineHeight: '1.8' }}>
                 <p style={{ marginBottom: '0.5rem' }}>✅ €19/month for 200 verified customers</p>
                 <p style={{ marginBottom: '0.5rem' }}>✅ 100% trackable attribution</p>
-                <p style={{ marginBottom: '0.5rem' }}>✅ 95%+ arrive via sustainable transport</p>
-                <p style={{ marginBottom: '0.5rem' }}>✅ Verified carbon reduction data for ESG</p>
+                <p style={{ marginBottom: '0.5rem' }}>✅ Pay only for people who actually show up</p>
                 <p style={{ marginBottom: '0.5rem' }}>✅ Cancel anytime, no contracts</p>
                 <hr style={{ border: 'none', borderTop: '2px solid #e5e7eb', margin: '1rem 0' }} />
-                <p style={{ fontWeight: '700', color: colors.greenText }}>Savings: €570-1,070/month + ESG value</p>
+                <p style={{ fontWeight: '700', color: colors.textDark }}>Savings: €570-1,070/month</p>
               </div>
             </div>
           </div>
@@ -724,10 +621,9 @@ export default function VenuesLandingPage() {
               fontWeight: '700',
               color: '#14b8a6',
               textAlign: 'center',
-              marginTop: '2rem',
             }}
           >
-            Stop guessing if your marketing works. Get verified visits + sustainability credentials.
+            Stop guessing if your marketing works. See exactly who MiM brings you.
           </p>
         </div>
       </section>
@@ -759,13 +655,11 @@ export default function VenuesLandingPage() {
           }}
         >
           {[
-            { icon: '🌱', text: 'Sustainability credentials & green certifications' },
-            { icon: '♻️', text: 'Zero-waste initiatives & eco-friendly practices' },
             { icon: '✅', text: 'Current specials & promos' },
             { icon: '🎵', text: 'Events & live music' },
             { icon: '🏳️‍🌈', text: 'LGBTQ+ friendly spaces' },
             { icon: '📊', text: 'Real-time capacity status' },
-            { icon: '🍃', text: 'Dietary options (vegan, halal, gluten-free)' },
+            { icon: '🌱', text: 'Dietary options (vegan, halal, gluten-free)' },
             { icon: '📲', text: 'Direct booking integration (coming soon)' },
           ].map((feature, index) => (
             <div
@@ -812,14 +706,6 @@ export default function VenuesLandingPage() {
             {
               question: 'How do you verify check-ins?',
               answer: 'Users check in via the MiM app at your venue. GPS + manual verification. No gaming the system.',
-            },
-            {
-              question: 'How accurate is the carbon reduction data?',
-              answer: 'We calculate emissions based on actual transport modes and distances traveled. Data is verified and suitable for ESG reporting frameworks including GRI, CSRD, and B Corp certification.',
-            },
-            {
-              question: 'Can I use MiM data in my sustainability reports?',
-              answer: 'Yes. You get exportable carbon reduction metrics, transport mode breakdowns, and customer journey data. Perfect for annual reports, ESG frameworks, and grant applications.',
             },
             {
               question: 'What if I don\'t get any customers?',
@@ -900,7 +786,7 @@ export default function VenuesLandingPage() {
             marginBottom: '2rem',
           }}
         >
-          Join Dublin venues attracting eco-conscious customers and building stronger ESG profiles.
+          Join Dublin venues getting discovered by groups planning meetups right now.
         </h3>
         <a
           href="https://form.jotform.com/253327911890360"
