@@ -102,8 +102,8 @@ const ComingSoonLandingPage: React.FC = () => {
             lineHeight: '1.2',
             color: '#1f2937',
           }}>
-            Fair Meetups.<br />
-            Sustainable Travel.
+            Meet in the Middle.<br />
+            Save Time, Money, Carbon.
           </h1>
           
           <p style={{
@@ -114,7 +114,7 @@ const ComingSoonLandingPage: React.FC = () => {
             marginLeft: 'auto',
             marginRight: 'auto',
           }}>
-            MiM finds the perfect middle ground using public transport, walking, and cycling. Private, safe, and fair for everyone—while reducing your carbon footprint.
+            Whose side of town? Nobody's. MiM finds the fairest middle ground for everyone. Less travel, less hassle, better meetups.
           </p>
 
           <button
@@ -131,7 +131,7 @@ const ComingSoonLandingPage: React.FC = () => {
               boxShadow: '0 10px 15px rgba(20, 184, 166, 0.3)',
             }}
           >
-            🌱 Join the Waitlist
+            📍 Join the Waitlist
           </button>
           
           <p style={{
@@ -165,12 +165,12 @@ const ComingSoonLandingPage: React.FC = () => {
           }}>
             <div style={{
               fontSize: '2rem',
-              background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+              background: 'linear-gradient(135deg, #f0fdfa 0%, #cffafe 100%)',
               padding: '0.75rem',
               borderRadius: '12px',
-              border: '2px solid #6ee7b7',
+              border: '2px solid #99f6e4',
             }}>
-              🌱
+              ⚖️
             </div>
             <div>
               <div style={{
@@ -178,13 +178,13 @@ const ComingSoonLandingPage: React.FC = () => {
                 fontWeight: '700',
                 color: '#1f2937',
               }}>
-                Climate Action
+                Actually Fair
               </div>
               <div style={{
                 fontSize: '0.875rem',
                 color: '#6b7280',
               }}>
-                95%+ carbon reduction vs cars
+                Real travel times for everyone
               </div>
             </div>
           </div>
@@ -253,171 +253,57 @@ const ComingSoonLandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Sustainability & Impact Section - NEW */}
+      {/* Why It Matters Section */}
       <section style={{
         padding: '5rem 2rem',
-        background: 'linear-gradient(to bottom right, #ecfdf5, #d1fae5)',
+        background: 'linear-gradient(to bottom right, #f0fdfa, #cffafe)',
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <h2 style={{
-              fontSize: '3rem',
-              fontWeight: '900',
-              color: '#1f2937',
-              marginBottom: '1rem',
-            }}>
-              Built for Climate Action
-            </h2>
-            <p style={{
-              fontSize: '1.5rem',
-              color: '#374151',
-              maxWidth: '900px',
-              margin: '0 auto',
-            }}>
-              Every meetup on MiM uses sustainable transport. No cars. Lower emissions. Real impact.
-            </p>
-          </div>
+        <div style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{
+            fontSize: '2.5rem',
+            fontWeight: '900',
+            color: '#1f2937',
+            marginBottom: '1.5rem',
+          }}>
+            Why Meeting in the Middle Matters
+          </h2>
+          <p style={{
+            fontSize: '1.25rem',
+            color: '#374151',
+            marginBottom: '3rem',
+            lineHeight: '1.7',
+          }}>
+            When everyone travels less, everyone wins. Shorter journeys mean less time wasted, lower costs, and yes—less environmental impact too. Fair for people, better for the planet.
+          </p>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
             gap: '2rem',
-            marginBottom: '4rem',
           }}>
             {[
-              { 
-                icon: '🚊', 
-                title: 'Public Transport First', 
-                desc: 'Luas, DART, Dublin Bus integration with real travel times and weather conditions',
-                stat: '95%+ lower emissions'
-              },
-              { 
-                icon: '🚴', 
-                title: 'Active Travel Options', 
-                desc: 'Walking and cycling routes with safe, accessible path recommendations',
-                stat: 'Zero emissions'
-              },
-              { 
-                icon: '📊', 
-                title: 'Carbon Reporting', 
-                desc: 'Track your group\'s environmental impact with detailed carbon reduction metrics',
-                stat: 'Real data insights'
-              },
+              { icon: '⏱️', title: 'Save Time', desc: 'Less travel means more time actually meeting' },
+              { icon: '💰', title: 'Save Money', desc: 'Shorter journeys = lower transport costs' },
+              { icon: '🌱', title: 'Lower Impact', desc: 'Naturally reduce your carbon footprint' },
             ].map((item) => (
               <div key={item.title} style={{
                 background: 'white',
-                borderRadius: '20px',
-                padding: '2.5rem',
-                border: '3px solid #6ee7b7',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                borderRadius: '16px',
+                padding: '2rem',
+                border: '2px solid #99f6e4',
               }}>
-                <div style={{ 
-                  fontSize: '3.5rem', 
-                  marginBottom: '1rem',
-                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {item.icon}
-                </div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{item.icon}</div>
                 <h3 style={{
-                  fontSize: '1.5rem',
+                  fontSize: '1.25rem',
                   fontWeight: '700',
                   color: '#1f2937',
                   marginBottom: '0.75rem',
                 }}>
                   {item.title}
                 </h3>
-                <p style={{ 
-                  color: '#6b7280', 
-                  fontSize: '1rem',
-                  marginBottom: '1rem',
-                  lineHeight: '1.6',
-                }}>
-                  {item.desc}
-                </p>
-                <div style={{
-                  background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '12px',
-                  fontSize: '0.875rem',
-                  fontWeight: '700',
-                  color: '#047857',
-                  border: '2px solid #6ee7b7',
-                }}>
-                  {item.stat}
-                </div>
+                <p style={{ color: '#6b7280', fontSize: '1rem' }}>{item.desc}</p>
               </div>
             ))}
-          </div>
-
-          {/* UN SDG & Dublin City Council Alignment */}
-          <div style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '3rem',
-            border: '3px solid #6ee7b7',
-            textAlign: 'center',
-          }}>
-            <h3 style={{
-              fontSize: '1.75rem',
-              fontWeight: '700',
-              color: '#1f2937',
-              marginBottom: '1.5rem',
-            }}>
-              Aligned with Dublin's Climate Goals
-            </h3>
-            <p style={{
-              fontSize: '1.125rem',
-              color: '#374151',
-              marginBottom: '2rem',
-              maxWidth: '800px',
-              margin: '0 auto 2rem',
-              lineHeight: '1.7',
-            }}>
-              MiM supports Dublin City Council's Climate Action Plan and UN Sustainable Development Goals (SDG 11: Sustainable Cities, SDG 13: Climate Action). Our platform provides verified carbon reduction data that organizations can use for ESG reporting and climate compliance.
-            </p>
-            <div style={{
-              display: 'flex',
-              gap: '2rem',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-            }}>
-              <div style={{
-                background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
-                padding: '1rem 2rem',
-                borderRadius: '12px',
-                border: '2px solid #6ee7b7',
-                fontWeight: '700',
-                color: '#047857',
-              }}>
-                🎯 UN SDG 11 & 13
-              </div>
-              <div style={{
-                background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
-                padding: '1rem 2rem',
-                borderRadius: '12px',
-                border: '2px solid #6ee7b7',
-                fontWeight: '700',
-                color: '#047857',
-              }}>
-                🏛️ Dublin Climate Action
-              </div>
-              <div style={{
-                background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
-                padding: '1rem 2rem',
-                borderRadius: '12px',
-                border: '2px solid #6ee7b7',
-                fontWeight: '700',
-                color: '#047857',
-              }}>
-                📈 ESG Reporting Ready
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -534,7 +420,7 @@ const ComingSoonLandingPage: React.FC = () => {
             marginBottom: '1rem',
             color: '#1f2937',
           }}>
-            Built Different
+            What Makes MiM Different
           </h2>
           <p style={{
             textAlign: 'center',
@@ -545,7 +431,7 @@ const ComingSoonLandingPage: React.FC = () => {
             marginLeft: 'auto',
             marginRight: 'auto',
           }}>
-            Everything you need for fair, fun, rewarding meetups
+            Fair, fast, and rewarding—every time
           </p>
 
           <div style={{
@@ -581,8 +467,8 @@ const ComingSoonLandingPage: React.FC = () => {
               },
               {
                 icon: '🎉',
-                title: 'Real Venues',
-                desc: '254 verified Dublin venues. Coffee shops, pubs, restaurants, and more.',
+                title: 'Real Dublin Venues',
+                desc: 'Coffee shops, pubs, restaurants, and more—all verified and ready to welcome your group.',
               },
             ].map((feature) => (
               <div key={feature.title} style={{
@@ -737,14 +623,14 @@ const ComingSoonLandingPage: React.FC = () => {
             color: 'white',
             marginBottom: '1.5rem',
           }}>
-            Fair Meetups. Sustainable Travel. Real Rewards.
+            Fair Meetups. Real Rewards.
           </h2>
           <p style={{
             fontSize: '1.5rem',
             color: 'rgba(255,255,255,0.9)',
             marginBottom: '3rem',
           }}>
-            Be the first to know when MiM launches in 2026. Earn points, reduce emissions, unlock discounts.
+            Be the first to know when MiM launches in 2026. Earn points, unlock discounts, meet in the middle.
           </p>
           
           <div style={{
@@ -832,7 +718,7 @@ const ComingSoonLandingPage: React.FC = () => {
               color: '#6b7280',
               fontSize: '0.875rem',
             }}>
-              🌱 Join Dubliners choosing sustainable, fair meetups
+              📍 Join Dubliners ready for fair meetups and real rewards
             </p>
           </div>
         </div>
@@ -886,7 +772,7 @@ const ComingSoonLandingPage: React.FC = () => {
             </span>
           </div>
           <p style={{ marginBottom: '1.5rem' }}>
-            Fair meetups for everyone. Sustainable travel. Real rewards.
+            Fair meetups for everyone. Earn rewards along the way.
           </p>
           
           <p style={{
