@@ -342,59 +342,6 @@ export default function VenuesLandingPage() {
             marginBottom: '2rem',
           }}
         >
-          {/* Free Tier */}
-          <div
-            style={{
-              background: colors.white,
-              border: `2px solid ${colors.border}`,
-              borderRadius: '12px',
-              padding: '2rem',
-            }}
-          >
-            <h3
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                marginBottom: '0.5rem',
-                color: colors.textDark,
-              }}
-            >
-              Free
-            </h3>
-            <div
-              style={{
-                fontSize: '2.5rem',
-                fontWeight: '900',
-                marginBottom: '1.5rem',
-                color: colors.textDark,
-              }}
-            >
-              €0<span style={{ fontSize: '1rem', fontWeight: '400' }}>/month</span>
-            </div>
-            <ul
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                marginBottom: '1.5rem',
-                fontSize: '1rem',
-                color: colors.textLight,
-              }}
-            >
-              <li style={{ marginBottom: '0.75rem' }}>✓ Up to 20 check-ins/month</li>
-              <li style={{ marginBottom: '0.75rem' }}>✓ Basic venue listing</li>
-              <li style={{ marginBottom: '0.75rem' }}>✓ Add promos & events</li>
-              <li style={{ marginBottom: '0.75rem' }}>✓ Dashboard access</li>
-            </ul>
-            <p
-              style={{
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: colors.textDark,
-              }}
-            >
-              Best for: Testing the platform
-            </p>
-          </div>
 
           {/* Growth Tier - MOST POPULAR */}
           <div
@@ -454,7 +401,7 @@ export default function VenuesLandingPage() {
               }}
             >
               <li style={{ marginBottom: '0.75rem' }}>✓ Up to 200 check-ins/month</li>
-              <li style={{ marginBottom: '0.75rem' }}>✓ Everything in Free</li>
+              <li style={{ marginBottom: '0.75rem' }}>✓ Basic venue listing</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ Analytics dashboard</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ LGBTQ+ friendly badge</li>
               <li style={{ marginBottom: '0.75rem' }}>✓ Priority support</li>
