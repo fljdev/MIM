@@ -14,6 +14,8 @@ const meetupTimeSuggestionsRouter = require('./routes/meetupTimeSuggestions');
 const profileRoutes = require('./routes/profile');
 const favoriteVenuesRoutes = require('./routes/favoriteVenues');
 const carbonRoutes = require('./routes/carbonRoutes');
+const accessibilityProfileRoutes = require('./routes/accessibilityProfile');
+const venuesRoutes = require('./routes/venues');
 
 app.use(cors());
 app.use(express.json());
@@ -44,7 +46,7 @@ app.locals.pool = pool;
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
-    service: 'Meet in Middle API',
+    service: 'Accessible Ireland API',
     timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
@@ -92,6 +94,12 @@ app.use('/api', favoriteVenuesRoutes);
 
 // Carbon tracking routes
 app.use('/api/carbon', carbonRoutes);
+
+// Accessibility Profile routes
+app.use('/api', accessibilityProfileRoutes);
+
+// Venues routes (with accessibility)
+app.use('/api', venuesRoutes);
 
 // Get all users
 app.get('/api/users', async (req, res) => {
