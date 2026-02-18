@@ -39,12 +39,12 @@ const Navbar: React.FC<NavbarProps> = ({ userName, avatarUrl, activeMeetupsCount
         <div className="flex items-center justify-between h-16">
           {/* Left: Logo + Home */}
           <div className="flex items-center gap-6">
-            {/* Logo - links to dashboard */}
+            {/* Logo - links to home */}
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/')}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark rounded-full flex items-center justify-center">
                 <span className="text-white text-xl">🎯</span>
               </div>
               <span className="text-xl font-bold text-gray-800 hidden sm:block">MiM</span>
@@ -52,10 +52,10 @@ const Navbar: React.FC<NavbarProps> = ({ userName, avatarUrl, activeMeetupsCount
 
             {/* Home button */}
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/')}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all ${
-                isActive('/profile')
-                  ? 'bg-emerald-100 text-emerald-700'
+                isActive('/')
+                  ? 'bg-brand-cream text-brand-turquoise'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -68,39 +68,49 @@ const Navbar: React.FC<NavbarProps> = ({ userName, avatarUrl, activeMeetupsCount
 
           {/* Center: Navigation Links */}
           <div className="flex items-center gap-2">
-            {/* My Meetups - only show if there are active meetups */}
-            {activeMeetupsCount > 0 && (
-              <button
-                onClick={() => navigate('/meetups')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all ${
-                  isActive('/meetups')
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <span className="hidden md:block">My Meetups</span>
-                <span className="bg-emerald-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {activeMeetupsCount}
-                </span>
-              </button>
-            )}
-
-            {/* Create Meetup - Primary Action */}
+            {/* Journey Planner */}
             <button
-              onClick={() => navigate('/create-meetup')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-                isActive('/create-meetup')
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-emerald-500 text-white hover:bg-emerald-600'
+              onClick={() => navigate('/journey-planner')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all ${
+                isActive('/journey-planner')
+                  ? 'bg-brand-cream text-brand-turquoise'
+                  : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
-              <span className="hidden sm:block">Create Meetup</span>
+              <span className="hidden md:block">Journey Planner</span>
+            </button>
+
+            {/* Accessibility Profile */}
+            <button
+              onClick={() => navigate('/accessibility-profile')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all ${
+                isActive('/accessibility-profile')
+                  ? 'bg-brand-cream text-brand-turquoise'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className="hidden md:block">Accessibility Profile</span>
+            </button>
+
+            {/* Browse Venues */}
+            <button
+              onClick={() => navigate('/venues')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all ${
+                isActive('/venues')
+                  ? 'bg-brand-cream text-brand-turquoise'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span className="hidden md:block">Browse Venues</span>
             </button>
           </div>
 
