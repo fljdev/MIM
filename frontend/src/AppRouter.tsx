@@ -11,10 +11,15 @@ import InvitationView from './features/meetup/pages/InvitationView';
 import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
 import ChoiceSelectorPage from './features/landing/pages/ChoiceSelectorPage';
 import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
-import VenuesLandingPage from './features/landing/pages/VenuesLandingPage';
+import VenuesComingSoonPage from './pages/VenuesComingSoonPage';
 import LoginPage from './features/auth/pages/LoginPage';
 import ProfileDashboard from './features/profile/pages/ProfileDashboard';
 import { useAuth } from './features/auth/contexts/AuthContext';
+
+// Import new accessibility components
+import AccessibilityProfileWizard from './features/accessibility/components/AccessibilityProfileWizard';
+import VenueDetailPage from './features/accessibility/pages/VenueDetailPage';
+import JourneyPlanner from './features/accessibility/pages/JourneyPlanner';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -42,14 +47,17 @@ const AppRouter: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Choice selector - main landing */}
+        {/* Main accessibility landing page */}
         <Route path="/" element={<ChoiceSelectorPage />} />
 
-        {/* Consumer landing page */}
-        <Route path="/app" element={<ComingSoonLandingPage />} />
+        {/* Accessibility features */}
+        <Route path="/accessibility-profile" element={<ProtectedRoute><AccessibilityProfileWizard /></ProtectedRoute>} />
+        <Route path="/journey-planner" element={<ProtectedRoute><JourneyPlanner /></ProtectedRoute>} />
+        <Route path="/venues/:id" element={<ProtectedRoute><VenueDetailPage /></ProtectedRoute>} />
 
-        {/* Business landing page */}
-        <Route path="/venues" element={<VenuesLandingPage />} />
+        {/* Legacy MiM routes (kept for compatibility) */}
+        <Route path="/consumer" element={<ComingSoonLandingPage />} />
+        <Route path="/venues" element={<VenuesComingSoonPage />} />
 
         {/* Login/Signup page */}
         <Route path="/login" element={<LoginPage />} />

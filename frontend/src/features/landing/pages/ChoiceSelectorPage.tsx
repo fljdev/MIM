@@ -1,154 +1,138 @@
-export default function ChoiceSelectorPage() {
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const ChoiceSelectorPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #17a398 0%, #14b8a6 100%)',
-      padding: '2rem',
-    }}>
+    <div className="min-h-screen bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark flex flex-col items-center justify-center p-6">
       {/* Logo/Title */}
-      <div style={{
-        marginBottom: '3rem',
-        textAlign: 'center',
-      }}>
-        <h1 style={{
-          fontSize: '3rem',
-          fontWeight: '900',
-          color: 'white',
-          marginBottom: '1rem',
-        }}>
+      <div className="text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
           MiM
         </h1>
-        <p style={{
-          fontSize: '1.5rem',
-          color: 'white',
-          opacity: 0.9,
-        }}>
-          Meet in the Middle
+        <p className="text-xl md:text-2xl text-white opacity-90">
+          Make It Manageable
+        </p>
+        <p className="text-lg text-white opacity-80 mt-2">
+          Accessible journey planning for everyone
         </p>
       </div>
 
       {/* Main Question */}
-      <h2 style={{
-        fontSize: '2rem',
-        fontWeight: '700',
-        color: 'white',
-        marginBottom: '3rem',
-        textAlign: 'center',
-      }}>
-        Who are you?
+      <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
+        How can we help you today?
       </h2>
 
-      {/* Two Big Buttons */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem',
-        width: '100%',
-        maxWidth: '500px',
-      }}>
-        {/* User Button */}
-        <a
-          href="/app"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            padding: '2rem',
-            background: 'white',
-            color: '#1f2937',
-            borderRadius: '16px',
-            textDecoration: 'none',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.boxShadow = '0 15px 30px rgba(0,0,0,0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
-          }}
+      {/* Three Big Buttons */}
+      <div className="flex flex-col gap-6 w-full max-w-lg">
+        {/* Plan My Journey */}
+        <button
+          onClick={() => navigate('/journey-planner')}
+          className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
         >
-          <span style={{ fontSize: '2.5rem' }}>🎯</span>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              marginBottom: '0.25rem',
-            }}>
-              I'm Planning Meetups
-            </div>
-            <div style={{
-              fontSize: '1rem',
-              color: '#6b7280',
-            }}>
-              Find fair places to meet with friends
-            </div>
+          <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">
+            <span className="text-3xl">🚶‍♀️</span>
           </div>
-        </a>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-brand-turquoise mb-1">
+              Plan My Journey
+            </h3>
+            <p className="text-gray-600">
+              Find accessible venues and plan your journey with specialized transport options
+            </p>
+          </div>
+          <span className="text-2xl text-brand-turquoise">→</span>
+        </button>
 
-        {/* Business Button */}
-        <a
-          href="/venues"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            padding: '2rem',
-            background: 'white',
-            color: '#1f2937',
-            borderRadius: '16px',
-            textDecoration: 'none',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.boxShadow = '0 15px 30px rgba(0,0,0,0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
-          }}
+        {/* Set Up Accessibility Profile */}
+        <button
+          onClick={() => navigate('/accessibility-profile')}
+          className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
         >
-          <span style={{ fontSize: '2.5rem' }}>🏪</span>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              marginBottom: '0.25rem',
-            }}>
-              I Own a Venue
-            </div>
-            <div style={{
-              fontSize: '1rem',
-              color: '#6b7280',
-            }}>
-              Get more customers for my business
-            </div>
+          <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">
+            <span className="text-3xl">♿</span>
           </div>
-        </a>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-brand-turquoise mb-1">
+              Set Up My Accessibility Profile
+            </h3>
+            <p className="text-gray-600">
+              Tell us about your mobility, sensory needs, and transportation preferences
+            </p>
+          </div>
+          <span className="text-2xl text-brand-turquoise">→</span>
+        </button>
+
+        {/* Browse Accessible Venues */}
+        <button
+          onClick={() => navigate('/venues')}
+          className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
+        >
+          <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">
+            <span className="text-3xl">🏪</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-brand-turquoise mb-1">
+              Browse Accessible Venues
+            </h3>
+            <p className="text-gray-600">
+              Discover venues with step-free access, accessible toilets, and sensory-friendly features
+            </p>
+          </div>
+          <span className="text-2xl text-brand-turquoise">→</span>
+        </button>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-white">1,200+</div>
+          <div className="text-white opacity-90">Accessible Venues</div>
+        </div>
+        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-white">50+</div>
+          <div className="text-white opacity-90">Specialized Transport Services</div>
+        </div>
+        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-white">300+</div>
+          <div className="text-white opacity-90">Autism-Friendly Events</div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="mt-12 text-center text-white max-w-2xl">
+        <h3 className="text-2xl font-bold mb-4">What Makes Us Different</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
+            <div className="text-2xl mb-2">♿</div>
+            <h4 className="font-bold mb-1">Physical Accessibility</h4>
+            <p className="text-sm opacity-90">Step-free access, parking, toilets, door widths</p>
+          </div>
+          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
+            <div className="text-2xl mb-2">🎵</div>
+            <h4 className="font-bold mb-1">Sensory Environment</h4>
+            <p className="text-sm opacity-90">Noise levels, lighting, crowd information</p>
+          </div>
+          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
+            <div className="text-2xl mb-2">🚌</div>
+            <h4 className="font-bold mb-1">Specialized Transport</h4>
+            <p className="text-sm opacity-90">IWA, Enable Ireland, accessible taxis</p>
+          </div>
+          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
+            <div className="text-2xl mb-2">🎬</div>
+            <h4 className="font-bold mb-1">Special Events</h4>
+            <p className="text-sm opacity-90">Autism-friendly screenings, quiet hours</p>
+          </div>
+        </div>
       </div>
 
       {/* Footer */}
-      <div style={{
-        marginTop: '4rem',
-        textAlign: 'center',
-        color: 'white',
-        opacity: 0.8,
-        fontSize: '0.875rem',
-      }}>
-        © 2025 CasaFlynn Ltd
+      <div className="mt-12 text-center text-white opacity-80 text-sm">
+        <p>© 2025 MiM | Make It Manageable - Accessible journey planning for everyone</p>
       </div>
     </div>
   );
-}
+};
+
+export default ChoiceSelectorPage;
