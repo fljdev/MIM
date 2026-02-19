@@ -100,9 +100,9 @@ const Navbar: React.FC<NavbarProps> = ({ userName, avatarUrl, activeMeetupsCount
 
             {/* Browse Venues */}
             <button
-              onClick={() => navigate('/venues')}
+              onClick={() => navigate('/browse-venues')}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-all ${
-                isActive('/venues')
+                isActive('/browse-venues')
                   ? 'bg-brand-cream text-brand-turquoise'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
