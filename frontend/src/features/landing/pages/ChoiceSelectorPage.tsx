@@ -66,7 +66,7 @@ const ChoiceSelectorPage: React.FC = () => {
 
         {/* Browse Accessible Venues */}
         <button
-          onClick={() => navigate('/venues')}
+          onClick={() => navigate('/browse-venues')}
           className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
         >
           <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">

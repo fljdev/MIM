@@ -267,7 +267,7 @@ const JourneyPlanner: React.FC = () => {
                     />
                     <div className="mt-4 flex flex-wrap gap-3">
                       <button
-                        onClick={() => navigate('/venues')}
+                        onClick={() => navigate('/browse-venues')}
                         className="px-4 py-2 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all"
                       >
                         Browse Accessible Venues
@@ -683,7 +683,7 @@ const JourneyPlanner: React.FC = () => {
                   </button>
                 ))}
                 <button
-                  onClick={() => navigate('/venues')}
+                  onClick={() => navigate('/browse-venues')}
                   className="w-full p-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all text-center mt-4"
                 >
                   Browse More Venues →

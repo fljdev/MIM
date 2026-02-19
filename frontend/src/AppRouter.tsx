@@ -20,6 +20,7 @@ import { useAuth } from './features/auth/contexts/AuthContext';
 import AccessibilityProfileWizard from './features/accessibility/components/AccessibilityProfileWizard';
 import VenueDetailPage from './features/accessibility/pages/VenueDetailPage';
 import JourneyPlanner from './features/accessibility/pages/JourneyPlanner';
+import BrowseVenuesPage from './features/accessibility/pages/BrowseVenuesPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -53,6 +54,7 @@ const AppRouter: React.FC = () => {
         {/* Accessibility features */}
         <Route path="/accessibility-profile" element={<ProtectedRoute><AccessibilityProfileWizard /></ProtectedRoute>} />
         <Route path="/journey-planner" element={<ProtectedRoute><JourneyPlanner /></ProtectedRoute>} />
+        <Route path="/browse-venues" element={<ProtectedRoute><BrowseVenuesPage /></ProtectedRoute>} />
         <Route path="/venues/:id" element={<ProtectedRoute><VenueDetailPage /></ProtectedRoute>} />
 
         {/* Legacy MiM routes (kept for compatibility) */}
