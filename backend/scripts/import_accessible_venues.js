@@ -126,7 +126,7 @@ async function importAccessibleVenues() {
             created_at,
             updated_at
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          ON CONFLICT DO NOTHING
+          ON CONFLICT (venue_name, address) DO NOTHING
           RETURNING id
         `;
         
