@@ -10,8 +10,6 @@ import MeetupConfirmed from './features/meetup/pages/MeetupConfirmed';
 import InvitationView from './features/meetup/pages/InvitationView';
 import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
 import ChoiceSelectorPage from './features/landing/pages/ChoiceSelectorPage';
-import ComingSoonLandingPage from './features/landing/pages/ComingSoonLandingPage';
-import VenuesComingSoonPage from './pages/VenuesComingSoonPage';
 import LoginPage from './features/auth/pages/LoginPage';
 import ProfileDashboard from './features/profile/pages/ProfileDashboard';
 import { useAuth } from './features/auth/contexts/AuthContext';
@@ -54,12 +52,8 @@ const AppRouter: React.FC = () => {
         {/* Accessibility features */}
         <Route path="/accessibility-profile" element={<ProtectedRoute><AccessibilityProfileWizard /></ProtectedRoute>} />
         <Route path="/journey-planner" element={<ProtectedRoute><JourneyPlanner /></ProtectedRoute>} />
-        <Route path="/browse-venues" element={<ProtectedRoute><BrowseVenuesPage /></ProtectedRoute>} />
+        <Route path="/browse-venues" element={<BrowseVenuesPage />} />
         <Route path="/venues/:id" element={<ProtectedRoute><VenueDetailPage /></ProtectedRoute>} />
-
-        {/* Legacy MiM routes (kept for compatibility) */}
-        <Route path="/consumer" element={<ComingSoonLandingPage />} />
-        <Route path="/venues" element={<VenuesComingSoonPage />} />
 
         {/* Login/Signup page */}
         <Route path="/login" element={<LoginPage />} />
