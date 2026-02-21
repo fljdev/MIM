@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import { TransportService, JourneyOption } from '../../../types/Accessibility';
 import LocationAutocomplete from '../../meetup/components/LocationAutocomplete';
+import { API_BASE_URL } from '../../../Config';
+import { AccessibleVenue } from './BrowseVenuesPage';
 
 const JourneyPlanner: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +30,10 @@ const JourneyPlanner: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'plan' | 'services' | 'saved'>('plan');
+  
+  // State for featured venues
+  const [featuredVenues, setFeaturedVenues] = useState<AccessibleVenue[]>([]);
+  const [loadingFeaturedVenues, setLoadingFeaturedVenues] = useState(false);
 
   // If venue data is passed from VenueDetailPage, pre-fill destination
   useEffect(() => {
@@ -42,7 +48,7 @@ const JourneyPlanner: React.FC = () => {
   useEffect(() => {
     const fetchTransportServices = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/transport-services');
+        const response = await fetch(`${API_BASE_URL}/api/transport-services`);
         if (!response.ok) throw new Error('Failed to fetch transport services');
         const data = await response.json();
         setTransportServices(data.services || []);
@@ -51,6 +57,24 @@ const JourneyPlanner: React.FC = () => {
       }
     };
     fetchTransportServices();
+  }, []);
+
+  // Fetch featured venues on component mount
+  useEffect(() => {
+    const fetchFeaturedVenues = async () => {
+      try {
+        setLoadingFeaturedVenues(true);
+        const response = await fetch(`${API_BASE_URL}/api/accessible-venues?limit=3&offset=0`);
+        if (!response.ok) throw new Error('Failed to fetch featured venues');
+        const data = await response.json();
+        setFeaturedVenues(data.venues || []);
+      } catch (err) {
+        console.error('Error fetching featured venues:', err);
+      } finally {
+        setLoadingFeaturedVenues(false);
+      }
+    };
+    fetchFeaturedVenues();
   }, []);
 
   const handleCurrentLocationSelect = (address: string, placeId?: string, coordinates?: { lat: number; lng: number }) => {
@@ -171,6 +195,30 @@ const JourneyPlanner: React.FC = () => {
       window.open(bookingUrl, '_blank');
     } else {
       alert(`Please contact ${serviceName} directly to book.`);
+    }
+  };
+
+  // Get accessibility level color
+  const getAccessibilityLevelColor = (level: string) => {
+    switch (level) {
+      case 'Fully Accessible': return 'bg-green-100 text-green-800';
+      case 'Accessible Entrance': return 'bg-blue-100 text-blue-800';
+      case 'Semi-Accessible': return 'bg-yellow-100 text-yellow-800';
+      case 'Not Recommended': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get venue type icon
+  const getVenueTypeIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'pub': return '🍺';
+      case 'restaurant': return '🍽️';
+      case 'cafe': return '☕';
+      case 'hotel': return '🏨';
+      case 'shop': return '🛍️';
+      case 'museum': return '🏛️';
+      default: return '🏢';
     }
   };
 
@@ -594,100 +642,109 @@ const JourneyPlanner: React.FC = () => {
               </div>
             </div>
 
-            {/* Recent Venues */}
+            {/* Featured Accessible Venues */}
             <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-brand-turquoise">
-              <h3 className="text-xl font-bold text-brand-turquoise mb-4">Recently Viewed Venues</h3>
+              <h3 className="text-xl font-bold text-brand-turquoise mb-4">Featured Accessible Venues</h3>
               <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                {/* Mock Dublin venues with accessibility info */}
-                {[
-                  {
-                    id: '1',
-                    name: 'The Clockwork Door',
-                    location: 'Temple Bar, Dublin',
-                    features: ['Step-free entrance', 'Accessible toilet', 'Quiet space']
-                  },
-                  {
-                    id: '2',
-                    name: 'National Gallery of Ireland',
-                    location: 'Merrion Square, Dublin',
-                    features: ['Step-free access', 'Lift available', 'Wheelchair rental']
-                  },
-                  {
-                    id: '3',
-                    name: 'Dublin Castle',
-                    location: 'Dame Street, Dublin',
-                    features: ['Step-free entrance', 'Accessible tours', 'Disabled parking']
-                  },
-                  {
-                    id: '4',
-                    name: 'Trinity College Library',
-                    location: 'College Green, Dublin',
-                    features: ['Step-free access', 'Lift to main hall', 'Assistance dogs welcome']
-                  },
-                  {
-                    id: '5',
-                    name: 'EPIC The Irish Emigration Museum',
-                    location: 'CHQ Building, Dublin',
-                    features: ['Fully accessible', 'Audio guides', 'Quiet hours available']
-                  },
-                  {
-                    id: '6',
-                    name: 'St. Stephen\'s Green Shopping Centre',
-                    location: 'St. Stephen\'s Green, Dublin',
-                    features: ['Step-free throughout', 'Accessible toilets', 'Wheelchair accessible lifts']
-                  },
-                  {
-                    id: '7',
-                    name: 'The Brazen Head',
-                    location: 'Bridge Street Lower, Dublin',
-                    features: ['Step-free entrance', 'Accessible seating', 'Quiet dining area']
-                  },
-                  {
-                    id: '8',
-                    name: 'Guinness Storehouse',
-                    location: 'St. James\'s Gate, Dublin',
-                    features: ['Fully wheelchair accessible', 'Accessible toilets', 'Sensory-friendly tours']
-                  },
-                  {
-                    id: '9',
-                    name: 'Phoenix Park Visitor Centre',
-                    location: 'Phoenix Park, Dublin',
-                    features: ['Step-free access', 'Disabled parking', 'Accessible nature trails']
-                  },
-                  {
-                    id: '10',
-                    name: 'Dublin Zoo',
-                    location: 'Phoenix Park, Dublin',
-                    features: ['Wheelchair accessible paths', 'Accessible toilets', 'Sensory maps']
-                  }
-                ].map((venue) => (
-                  <button
-                    key={venue.id}
-                    onClick={() => navigate(`/venues/${venue.id}`)}
-                    className="w-full p-4 bg-brand-cream rounded-lg hover:bg-brand-turquoise hover:text-white transition-all text-left group"
-                  >
-                    <div className="font-bold text-lg group-hover:text-white">{venue.name}</div>
-                    <div className="text-sm text-gray-600 group-hover:text-white/90 mb-2">{venue.location}</div>
-                    <div className="flex flex-wrap gap-1">
-                      {venue.features.slice(0, 2).map((feature, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-white/80 group-hover:bg-white/20 text-xs rounded-full border border-brand-turquoise/30 group-hover:border-white/50">
-                          {feature}
-                        </span>
-                      ))}
-                      {venue.features.length > 2 && (
-                        <span className="px-2 py-1 bg-white/80 group-hover:bg-white/20 text-xs rounded-full border border-brand-turquoise/30 group-hover:border-white/50">
-                          +{venue.features.length - 2} more
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-                <button
-                  onClick={() => navigate('/browse-venues')}
-                  className="w-full p-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all text-center mt-4"
-                >
-                  Browse More Venues →
-                </button>
+                {loadingFeaturedVenues ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand-turquoise border-t-transparent mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-600">Loading venues...</p>
+                  </div>
+                ) : featuredVenues.length > 0 ? (
+                  <>
+                    {featuredVenues.map((venue) => (
+                      <div
+                        key={venue.id}
+                        onClick={() => navigate(`/venues/${venue.id}`)}
+                        className="w-full bg-white rounded-xl shadow-lg overflow-hidden border-2 border-transparent hover:border-emerald-500 hover:shadow-xl transition-all cursor-pointer"
+                      >
+                        {/* Venue Header */}
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-800 mb-1">{venue.venue_name}</h3>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">{getVenueTypeIcon(venue.venue_type)}</span>
+                                <span className="text-gray-600 text-sm">{venue.venue_type}</span>
+                              </div>
+                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getAccessibilityLevelColor(venue.accessibility_level)}`}>
+                              {venue.accessibility_level}
+                            </span>
+                          </div>
+
+                          {/* Address */}
+                          <p className="text-gray-600 text-sm mb-3">
+                            <span className="font-medium">📍</span> {venue.address || 'Address not available'}
+                          </p>
+
+                          {/* Accessibility Features */}
+                          <div className="mb-3">
+                            <div className="flex flex-wrap gap-1">
+                              {venue.wheelchair_entrance && (
+                                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs flex items-center gap-1">
+                                  ♿ Entrance
+                                </span>
+                              )}
+                              {venue.wheelchair_bathroom && (
+                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs flex items-center gap-1">
+                                  🚽 Bathroom
+                                </span>
+                              )}
+                              {venue.accessible_parking_nearby && (
+                                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs flex items-center gap-1">
+                                  🅿️ Parking
+                                </span>
+                              )}
+                              {venue.level_access_internal && (
+                                <span className="px-2 py-1 bg-teal-100 text-teal-700 rounded-full text-xs flex items-center gap-1">
+                                  📐 Level Access
+                                </span>
+                              )}
+                              {venue.quiet_space_available && (
+                                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs flex items-center gap-1">
+                                  🤫 Quiet Space
+                                </span>
+                              )}
+                              {!venue.wheelchair_entrance && !venue.wheelchair_bathroom && !venue.accessible_parking_nearby && !venue.level_access_internal && !venue.quiet_space_available && (
+                                <span className="text-gray-500 text-xs">Basic Access</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Footer */}
+                          <div className="pt-3 border-t border-gray-200">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-gray-600">
+                                {venue.currently_operating ? '✅ Open' : '❌ Closed'}
+                              </span>
+                              <span className="text-xs font-semibold text-emerald-600">
+                                View Details →
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => navigate('/browse-venues')}
+                      className="w-full p-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all text-center mt-4"
+                    >
+                      Browse More Venues →
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600">No venues available</p>
+                    <button
+                      onClick={() => navigate('/browse-venues')}
+                      className="mt-2 px-4 py-2 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all"
+                    >
+                      Explore Venues
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

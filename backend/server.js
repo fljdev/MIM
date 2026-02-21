@@ -105,6 +105,126 @@ app.use('/api', venuesRoutes);
 // Accessible venues routes (new comprehensive accessible venues table)
 app.use('/api', accessibleVenuesRoutes);
 
+// Mock transport services endpoint for journey planner
+app.get('/api/transport-services', (req, res) => {
+  const mockTransportServices = [
+    {
+      id: '1',
+      serviceName: 'Irish Wheelchair Association Transport',
+      serviceType: 'specialized',
+      organization: 'Irish Wheelchair Association',
+      coverageAreas: ['Dublin', 'Leinster'],
+      requiresMembership: true,
+      membershipCostEuro: 50,
+      requiresAdvanceBooking: true,
+      advanceBookingDays: 2,
+      contactPhone: '01 818 6400',
+      contactEmail: 'transport@iwa.ie',
+      bookingUrl: 'https://iwa.ie/book',
+      website: 'https://iwa.ie',
+      wheelchairAccessible: true,
+      vehicleTypes: ['Wheelchair Accessible Minibus'],
+      costStructure: 'Membership fee + per-journey charge',
+      acceptsFreeTravelPass: true,
+      operatingDays: [1, 2, 3, 4, 5],
+      operatingHours: '08:00-18:00',
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '2',
+      serviceName: 'GoCar Wheelchair Accessible Vehicles',
+      serviceType: 'specialized',
+      organization: 'GoCar',
+      coverageAreas: ['Dublin City', 'Dublin Airport'],
+      requiresMembership: true,
+      membershipCostEuro: 25,
+      requiresAdvanceBooking: true,
+      advanceBookingDays: 1,
+      contactPhone: '01 716 6058',
+      contactEmail: 'info@gocar.ie',
+      bookingUrl: 'https://www.gocar.ie/wheelchair-accessible',
+      website: 'https://www.gocar.ie',
+      wheelchairAccessible: true,
+      vehicleTypes: ['Wheelchair Accessible Car'],
+      costStructure: 'Hourly + mileage',
+      acceptsFreeTravelPass: false,
+      operatingDays: [1, 2, 3, 4, 5, 6, 7],
+      operatingHours: '24/7',
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '3',
+      serviceName: 'Dublin Bus Accessible Services',
+      serviceType: 'public',
+      organization: 'Dublin Bus',
+      coverageAreas: ['Greater Dublin Area'],
+      requiresMembership: false,
+      requiresAdvanceBooking: false,
+      contactPhone: '01 873 4222',
+      bookingUrl: 'https://www.dublinbus.ie',
+      website: 'https://www.dublinbus.ie',
+      wheelchairAccessible: true,
+      vehicleTypes: ['Low-floor Buses'],
+      costStructure: 'Standard fares',
+      acceptsFreeTravelPass: true,
+      operatingDays: [1, 2, 3, 4, 5, 6, 7],
+      operatingHours: 'Varies by route',
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '4',
+      serviceName: 'Free Now Wheelchair Accessible Taxis',
+      serviceType: 'taxi',
+      organization: 'Free Now',
+      coverageAreas: ['Dublin City', 'Cork City', 'Galway City'],
+      requiresMembership: false,
+      requiresAdvanceBooking: false,
+      bookingUrl: 'https://www.free-now.com/ie/wheelchair-accessible',
+      website: 'https://www.free-now.com',
+      wheelchairAccessible: true,
+      vehicleTypes: ['Wheelchair Accessible Taxi'],
+      costStructure: 'Metered fares',
+      acceptsFreeTravelPass: false,
+      operatingDays: [1, 2, 3, 4, 5, 6, 7],
+      operatingHours: '24/7',
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '5',
+      serviceName: 'Enable Ireland Transport Service',
+      serviceType: 'community',
+      organization: 'Enable Ireland',
+      coverageAreas: ['Dublin South', 'Wicklow'],
+      requiresMembership: true,
+      membershipCostEuro: 30,
+      requiresAdvanceBooking: true,
+      advanceBookingDays: 3,
+      contactPhone: '1850 204 304',
+      contactEmail: 'transport@enableireland.ie',
+      website: 'https://www.enableireland.ie',
+      wheelchairAccessible: true,
+      vehicleTypes: ['Specialized Transport'],
+      costStructure: 'Membership + subsidized fares',
+      acceptsFreeTravelPass: true,
+      operatingDays: [1, 2, 3, 4, 5],
+      operatingHours: '09:00-17:00',
+      active: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  ];
+  
+  res.json({ services: mockTransportServices });
+});
+
 // Get all users
 app.get('/api/users', async (req, res) => {
   try {
