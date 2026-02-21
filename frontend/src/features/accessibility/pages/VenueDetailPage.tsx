@@ -1,57 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
-import { 
-  PhysicalAccessibility, 
-  SensoryAccessibility, 
-  SpecialEvent,
-  AccessibilityReview 
-} from '../../../types/Accessibility';
-
-interface Venue {
-  id: number;
-  name: string;
-  address: string;
-  lat: number;
-  lng: number;
-  venue_type: string;
-  google_places_id: string;
-}
+import { API_BASE_URL } from '../../../Config';
+import { AccessibleVenue } from './BrowseVenuesPage';
 
 const VenueDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  const [venue, setVenue] = useState<Venue | null>(null);
-  const [physicalAccessibility, setPhysicalAccessibility] = useState<PhysicalAccessibility | null>(null);
-  const [sensoryAccessibility, setSensoryAccessibility] = useState<SensoryAccessibility | null>(null);
-  const [specialEvents, setSpecialEvents] = useState<SpecialEvent[]>([]);
-  const [reviews, setReviews] = useState<AccessibilityReview[]>([]);
+  const [venue, setVenue] = useState<AccessibleVenue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'physical' | 'sensory' | 'events' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'physical' | 'sensory'>('overview');
 
   useEffect(() => {
     const fetchVenueDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5001/api/venues/${id}`);
-        if (!response.ok) {
-          throw new Error('Venue not found');
-        }
-        const data = await response.json();
-        setVenue(data.venue);
-        setPhysicalAccessibility(data.physicalAccessibility);
-        setSensoryAccessibility(data.sensoryAccessibility);
-        setSpecialEvents(data.specialEvents || []);
+        const response = await fetch(`${API_BASE_URL}/api/accessible-venues/${id}`);
         
-        // Fetch reviews separately
-        const reviewsResponse = await fetch(`http://localhost:5001/api/venues/${id}/reviews`);
-        if (reviewsResponse.ok) {
-          const reviewsData = await reviewsResponse.json();
-          setReviews(reviewsData.reviews || []);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Venue not found');
+          }
+          throw new Error(`Failed to load venue: ${response.status}`);
         }
+        
+        const venueData = await response.json();
+        setVenue(venueData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load venue details');
       } finally {
@@ -65,11 +42,50 @@ const VenueDetailPage: React.FC = () => {
   }, [id]);
 
   const handlePlanJourney = () => {
-    navigate('/journey-planner', { state: { destinationVenue: venue } });
+    if (venue) {
+      navigate('/journey-planner', { 
+        state: { 
+          destinationVenue: {
+            name: venue.venue_name,
+            lat: venue.latitude,
+            lng: venue.longitude,
+            address: venue.address
+          }
+        } 
+      });
+    }
   };
 
-  const handleAddReview = () => {
-    navigate(`/venues/${id}/review`);
+  // Calculate accessibility score based on real venue data
+  const calculateAccessibilityScore = (venue: AccessibleVenue) => {
+    let score = 50; // Base score
+    
+    // Physical accessibility points
+    if (venue.wheelchair_entrance) score += 15;
+    if (venue.wheelchair_bathroom) score += 15;
+    if (venue.accessible_parking_nearby) score += 10;
+    if (venue.level_access_internal) score += 10;
+    if (venue.elevator_available) score += 5;
+    if (venue.quiet_space_available) score += 5;
+    
+    // Deductions based on accessibility level
+    if (venue.accessibility_level === 'Not Recommended') score -= 20;
+    else if (venue.accessibility_level === 'Semi-Accessible') score -= 10;
+    else if (venue.accessibility_level === 'Accessible Entrance') score += 5;
+    else if (venue.accessibility_level === 'Fully Accessible') score += 20;
+    
+    return Math.min(Math.max(score, 0), 100);
+  };
+
+  // Get accessibility level color
+  const getAccessibilityLevelColor = (level: string) => {
+    switch (level) {
+      case 'Fully Accessible': return 'text-green-600';
+      case 'Accessible Entrance': return 'text-blue-600';
+      case 'Semi-Accessible': return 'text-yellow-600';
+      case 'Not Recommended': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
   };
 
   if (loading) {
@@ -91,40 +107,31 @@ const VenueDetailPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-brand-turquoise mb-2">Venue Not Found</h2>
           <p className="text-brand-brown">{error || 'The requested venue could not be found.'}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/browse-venues')}
             className="mt-4 px-6 py-3 bg-brand-turquoise text-white rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all"
           >
-            ← Back to Home
+            ← Browse All Venues
           </button>
         </div>
       </div>
     );
   }
 
-  const calculateAccessibilityScore = () => {
-    let score = 50; // Base score
-    
-    if (physicalAccessibility) {
-      if (physicalAccessibility.stepFreeEntrance) score += 10;
-      if (physicalAccessibility.accessibleToilet) score += 15;
-      if (physicalAccessibility.wheelchairSpaceAvailable) score += 10;
-      if (physicalAccessibility.liftAvailable) score += 5;
-      if (physicalAccessibility.disabledParkingBays > 0) score += 5;
-    }
-    
-    if (sensoryAccessibility) {
-      if (sensoryAccessibility.quietSpaceAvailable) score += 5;
-      if (sensoryAccessibility.staffAutismTrained) score += 5;
-      if (sensoryAccessibility.noiseLevel === 'quiet' || sensoryAccessibility.noiseLevel === 'very_quiet') score += 5;
-    }
-    
-    return Math.min(score, 100);
-  };
+  const accessibilityScore = calculateAccessibilityScore(venue);
+  const scoreColor = getAccessibilityLevelColor(venue.accessibility_level);
 
-  const accessibilityScore = calculateAccessibilityScore();
-  const scoreColor = accessibilityScore >= 80 ? 'text-green-600' : 
-                     accessibilityScore >= 60 ? 'text-yellow-600' : 
-                     'text-red-600';
+  // Get venue type icon
+  const getVenueTypeIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'pub': return '🍺';
+      case 'restaurant': return '🍽️';
+      case 'cafe': return '☕';
+      case 'hotel': return '🏨';
+      case 'shop': return '🛍️';
+      case 'museum': return '🏛️';
+      default: return '🏢';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-brand-cream">
@@ -137,17 +144,23 @@ const VenueDetailPage: React.FC = () => {
           >
             ← Back
           </button>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">{venue.name}</h1>
-          <p className="text-lg opacity-90">{venue.address}</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">{venue.venue_name}</h1>
+          <p className="text-lg opacity-90">{venue.address || 'Address not available'}</p>
           <div className="flex flex-wrap items-center gap-4 mt-4">
             <div className="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-full">
-              <span className="text-2xl">🏪</span>
+              <span className="text-2xl">{getVenueTypeIcon(venue.venue_type)}</span>
               <span>{venue.venue_type || 'Venue'}</span>
             </div>
             <div className={`flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-full ${scoreColor}`}>
               <span className="text-2xl">♿</span>
-              <span className="font-bold">{accessibilityScore}% Accessibility</span>
+              <span className="font-bold">{venue.accessibility_level}</span>
             </div>
+            {venue.user_rating && (
+              <div className="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-full">
+                <span className="text-2xl">⭐</span>
+                <span>{venue.user_rating.toFixed(1)} ({venue.total_ratings || 0} ratings)</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -159,18 +172,13 @@ const VenueDetailPage: React.FC = () => {
           <div className="lg:col-span-2">
             {/* Tab Navigation */}
             <div className="flex overflow-x-auto mb-6 border-b border-gray-300">
-              {['overview', 'physical', 'sensory', 'events', 'reviews'].map((tab) => (
+              {['overview', 'physical', 'sensory'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}
                   className={`px-4 py-3 font-medium whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-brand-turquoise text-brand-turquoise' : 'text-gray-600 hover:text-brand-turquoise'}`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  {tab === 'reviews' && reviews.length > 0 && (
-                    <span className="ml-2 bg-brand-turquoise text-white text-xs px-2 py-1 rounded-full">
-                      {reviews.length}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
@@ -179,88 +187,113 @@ const VenueDetailPage: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-brand-turquoise">
               {activeTab === 'overview' && (
                 <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-brand-turquoise">Overview</h3>
+                  <h3 className="text-2xl font-bold text-brand-turquoise">Accessibility Overview</h3>
                   <p className="text-brand-brown">
-                    This venue has been evaluated for accessibility features. Below is a summary of what's available.
+                    {venue.accessibility_notes || 'This venue has been evaluated for accessibility features.'}
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Physical Features */}
+                    {/* Physical Accessibility */}
                     <div className="bg-brand-cream p-4 rounded-lg">
                       <h4 className="font-bold text-brand-turquoise mb-3">♿ Physical Accessibility</h4>
                       <ul className="space-y-2">
-                        {physicalAccessibility?.stepFreeEntrance && (
+                        {venue.wheelchair_entrance && (
                           <li className="flex items-center gap-2">
                             <span className="text-green-600">✓</span>
-                            <span>Step-free entrance</span>
+                            <span>Wheelchair accessible entrance</span>
                           </li>
                         )}
-                        {physicalAccessibility?.accessibleToilet && (
+                        {venue.wheelchair_bathroom && (
                           <li className="flex items-center gap-2">
                             <span className="text-green-600">✓</span>
-                            <span>Accessible toilet</span>
+                            <span>Accessible bathroom</span>
                           </li>
                         )}
-                        {physicalAccessibility?.wheelchairSpaceAvailable && (
+                        {venue.accessible_parking_nearby && (
                           <li className="flex items-center gap-2">
                             <span className="text-green-600">✓</span>
-                            <span>Wheelchair space</span>
+                            <span>Accessible parking nearby</span>
                           </li>
                         )}
-                        {physicalAccessibility?.disabledParkingBays > 0 && (
+                        {venue.level_access_internal && (
                           <li className="flex items-center gap-2">
                             <span className="text-green-600">✓</span>
-                            <span>Disabled parking ({physicalAccessibility.disabledParkingBays} bays)</span>
+                            <span>Level access throughout</span>
                           </li>
                         )}
-                        {!physicalAccessibility && (
-                          <li className="text-gray-500">No physical accessibility data available</li>
+                        {venue.elevator_available && (
+                          <li className="flex items-center gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>Elevator available</span>
+                          </li>
+                        )}
+                        {!venue.wheelchair_entrance && !venue.wheelchair_bathroom && !venue.accessible_parking_nearby && !venue.level_access_internal && !venue.elevator_available && (
+                          <li className="text-gray-500">No physical accessibility features recorded</li>
                         )}
                       </ul>
                     </div>
 
-                    {/* Sensory Features */}
+                    {/* Additional Features */}
                     <div className="bg-brand-cream p-4 rounded-lg">
-                      <h4 className="font-bold text-brand-turquoise mb-3">🎵 Sensory Environment</h4>
+                      <h4 className="font-bold text-brand-turquoise mb-3">🎵 Additional Features</h4>
                       <ul className="space-y-2">
-                        {sensoryAccessibility?.noiseLevel && (
-                          <li className="flex items-center gap-2">
-                            <span className="text-green-600">✓</span>
-                            <span>Noise level: {sensoryAccessibility.noiseLevel.replace('_', ' ')}</span>
-                          </li>
-                        )}
-                        {sensoryAccessibility?.quietSpaceAvailable && (
+                        {venue.quiet_space_available && (
                           <li className="flex items-center gap-2">
                             <span className="text-green-600">✓</span>
                             <span>Quiet space available</span>
                           </li>
                         )}
-                        {sensoryAccessibility?.staffAutismTrained && (
+                        {venue.service_dog_friendly && (
                           <li className="flex items-center gap-2">
                             <span className="text-green-600">✓</span>
-                            <span>Autism-trained staff</span>
+                            <span>Service dog friendly</span>
                           </li>
                         )}
-                        {!sensoryAccessibility && (
-                          <li className="text-gray-500">No sensory accessibility data available</li>
+                        {venue.hearing_loop && (
+                          <li className="flex items-center gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>Hearing loop available</span>
+                          </li>
+                        )}
+                        {venue.braille_menu && (
+                          <li className="flex items-center gap-2">
+                            <span className="text-green-600">✓</span>
+                            <span>Braille menu available</span>
+                          </li>
+                        )}
+                        {!venue.quiet_space_available && !venue.service_dog_friendly && !venue.hearing_loop && !venue.braille_menu && (
+                          <li className="text-gray-500">No additional features recorded</li>
                         )}
                       </ul>
                     </div>
                   </div>
 
-                  {/* Special Events */}
-                  {specialEvents.length > 0 && (
+                  {/* Contact Information */}
+                  {(venue.phone || venue.website) && (
                     <div className="bg-brand-cream p-4 rounded-lg">
-                      <h4 className="font-bold text-brand-turquoise mb-3">🎬 Upcoming Special Events</h4>
-                      <div className="space-y-3">
-                        {specialEvents.slice(0, 3).map(event => (
-                          <div key={event.id} className="bg-white p-3 rounded-lg border border-brand-turquoise">
-                            <div className="font-bold text-brand-turquoise">{event.eventName}</div>
-                            <div className="text-sm text-brand-brown">
-                              {new Date(event.nextOccurrence).toLocaleDateString()} • {event.eventType.replace('_', ' ')}
-                            </div>
+                      <h4 className="font-bold text-brand-turquoise mb-3">📞 Contact Information</h4>
+                      <div className="space-y-2">
+                        {venue.phone && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Phone:</span>
+                            <a href={`tel:${venue.phone}`} className="text-brand-turquoise hover:underline">
+                              {venue.phone}
+                            </a>
                           </div>
-                        ))}
+                        )}
+                        {venue.website && (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Website:</span>
+                            <a 
+                              href={venue.website} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-brand-turquoise hover:underline"
+                            >
+                              {venue.website.replace('https://', '').replace('http://', '')}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -269,303 +302,192 @@ const VenueDetailPage: React.FC = () => {
 
               {activeTab === 'physical' && (
                 <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-brand-turquoise">Physical Accessibility Details</h3>
-                  {physicalAccessibility ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Entrance & Access</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Step-free entrance:</span>
-                            <span className={physicalAccessibility.stepFreeEntrance ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.stepFreeEntrance ? 'Yes' : 'No'}
-                            </span>
+                  <h3 className="text-2xl font-bold text-brand-turquoise">Detailed Physical Accessibility</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Entrance & Access */}
+                    <div>
+                      <h4 className="font-bold text-brand-turquoise mb-3">Entrance & Access</h4>
+                      <ul className="space-y-2">
+                        <li className="flex justify-between">
+                          <span>Wheelchair entrance:</span>
+                          <span className={venue.wheelchair_entrance ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.wheelchair_entrance ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Level access internal:</span>
+                          <span className={venue.level_access_internal ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.level_access_internal ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Wide doorways:</span>
+                          <span className={venue.wide_doorways ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.wide_doorways ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        {venue.entrance_notes && (
+                          <li className="text-sm text-gray-600 mt-2">
+                            <span className="font-medium">Notes:</span> {venue.entrance_notes}
                           </li>
-                          <li className="flex justify-between">
-                            <span>Ramp available:</span>
-                            <span className={physicalAccessibility.rampAvailable ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.rampAvailable ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Automatic door:</span>
-                            <span className={physicalAccessibility.automaticDoor ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.automaticDoor ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Door width:</span>
-                            <span>{physicalAccessibility.doorWidthCm || 'Unknown'} cm</span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Parking & Drop-off</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Disabled parking bays:</span>
-                            <span>{physicalAccessibility.disabledParkingBays}</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Drop-off zone:</span>
-                            <span className={physicalAccessibility.dropOffZone ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.dropOffZone ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Covered parking:</span>
-                            <span className={physicalAccessibility.parkingCovered ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.parkingCovered ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Interior</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Level access throughout:</span>
-                            <span className={physicalAccessibility.levelAccessThroughout ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.levelAccessThroughout ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Lift available:</span>
-                            <span className={physicalAccessibility.liftAvailable ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.liftAvailable ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Wheelchair-accessible lift:</span>
-                            <span className={physicalAccessibility.liftWheelchairAccessible ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.liftWheelchairAccessible ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Toilets</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Accessible toilet:</span>
-                            <span className={physicalAccessibility.accessibleToilet ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.accessibleToilet ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Grab rails:</span>
-                            <span className={physicalAccessibility.toiletGrabRails ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.toiletGrabRails ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Changing Places toilet:</span>
-                            <span className={physicalAccessibility.changingPlacesToilet ? 'text-green-600 font-bold' : 'text-red-600'}>
-                              {physicalAccessibility.changingPlacesToilet ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
+                        )}
+                      </ul>
                     </div>
-                  ) : (
-                    <p className="text-gray-500">No physical accessibility data available for this venue.</p>
-                  )}
+
+                    {/* Bathroom Facilities */}
+                    <div>
+                      <h4 className="font-bold text-brand-turquoise mb-3">Bathroom Facilities</h4>
+                      <ul className="space-y-2">
+                        <li className="flex justify-between">
+                          <span>Wheelchair bathroom:</span>
+                          <span className={venue.wheelchair_bathroom ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.wheelchair_bathroom ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Grab rails:</span>
+                          <span className={venue.wheelchair_bathroom ? 'text-green-600 font-bold' : 'text-gray-600'}>
+                            {venue.wheelchair_bathroom ? 'Assumed' : 'Unknown'}
+                          </span>
+                        </li>
+                        {venue.bathroom_notes && (
+                          <li className="text-sm text-gray-600 mt-2">
+                            <span className="font-medium">Notes:</span> {venue.bathroom_notes}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+
+                    {/* Seating & Tables */}
+                    <div>
+                      <h4 className="font-bold text-brand-turquoise mb-3">Seating & Tables</h4>
+                      <ul className="space-y-2">
+                        <li className="flex justify-between">
+                          <span>Wheelchair space at tables:</span>
+                          <span className={venue.wheelchair_space_at_tables ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.wheelchair_space_at_tables ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Low height tables:</span>
+                          <span className={venue.low_height_tables ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.low_height_tables ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Accessible bar counter:</span>
+                          <span className={venue.accessible_bar_counter ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.accessible_bar_counter ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Mobility & Transport */}
+                    <div>
+                      <h4 className="font-bold text-brand-turquoise mb-3">Mobility & Transport</h4>
+                      <ul className="space-y-2">
+                        <li className="flex justify-between">
+                          <span>Accessible parking nearby:</span>
+                          <span className={venue.accessible_parking_nearby ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.accessible_parking_nearby ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Elevator available:</span>
+                          <span className={venue.elevator_available ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.elevator_available ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        {venue.nearby_accessible_bathrooms && (
+                          <li className="text-sm text-gray-600 mt-2">
+                            <span className="font-medium">Nearby accessible bathrooms:</span> {venue.nearby_accessible_bathrooms}
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {activeTab === 'sensory' && (
                 <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-brand-turquoise">Sensory Environment Details</h3>
-                  {sensoryAccessibility ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Noise & Music</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Noise level:</span>
-                            <span>{sensoryAccessibility.noiseLevel?.replace('_', ' ') || 'Unknown'}</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Background music:</span>
-                            <span className={sensoryAccessibility.backgroundMusic ? 'text-yellow-600 font-bold' : 'text-green-600'}>
-                              {sensoryAccessibility.backgroundMusic ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Live music:</span>
-                            <span className={sensoryAccessibility.liveMusic ? 'text-yellow-600 font-bold' : 'text-green-600'}>
-                              {sensoryAccessibility.liveMusic ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Lighting</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Lighting type:</span>
-                            <span>{sensoryAccessibility.lightingType || 'Unknown'}</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Flickering lights:</span>
-                            <span className={sensoryAccessibility.flickeringLights ? 'text-red-600 font-bold' : 'text-green-600'}>
-                              {sensoryAccessibility.flickeringLights ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Adjustable lighting:</span>
-                            <span className={sensoryAccessibility.adjustableLighting ? 'text-green-600 font-bold' : 'text-gray-600'}>
-                              {sensoryAccessibility.adjustableLighting ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Environment</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Typical crowd level:</span>
-                            <span>{sensoryAccessibility.typicalCrowdLevel || 'Unknown'}</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Strong smells:</span>
-                            <span className={sensoryAccessibility.strongSmells ? 'text-red-600 font-bold' : 'text-green-600'}>
-                              {sensoryAccessibility.strongSmells ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div>
-                        <h4 className="font-bold text-brand-turquoise mb-3">Autism-Friendly Features</h4>
-                        <ul className="space-y-2">
-                          <li className="flex justify-between">
-                            <span>Quiet space available:</span>
-                            <span className={sensoryAccessibility.quietSpaceAvailable ? 'text-green-600 font-bold' : 'text-gray-600'}>
-                              {sensoryAccessibility.quietSpaceAvailable ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Staff autism-trained:</span>
-                            <span className={sensoryAccessibility.staffAutismTrained ? 'text-green-600 font-bold' : 'text-gray-600'}>
-                              {sensoryAccessibility.staffAutismTrained ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span>Visual supports:</span>
-                            <span className={sensoryAccessibility.visualSupportsAvailable ? 'text-green-600 font-bold' : 'text-gray-600'}>
-                              {sensoryAccessibility.visualSupportsAvailable ? 'Yes' : 'No'}
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
+                  <h3 className="text-2xl font-bold text-brand-turquoise">Sensory Environment</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Sensory Features */}
+                    <div>
+                      <h4 className="font-bold text-brand-turquoise mb-3">Sensory Features</h4>
+                      <ul className="space-y-2">
+                        <li className="flex justify-between">
+                          <span>Quiet space available:</span>
+                          <span className={venue.quiet_space_available ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.quiet_space_available ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Hearing loop:</span>
+                          <span className={venue.hearing_loop ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.hearing_loop ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Service dog friendly:</span>
+                          <span className={venue.service_dog_friendly ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.service_dog_friendly ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                      </ul>
                     </div>
-                  ) : (
-                    <p className="text-gray-500">No sensory accessibility data available for this venue.</p>
-                  )}
-                </div>
-              )}
 
-              {activeTab === 'events' && (
-                <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-brand-turquoise">Special Events</h3>
-                  {specialEvents.length > 0 ? (
-                    <div className="space-y-4">
-                      {specialEvents.map(event => (
-                        <div key={event.id} className="bg-brand-cream p-6 rounded-lg border-2 border-brand-turquoise">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                              <h4 className="text-xl font-bold text-brand-turquoise">{event.eventName}</h4>
-                              <p className="text-brand-brown mt-2">{event.description}</p>
-                              <div className="flex flex-wrap gap-3 mt-3">
-                                <span className="px-3 py-1 bg-white text-brand-turquoise rounded-full text-sm">
-                                  {event.eventType.replace('_', ' ')}
-                                </span>
-                                <span className="px-3 py-1 bg-white text-brand-turquoise rounded-full text-sm">
-                                  {new Date(event.nextOccurrence).toLocaleDateString()}
-                                </span>
-                                {event.bookingRequired && (
-                                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-                                    Booking required
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex gap-3">
-                              {event.bookingUrl && (
-                                <a
-                                  href={event.bookingUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-4 py-2 bg-brand-turquoise text-white rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all"
-                                >
-                                  Book Now
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                    {/* Additional Information */}
+                    <div>
+                      <h4 className="font-bold text-brand-turquoise mb-3">Additional Information</h4>
+                      <ul className="space-y-2">
+                        <li className="flex justify-between">
+                          <span>Braille menu:</span>
+                          <span className={venue.braille_menu ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.braille_menu ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span>Booth seating transferable:</span>
+                          <span className={venue.booth_seating_transferable ? 'text-green-600 font-bold' : 'text-red-600'}>
+                            {venue.booth_seating_transferable ? 'Yes' : 'No'}
+                          </span>
+                        </li>
+                        {venue.accessibility_notes && (
+                          <li className="text-sm text-gray-600 mt-2">
+                            <span className="font-medium">General notes:</span> {venue.accessibility_notes}
+                          </li>
+                        )}
+                      </ul>
                     </div>
-                  ) : (
-                    <p className="text-gray-500">No special events scheduled for this venue.</p>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'reviews' && (
-                <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-brand-turquoise">Accessibility Reviews</h3>
-                  {user && (
-                    <button
-                      onClick={handleAddReview}
-                      className="px-6 py-3 bg-brand-turquoise text-white rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all"
-                    >
-                      + Add Your Review
-                    </button>
-                  )}
+                  </div>
                   
-                  {reviews.length > 0 ? (
-                    <div className="space-y-6">
-                      {reviews.map(review => (
-                        <div key={review.id} className="bg-white border border-gray-300 rounded-lg p-6">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <span
-                                    key={i}
-                                    className={`text-2xl ${i < review.overallRating ? 'text-yellow-500' : 'text-gray-300'}`}
-                                  >
-                                    ★
-                                  </span>
-                                ))}
-                              </div>
-                              <div className="mt-2 text-sm text-gray-600">
-                                {new Date(review.visitDate).toLocaleDateString()} • 
-                                {review.wouldRecommend ? ' Would recommend' : ' Would not recommend'}
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              {review.accessibilityNeedsMet && (
-                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                                  Needs met ✓
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <p className="text-gray-800">{review.reviewText}</p>
+                  {/* Verification Information */}
+                  <div className="bg-brand-cream p-4 rounded-lg">
+                    <h4 className="font-bold text-brand-turquoise mb-3">📋 Verification Information</h4>
+                    <div className="space-y-2 text-sm">
+                      {venue.data_source && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Data source:</span>
+                          <span>{venue.data_source}</span>
                         </div>
-                      ))}
+                      )}
+                      {venue.last_verified_date && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Last verified:</span>
+                          <span>{new Date(venue.last_verified_date).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                      {venue.verified_by && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Verified by:</span>
+                          <span>{venue.verified_by}</span>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-gray-500">No reviews yet. Be the first to share your experience!</p>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
@@ -585,14 +507,26 @@ const VenueDetailPage: React.FC = () => {
               </button>
               
               <div className="space-y-3">
-                <button className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2">
-                  <span>📞</span>
-                  Call Venue
-                </button>
-                <button className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2">
-                  <span>🌐</span>
-                  Visit Website
-                </button>
+                {venue.phone && (
+                  <a
+                    href={`tel:${venue.phone}`}
+                    className="w-full block px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>📞</span>
+                    Call Venue
+                  </a>
+                )}
+                {venue.website && (
+                  <a
+                    href={venue.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full block px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>🌐</span>
+                    Visit Website
+                  </a>
+                )}
                 <button className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2">
                   <span>📋</span>
                   Report Incorrect Info
@@ -606,13 +540,17 @@ const VenueDetailPage: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">Overall Score</span>
-                    <span className={`text-2xl font-bold ${scoreColor}`}>{accessibilityScore}%</span>
+                    <span className="font-medium">Accessibility Level</span>
+                    <span className={`text-xl font-bold ${scoreColor}`}>{venue.accessibility_level}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
-                      className={`h-3 rounded-full ${accessibilityScore >= 80 ? 'bg-green-500' : accessibilityScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                      style={{ width: `${accessibilityScore}%` }}
+                      className={`h-3 rounded-full ${scoreColor.replace('text-', 'bg-')}`}
+                      style={{ 
+                        width: venue.accessibility_level === 'Fully Accessible' ? '100%' :
+                               venue.accessibility_level === 'Accessible Entrance' ? '75%' :
+                               venue.accessibility_level === 'Semi-Accessible' ? '50%' : '25%'
+                      }}
                     ></div>
                   </div>
                 </div>
@@ -620,20 +558,17 @@ const VenueDetailPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-3 bg-brand-cream rounded-lg">
                     <div className="text-2xl">♿</div>
-                    <div className="font-bold text-brand-turquoise">Physical</div>
+                    <div className="font-bold text-brand-turquoise">Physical Access</div>
                     <div className="text-sm">
-                      {physicalAccessibility ? 
-                        (physicalAccessibility.stepFreeEntrance && physicalAccessibility.accessibleToilet ? 'Good' : 'Basic') : 
-                        'No data'}
+                      {venue.wheelchair_entrance && venue.wheelchair_bathroom ? 'Good' : 
+                       venue.wheelchair_entrance ? 'Basic' : 'Limited'}
                     </div>
                   </div>
                   <div className="text-center p-3 bg-brand-cream rounded-lg">
                     <div className="text-2xl">🎵</div>
                     <div className="font-bold text-brand-turquoise">Sensory</div>
                     <div className="text-sm">
-                      {sensoryAccessibility ? 
-                        (sensoryAccessibility.quietSpaceAvailable ? 'Good' : 'Basic') : 
-                        'No data'}
+                      {venue.quiet_space_available ? 'Good' : 'Basic'}
                     </div>
                   </div>
                 </div>
@@ -642,28 +577,28 @@ const VenueDetailPage: React.FC = () => {
 
             {/* Transport Options */}
             <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-brand-turquoise">
-              <h3 className="text-xl font-bold text-brand-turquoise mb-4">Nearby Transport</h3>
+              <h3 className="text-xl font-bold text-brand-turquoise mb-4">Venue Information</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 bg-brand-cream rounded-lg">
-                  <span className="text-2xl">🚌</span>
+                  <span className="text-2xl">🏪</span>
                   <div>
-                    <div className="font-bold">Dublin Bus Route 46A</div>
-                    <div className="text-sm text-gray-600">Accessible bus - 200m away</div>
+                    <div className="font-bold">Type</div>
+                    <div className="text-sm text-gray-600">{venue.venue_type}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-brand-cream rounded-lg">
-                  <span className="text-2xl">🚕</span>
+                  <span className="text-2xl">📍</span>
                   <div>
-                    <div className="font-bold">Accessible Taxi</div>
-                    <div className="text-sm text-gray-600">Local companies available</div>
+                    <div className="font-bold">Address</div>
+                    <div className="text-sm text-gray-600">{venue.address}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-brand-cream rounded-lg">
-                  <span className="text-2xl">🅿️</span>
+                  <span className="text-2xl">🕒</span>
                   <div>
-                    <div className="font-bold">Disabled Parking</div>
+                    <div className="font-bold">Status</div>
                     <div className="text-sm text-gray-600">
-                      {physicalAccessibility?.disabledParkingBays || '0'} bays on-site
+                      {venue.currently_operating ? '✅ Currently Open' : '❌ Currently Closed'}
                     </div>
                   </div>
                 </div>
