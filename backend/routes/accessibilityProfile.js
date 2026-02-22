@@ -6,6 +6,13 @@ console.log('Accessibility Profile router loaded');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'mimapp-dev-secret-2025';
 
+// Helper function to ensure array fields are properly serialized
+const ensureArray = (value) => {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) return value;
+  return [value];
+};
+
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -65,40 +72,40 @@ router.post('/accessibility-profile', authenticateToken, async (req, res) => {
     let result;
     if (existingProfile.rows.length > 0) {
       // Update existing profile
-      result = await pool.query(
-        `UPDATE user_accessibility_profiles 
-         SET 
-           mobility_type = $1,
-           transport_access = $2,
-           autism = $3,
-           light_sensitivity = $4,
-           noise_sensitivity = $5,
-           crowd_sensitivity = $6,
-           hearing_impaired = $7,
-           vision_impaired = $8,
-           service_dog = $9,
-           cognitive_needs = $10,
-           preferred_transport_services = $11,
-           avoid_features = $12,
-           updated_at = NOW()
-         WHERE user_id = $13
-         RETURNING *`,
-        [
-          mobilityType,
-          transportAccess,
-          autism || false,
-          lightSensitivity || false,
-          noiseSensitivity || false,
-          crowdSensitivity || false,
-          hearingImpaired || false,
-          visionImpaired || false,
-          serviceDog || false,
-          cognitiveNeeds || false,
-          preferredTransportServices || [],
-          avoidFeatures || [],
-          userId
-        ]
-      );
+        result = await pool.query(
+          `UPDATE user_accessibility_profiles 
+           SET 
+             mobility_type = $1,
+             transport_access = $2,
+             autism = $3,
+             light_sensitivity = $4,
+             noise_sensitivity = $5,
+             crowd_sensitivity = $6,
+             hearing_impaired = $7,
+             vision_impaired = $8,
+             service_dog = $9,
+             cognitive_needs = $10,
+             preferred_transport_services = $11,
+             avoid_features = $12,
+             updated_at = NOW()
+           WHERE user_id = $13
+           RETURNING *`,
+          [
+            mobilityType,
+            transportAccess,
+            autism || false,
+            lightSensitivity || false,
+            noiseSensitivity || false,
+            crowdSensitivity || false,
+            hearingImpaired || false,
+            visionImpaired || false,
+            serviceDog || false,
+            cognitiveNeeds || false,
+            JSON.stringify(ensureArray(preferredTransportServices)),
+            JSON.stringify(ensureArray(avoidFeatures)),
+            userId
+          ]
+        );
     } else {
       // Create new profile
       result = await pool.query(
@@ -120,8 +127,8 @@ router.post('/accessibility-profile', authenticateToken, async (req, res) => {
           visionImpaired || false,
           serviceDog || false,
           cognitiveNeeds || false,
-          preferredTransportServices || [],
-          avoidFeatures || []
+          JSON.stringify(ensureArray(preferredTransportServices)),
+          JSON.stringify(ensureArray(avoidFeatures))
         ]
       );
     }
@@ -197,8 +204,13 @@ router.put('/accessibility-profile/:userId', authenticateToken, async (req, res)
     for (const [key, value] of Object.entries(updates)) {
       const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
       if (allowedFields.includes(dbKey)) {
+        // Handle array fields specially to ensure proper JSON array serialization
+        let processedValue = value;
+        if (dbKey === 'preferred_transport_services' || dbKey === 'avoid_features') {
+          processedValue = JSON.stringify(ensureArray(value));
+        }
         updateFields.push(`${dbKey} = $${paramCount}`);
-        updateValues.push(value);
+        updateValues.push(processedValue);
         paramCount++;
       }
     }
