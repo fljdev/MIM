@@ -35,6 +35,14 @@ const JourneyPlanner: React.FC = () => {
   const [featuredVenues, setFeaturedVenues] = useState<AccessibleVenue[]>([]);
   const [loadingFeaturedVenues, setLoadingFeaturedVenues] = useState(false);
 
+  // State for modals
+  const [showTipsModal, setShowTipsModal] = useState(false);
+  const [showUpdatesModal, setShowUpdatesModal] = useState(false);
+  const [showSupportEmail, setShowSupportEmail] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState(user?.email || '');
+  const [waitlistStatus, setWaitlistStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [waitlistError, setWaitlistError] = useState('');
+
   // If venue data is passed from VenueDetailPage, pre-fill destination
   useEffect(() => {
     if (location.state?.destinationVenue) {
@@ -219,6 +227,47 @@ const JourneyPlanner: React.FC = () => {
       case 'shop': return '🛍️';
       case 'museum': return '🏛️';
       default: return '🏢';
+    }
+  };
+
+  // Handle waitlist submission
+  const handleWaitlistSubmit = async () => {
+    if (!waitlistEmail.trim()) {
+      setWaitlistError('Please enter your email address');
+      return;
+    }
+
+    setWaitlistStatus('loading');
+    setWaitlistError('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: waitlistEmail.toLowerCase().trim() })
+      });
+
+      if (response.ok) {
+        setWaitlistStatus('success');
+        // Clear email field on success
+        setWaitlistEmail('');
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          setShowUpdatesModal(false);
+          setWaitlistStatus('idle');
+        }, 2000);
+      } else if (response.status === 409) {
+        // Email already exists
+        setWaitlistStatus('error');
+        setWaitlistError('Looks like you\'re already signed up!');
+      } else {
+        setWaitlistStatus('error');
+        setWaitlistError('Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      console.error('Waitlist submission error:', error);
+      setWaitlistStatus('error');
+      setWaitlistError('Network error. Please check your connection.');
     }
   };
 
@@ -627,17 +676,46 @@ const JourneyPlanner: React.FC = () => {
             <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-brand-turquoise">
               <h3 className="text-xl font-bold text-brand-turquoise mb-4">Need Help?</h3>
               <div className="space-y-4">
-                <button className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setShowSupportEmail(!showSupportEmail)}
+                  className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2"
+                >
                   <span>📞</span>
                   Contact Support
                 </button>
-                <button className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2">
-                  <span>📋</span>
+                {showSupportEmail && (
+                  <div className="mt-3 p-4 bg-brand-cream rounded-lg border-2 border-brand-turquoise animate-fadeIn">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">📧</span>
+                        <span className="font-mono text-lg font-bold text-gray-800">support@mimtown.com</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText('support@mimtown.com');
+                          alert('Email address copied to clipboard!');
+                        }}
+                        className="px-3 py-1 bg-brand-turquoise text-white text-sm rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600">Copy this address to email us for accessibility support.</p>
+                  </div>
+                )}
+                <button 
+                  onClick={() => setShowTipsModal(true)}
+                  className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2"
+                >
+                  <span></span>
                   Accessibility Tips
                 </button>
-                <button className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => setShowUpdatesModal(true)}
+                  className="w-full px-4 py-3 bg-brand-cream text-brand-turquoise rounded-lg font-semibold hover:bg-brand-turquoise hover:text-white transition-all flex items-center justify-center gap-2"
+                >
                   <span>🔔</span>
-                  Set Reminders
+                  Get Updates
                 </button>
               </div>
             </div>
@@ -769,6 +847,157 @@ const JourneyPlanner: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Accessibility Tips Modal */}
+      {showTipsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowTipsModal(false)}
+          ></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-brand-turquoise">Accessibility Tips</h3>
+              <button
+                onClick={() => setShowTipsModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-brand-cream text-brand-turquoise rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                  1
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800">Plan ahead</h4>
+                  <p className="text-gray-600 text-sm">Check transport accessibility before traveling</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-brand-cream text-brand-turquoise rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                  2
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800">Luas is step-free</h4>
+                  <p className="text-gray-600 text-sm">All stations have level access</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-brand-cream text-brand-turquoise rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                  3
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800">Call ahead</h4>
+                  <p className="text-gray-600 text-sm">Confirm venue accessibility before visiting</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-brand-cream text-brand-turquoise rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                  4
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800">Read the icons</h4>
+                  <p className="text-gray-600 text-sm">Understand accessibility symbols</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-brand-cream text-brand-turquoise rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                  5
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800">Report errors</h4>
+                  <p className="text-gray-600 text-sm">Report accessibility issues to support@mimtown.com</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-brand-cream text-brand-turquoise rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                  6
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800">Dublin Bus low-floor routes</h4>
+                  <p className="text-gray-600 text-sm">Low-floor buses are wheelchair accessible</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowTipsModal(false)}
+                className="w-full px-4 py-3 bg-brand-turquoise text-white rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all"
+              >
+                Got it, thanks!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Get Updates Modal */}
+      {showUpdatesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowUpdatesModal(false)}
+          ></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 z-10">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-brand-turquoise">Get Updates</h3>
+              <button
+                onClick={() => setShowUpdatesModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            {waitlistStatus === 'success' ? (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">🎉</div>
+                <h4 className="text-xl font-bold text-brand-turquoise mb-2">You're on the list!</h4>
+                <p className="text-gray-600">We'll keep you updated on new accessibility features.</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-600 mb-6">
+                  Sign up to get notified about new accessible venues, transport options, and features.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Email Address</label>
+                    <input
+                      type="email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-brand-turquoise"
+                      disabled={waitlistStatus === 'loading'}
+                    />
+                  </div>
+                  
+                  {waitlistError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                      {waitlistError}
+                    </div>
+                  )}
+                  
+                  <button
+                    onClick={handleWaitlistSubmit}
+                    disabled={waitlistStatus === 'loading' || !waitlistEmail.trim()}
+                    className="w-full px-4 py-3 bg-brand-turquoise text-white rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {waitlistStatus === 'loading' ? 'Signing up...' : 'Sign Up for Updates'}
+                  </button>
+                  
+                  <p className="text-gray-500 text-sm text-center">
+                    We'll only email you about important updates. No spam.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
