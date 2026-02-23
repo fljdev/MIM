@@ -146,6 +146,31 @@ router.post('/accessibility-profile', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/accessibility-profile/me - Get current user's accessibility profile
+router.get('/accessibility-profile/me', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM user_accessibility_profiles WHERE user_id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Accessibility profile not found' });
+    }
+
+    res.json({
+      profile: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error fetching accessibility profile:', error);
+    res.status(500).json({ error: 'Failed to fetch accessibility profile' });
+  }
+});
+
 // GET /api/accessibility-profile/:userId - Get user accessibility profile
 router.get('/accessibility-profile/:userId', authenticateToken, async (req, res) => {
   const pool = req.app.locals.pool;

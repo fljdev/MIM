@@ -8,6 +8,7 @@ import MeetupHistoryItem from '../components/MeetupHistoryItem';
 import SavedLocationCard from '../components/SavedLocationCard';
 import SaveLocationModal from '../../meetup/components/SaveLocationModal';
 import LocationAutocomplete from '../../meetup/components/LocationAutocomplete';
+import { UserAccessibilityProfile } from '../../../types/Accessibility';
 
 // Types
 interface UserProfile {
@@ -83,28 +84,55 @@ interface CarbonStats {
   carbonKg: number;
 }
 
-const LOCATION_LABELS = ['Home', 'Work', 'Gym', 'Café', 'Other'];
-const MEETUP_HISTORY_LIMIT = 5;
+  const LOCATION_LABELS = ['Home', 'Work', 'Gym', 'Café', 'Other'];
+  const MEETUP_HISTORY_LIMIT = 5;
 
-const ProfileDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  
-  // State
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<ProfileStats | null>(null);
-  const [favoriteVenues, setFavoriteVenues] = useState<FavoriteVenue[]>([]);
-  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
-  const [meetupHistory, setMeetupHistory] = useState<MeetupHistoryItemType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'past'>('all');
-  
-  // Carbon tracking state
-  const [carbonStats, setCarbonStats] = useState<CarbonStats | null>(null);
-  const [carbonError, setCarbonError] = useState<string | null>(null);
-  
-  // Meetup history expansion
-  const [showAllMeetups, setShowAllMeetups] = useState(false);
+  // Transform snake_case API response to camelCase
+  const transformProfileFromApi = (apiProfile: any): UserAccessibilityProfile => {
+    return {
+      id: apiProfile.id,
+      userId: apiProfile.user_id,
+      mobilityType: apiProfile.mobility_type,
+      transportAccess: apiProfile.transport_access,
+      autism: apiProfile.autism,
+      lightSensitivity: apiProfile.light_sensitivity,
+      noiseSensitivity: apiProfile.noise_sensitivity,
+      crowdSensitivity: apiProfile.crowd_sensitivity,
+      hearingImpaired: apiProfile.hearing_impaired,
+      visionImpaired: apiProfile.vision_impaired,
+      serviceDog: apiProfile.service_dog,
+      cognitiveNeeds: apiProfile.cognitive_needs,
+      preferredTransportServices: apiProfile.preferred_transport_services || [],
+      avoidFeatures: apiProfile.avoid_features || [],
+      createdAt: new Date(apiProfile.created_at),
+      updatedAt: new Date(apiProfile.updated_at)
+    };
+  };
+
+  const ProfileDashboard: React.FC = () => {
+    const navigate = useNavigate();
+    
+    // State
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [stats, setStats] = useState<ProfileStats | null>(null);
+    const [favoriteVenues, setFavoriteVenues] = useState<FavoriteVenue[]>([]);
+    const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
+    const [meetupHistory, setMeetupHistory] = useState<MeetupHistoryItemType[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'past'>('all');
+    
+    // Accessibility profile state
+    const [accessibilityProfile, setAccessibilityProfile] = useState<UserAccessibilityProfile | null>(null);
+    const [accessibilityLoading, setAccessibilityLoading] = useState(true);
+    const [accessibilityError, setAccessibilityError] = useState<string | null>(null);
+    
+    // Carbon tracking state
+    const [carbonStats, setCarbonStats] = useState<CarbonStats | null>(null);
+    const [carbonError, setCarbonError] = useState<string | null>(null);
+    
+    // Meetup history expansion
+    const [showAllMeetups, setShowAllMeetups] = useState(false);
   
   // Save Location Modal state
   const [showSaveLocationModal, setShowSaveLocationModal] = useState(false);
@@ -244,6 +272,48 @@ const ProfileDashboard: React.FC = () => {
     }
   };
 
+  // Fetch accessibility profile
+  const fetchAccessibilityProfile = async () => {
+    setAccessibilityLoading(true);
+    setAccessibilityError(null);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setAccessibilityLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/accessibility-profile/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const transformedProfile = transformProfileFromApi(data.profile);
+        setAccessibilityProfile(transformedProfile);
+      } else if (response.status === 404) {
+        // No profile exists - this is expected
+        setAccessibilityProfile(null);
+      } else {
+        // Other error
+        setAccessibilityError('Failed to load accessibility profile');
+        console.error('Failed to fetch accessibility profile:', response.status);
+        setAccessibilityProfile(null);
+      }
+    } catch (error) {
+      console.error('Error fetching accessibility profile:', error);
+      setAccessibilityError('Failed to load accessibility profile');
+      setAccessibilityProfile(null);
+    } finally {
+      setAccessibilityLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfileData();
   }, [activeFilter, savedLocationsRefresh]);
@@ -252,6 +322,13 @@ const ProfileDashboard: React.FC = () => {
   useEffect(() => {
     if (profile?.id) {
       fetchCarbonStats(profile.id);
+    }
+  }, [profile]);
+
+  // Fetch accessibility profile when profile is available
+  useEffect(() => {
+    if (profile?.id) {
+      fetchAccessibilityProfile();
     }
   }, [profile]);
 
@@ -503,7 +580,7 @@ const ProfileDashboard: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
           <div 
             className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
             onClick={() => document.getElementById('saved-locations')?.scrollIntoView({ behavior: 'smooth' })}
@@ -526,43 +603,6 @@ const ProfileDashboard: React.FC = () => {
             </div>
             <div className="text-4xl font-bold text-emerald-600">{stats?.favoriteVenues || 0}</div>
             <p className="text-gray-500 text-sm mt-2">Venues you've starred</p>
-          </div>
-
-          <div 
-            className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
-            onClick={() => document.getElementById('meetup-history')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-700">Active Meetups</h3>
-              <div className="text-3xl">👥</div>
-            </div>
-            <div className="text-4xl font-bold text-emerald-600">{stats?.activeMeetups || 0}</div>
-            <p className="text-gray-500 text-sm mt-2">Meetups in progress</p>
-          </div>
-
-          <div 
-            className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
-            onClick={() => document.getElementById('carbon-tracking')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-700">Carbon Tracking</h3>
-              <div className="text-3xl">🌱</div>
-            </div>
-            {carbonError ? (
-              <div className="text-red-500 text-sm font-medium">Carbon stats unavailable</div>
-            ) : carbonStats ? (
-              <>
-                <div className="text-2xl font-bold text-emerald-600">
-                  {carbonStats.distanceKm.toFixed(2)} km
-                </div>
-                <div className="text-lg font-semibold text-gray-700 mt-1">
-                  {carbonStats.carbonKg.toFixed(1)} kg CO₂
-                </div>
-                <p className="text-gray-500 text-sm mt-2">Distance traveled / Carbon emitted</p>
-              </>
-            ) : (
-              <div className="text-4xl font-bold text-emerald-600">--</div>
-            )}
           </div>
         </div>
 
@@ -628,6 +668,124 @@ const ProfileDashboard: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Accessibility Profile Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Accessibility Profile</h2>
+          </div>
+          
+          {accessibilityLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading accessibility profile...</p>
+            </div>
+          ) : accessibilityProfile ? (
+            <div className="bg-gray-50 rounded-lg p-6 space-y-6">
+              <div>
+                <h3 className="text-xl font-bold text-emerald-800 mb-4">Mobility & Transportation</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Mobility Type</h4>
+                    <p className="text-gray-900">
+                      {accessibilityProfile.mobilityType ? (
+                        <span className="capitalize">
+                          {accessibilityProfile.mobilityType === 'mobility_scooter' ? 'Mobility Scooter' : accessibilityProfile.mobilityType}
+                        </span>
+                      ) : 'Not specified'}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Transport Access</h4>
+                    <p className="text-gray-900">
+                      {accessibilityProfile.transportAccess ? (
+                        <span className="capitalize">
+                          {accessibilityProfile.transportAccess.replace('_', ' ')}
+                        </span>
+                      ) : 'Not specified'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-emerald-800 mb-4">Sensory & Environmental Needs</h3>
+                <div className="flex flex-wrap gap-2">
+                  {accessibilityProfile.autism && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Autism</span>}
+                  {accessibilityProfile.lightSensitivity && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Light Sensitivity</span>}
+                  {accessibilityProfile.noiseSensitivity && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Noise Sensitivity</span>}
+                  {accessibilityProfile.crowdSensitivity && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Crowd Sensitivity</span>}
+                  {accessibilityProfile.hearingImpaired && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Hearing Impaired</span>}
+                  {accessibilityProfile.visionImpaired && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Vision Impaired</span>}
+                  {accessibilityProfile.serviceDog && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Service Dog</span>}
+                  {accessibilityProfile.cognitiveNeeds && <span className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">Cognitive Needs</span>}
+                  {!accessibilityProfile.autism && !accessibilityProfile.lightSensitivity && !accessibilityProfile.noiseSensitivity && 
+                   !accessibilityProfile.crowdSensitivity && !accessibilityProfile.hearingImpaired && !accessibilityProfile.visionImpaired &&
+                   !accessibilityProfile.serviceDog && !accessibilityProfile.cognitiveNeeds && (
+                    <span className="text-gray-500">No sensory needs specified</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-emerald-800 mb-4">Preferred Transport Services</h3>
+                <div className="flex flex-wrap gap-2">
+                  {accessibilityProfile.preferredTransportServices && accessibilityProfile.preferredTransportServices.length > 0 ? (
+                    accessibilityProfile.preferredTransportServices.map(service => (
+                      <span key={service} className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">
+                        {service}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500">No preferred services specified</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold text-emerald-800 mb-4">Features to Avoid</h3>
+                <div className="flex flex-wrap gap-2">
+                  {accessibilityProfile.avoidFeatures && accessibilityProfile.avoidFeatures.length > 0 ? (
+                    accessibilityProfile.avoidFeatures.map(feature => (
+                      <span key={feature} className="px-3 py-1 bg-white text-emerald-800 rounded-full text-sm border border-emerald-200">
+                        {feature}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500">No features to avoid specified</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
+                <p className="text-sm text-gray-500">
+                  Last updated: {accessibilityProfile.updatedAt ? new Date(accessibilityProfile.updatedAt).toLocaleDateString() : 'Never'}
+                </p>
+                <button
+                  onClick={() => navigate('/accessibility-profile')}
+                  className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition-all flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Profile
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">♿</div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No accessibility profile yet</h3>
+              <p className="text-gray-500 mb-6">Set up your accessibility profile to get personalized venue recommendations.</p>
+              <button
+                onClick={() => navigate('/accessibility-profile')}
+                className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-emerald-600 transition-all"
+              >
+                Set up your accessibility profile
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Saved Locations Section */}
