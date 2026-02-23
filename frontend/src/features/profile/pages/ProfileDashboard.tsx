@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../../Config';
-import Navbar from '../../../components/Navbar';
 import ProfileEditModal from '../components/ProfileEditModal';
 import FavoriteVenueCard from '../components/FavoriteVenueCard';
 import MeetupHistoryItem from '../components/MeetupHistoryItem';
@@ -565,13 +564,6 @@ interface CarbonStats {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
-      {/* Navbar */}
-      <Navbar 
-        userName={profile.name}
-        avatarUrl={profile.avatar_url}
-        activeMeetupsCount={stats?.activeMeetups || 0}
-      />
-
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Header */}
         <div className="mb-8">

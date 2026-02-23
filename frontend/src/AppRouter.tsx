@@ -20,6 +20,9 @@ import VenueDetailPage from './features/accessibility/pages/VenueDetailPage';
 import JourneyPlanner from './features/accessibility/pages/JourneyPlanner';
 import BrowseVenuesPage from './features/accessibility/pages/BrowseVenuesPage';
 
+// Import Navbar
+import Navbar from './components/Navbar';
+
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -45,6 +48,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AppRouter: React.FC = () => {
   return (
     <Router>
+      <Navbar />
       <Routes>
         {/* Main accessibility landing page */}
         <Route path="/" element={<ChoiceSelectorPage />} />
