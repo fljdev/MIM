@@ -8,6 +8,28 @@ import {
   UserAccessibilityProfile 
 } from '../../../types/Accessibility';
 
+// Transform snake_case API response to camelCase
+const transformProfileFromApi = (apiProfile: any): UserAccessibilityProfile => {
+  return {
+    id: apiProfile.id,
+    userId: apiProfile.user_id,
+    mobilityType: apiProfile.mobility_type,
+    transportAccess: apiProfile.transport_access,
+    autism: apiProfile.autism,
+    lightSensitivity: apiProfile.light_sensitivity,
+    noiseSensitivity: apiProfile.noise_sensitivity,
+    crowdSensitivity: apiProfile.crowd_sensitivity,
+    hearingImpaired: apiProfile.hearing_impaired,
+    visionImpaired: apiProfile.vision_impaired,
+    serviceDog: apiProfile.service_dog,
+    cognitiveNeeds: apiProfile.cognitive_needs,
+    preferredTransportServices: apiProfile.preferred_transport_services || [],
+    avoidFeatures: apiProfile.avoid_features || [],
+    createdAt: new Date(apiProfile.created_at),
+    updatedAt: new Date(apiProfile.updated_at)
+  };
+};
+
 interface AccessibilityProfileWizardProps {
   initialProfile?: UserAccessibilityProfile | null;
   onSave?: (profile: Partial<UserAccessibilityProfile>) => void;
@@ -23,6 +45,11 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Profile fetching state
+  const [isLoading, setIsLoading] = useState(false);
+  const [existingProfile, setExistingProfile] = useState<UserAccessibilityProfile | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   
   // Form state
   const [mobilityType, setMobilityType] = useState<MobilityType | undefined>(undefined);
@@ -49,7 +76,56 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
   const [registrationError, setRegistrationError] = useState('');
   const [registrationLoading, setRegistrationLoading] = useState(false);
 
-  // Initialize form with existing profile
+  // Fetch existing profile on mount if user is authenticated
+  useEffect(() => {
+    const fetchExistingProfile = async () => {
+      if (!user) {
+        // Not authenticated - no profile to fetch
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/accessibility-profile/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const transformedProfile = transformProfileFromApi(data.profile);
+          setExistingProfile(transformedProfile);
+        } else if (response.status === 404) {
+          // No profile exists - this is expected
+          setExistingProfile(null);
+        } else {
+          // Other error - silently fall through
+          console.error('Failed to fetch profile:', response.status);
+          setExistingProfile(null);
+        }
+      } catch (error) {
+        // Network or other error - silently fall through
+        console.error('Error fetching profile:', error);
+        setExistingProfile(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchExistingProfile();
+  }, [user]);
+
+  // Initialize form with existing profile (when editing or from props)
   useEffect(() => {
     if (initialProfile) {
       setMobilityType(initialProfile.mobilityType);
@@ -64,8 +140,22 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
       setCognitiveNeeds(initialProfile.cognitiveNeeds);
       setPreferredTransportServices(initialProfile.preferredTransportServices);
       setAvoidFeatures(initialProfile.avoidFeatures);
+    } else if (existingProfile && isEditMode) {
+      // When switching to edit mode with existing profile
+      setMobilityType(existingProfile.mobilityType);
+      setTransportAccess(existingProfile.transportAccess);
+      setAutism(existingProfile.autism);
+      setLightSensitivity(existingProfile.lightSensitivity);
+      setNoiseSensitivity(existingProfile.noiseSensitivity);
+      setCrowdSensitivity(existingProfile.crowdSensitivity);
+      setHearingImpaired(existingProfile.hearingImpaired);
+      setVisionImpaired(existingProfile.visionImpaired);
+      setServiceDog(existingProfile.serviceDog);
+      setCognitiveNeeds(existingProfile.cognitiveNeeds);
+      setPreferredTransportServices(existingProfile.preferredTransportServices);
+      setAvoidFeatures(existingProfile.avoidFeatures);
     }
-  }, [initialProfile]);
+  }, [initialProfile, existingProfile, isEditMode]);
 
   const handleNext = () => {
     if (step < 4) {
@@ -102,7 +192,13 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
     try {
       // If user is authenticated, save profile directly
       if (user) {
-        await saveProfileData(profileData);
+        if (isEditMode && existingProfile) {
+          // Editing existing profile - use edit mode handler
+          await handleSaveInEditMode(profileData);
+        } else {
+          // Creating new profile
+          await saveProfileData(profileData);
+        }
       } else {
         // Show registration modal for unauthenticated users
         setShowRegistrationModal(true);
@@ -296,6 +392,155 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
         : [...prev, feature]
     );
   };
+
+  // Handle edit button click
+  const handleEditClick = () => {
+    setIsEditMode(true);
+    setStep(1); // Reset to first step
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    if (onCancel) {
+      onCancel();
+    }
+  };
+
+  // Handle save in edit mode
+  const handleSaveInEditMode = async (profileData: Partial<UserAccessibilityProfile>) => {
+    try {
+      await saveProfileData(profileData);
+      setIsEditMode(false);
+      // Refresh the profile after saving
+      if (user) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch(`${API_BASE_URL}/api/accessibility-profile/me`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const transformedProfile = transformProfileFromApi(data.profile);
+            setExistingProfile(transformedProfile);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      throw error;
+    }
+  };
+
+  // Summary view component
+  const renderSummaryView = () => (
+    <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8 border-2 border-brand-turquoise">
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-brand-turquoise mb-2">
+            Your Accessibility Profile
+          </h2>
+          <p className="text-brand-brown">
+            View and manage your accessibility needs and preferences.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleEditClick}
+          className="px-6 py-3 bg-brand-turquoise text-white rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all"
+        >
+          Edit Profile
+        </button>
+      </div>
+
+      <div className="bg-brand-cream rounded-lg p-6 space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-brand-turquoise mb-4">Mobility & Transportation</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-brand-brown mb-2">Mobility Type</h4>
+              <p className="text-brand-brown">
+                {existingProfile?.mobilityType ? (
+                  <span className="capitalize">
+                    {existingProfile.mobilityType === 'mobility_scooter' ? 'Mobility Scooter' : existingProfile.mobilityType}
+                  </span>
+                ) : 'Not specified'}
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium text-brand-brown mb-2">Transport Access</h4>
+              <p className="text-brand-brown">
+                {existingProfile?.transportAccess ? (
+                  <span className="capitalize">
+                    {existingProfile.transportAccess.replace('_', ' ')}
+                  </span>
+                ) : 'Not specified'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-brand-turquoise mb-4">Sensory & Environmental Needs</h3>
+          <div className="flex flex-wrap gap-2">
+            {existingProfile?.autism && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Autism</span>}
+            {existingProfile?.lightSensitivity && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Light Sensitivity</span>}
+            {existingProfile?.noiseSensitivity && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Noise Sensitivity</span>}
+            {existingProfile?.crowdSensitivity && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Crowd Sensitivity</span>}
+            {existingProfile?.hearingImpaired && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Hearing Impaired</span>}
+            {existingProfile?.visionImpaired && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Vision Impaired</span>}
+            {existingProfile?.serviceDog && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Service Dog</span>}
+            {existingProfile?.cognitiveNeeds && <span className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">Cognitive Needs</span>}
+            {!existingProfile?.autism && !existingProfile?.lightSensitivity && !existingProfile?.noiseSensitivity && 
+             !existingProfile?.crowdSensitivity && !existingProfile?.hearingImpaired && !existingProfile?.visionImpaired &&
+             !existingProfile?.serviceDog && !existingProfile?.cognitiveNeeds && (
+              <span className="text-brand-brown">No sensory needs specified</span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-brand-turquoise mb-4">Preferred Transport Services</h3>
+          <div className="flex flex-wrap gap-2">
+            {existingProfile?.preferredTransportServices && existingProfile.preferredTransportServices.length > 0 ? (
+              existingProfile.preferredTransportServices.map(service => (
+                <span key={service} className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">
+                  {service}
+                </span>
+              ))
+            ) : (
+              <span className="text-brand-brown">No preferred services specified</span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-brand-turquoise mb-4">Features to Avoid</h3>
+          <div className="flex flex-wrap gap-2">
+            {existingProfile?.avoidFeatures && existingProfile.avoidFeatures.length > 0 ? (
+              existingProfile.avoidFeatures.map(feature => (
+                <span key={feature} className="px-3 py-1 bg-white text-brand-brown rounded-full text-sm">
+                  {feature}
+                </span>
+              ))
+            ) : (
+              <span className="text-brand-brown">No features to avoid specified</span>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-gray-200">
+          <p className="text-sm text-brand-brown">
+            Last updated: {existingProfile?.updatedAt ? new Date(existingProfile.updatedAt).toLocaleDateString() : 'Never'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   // Step 1: Mobility
   const renderStep1 = () => (
@@ -544,15 +789,156 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
     </div>
   );
 
+  // Conditional rendering logic
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8 border-2 border-brand-turquoise">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-turquoise"></div>
+            <p className="mt-4 text-brand-brown">Loading your accessibility profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show summary view if user is authenticated and has an existing profile and not in edit mode
+  if (user && existingProfile && !isEditMode) {
+    return (
+      <>
+        {renderSummaryView()}
+        {/* Registration Modal (still available if needed) */}
+        {showRegistrationModal && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={closeRegistrationModal}
+          >
+            <div 
+              className="bg-white rounded-lg p-8 max-w-md w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-brand-turquoise">Create Account & Save Profile</h2>
+                <button
+                  onClick={closeRegistrationModal}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  disabled={registrationLoading}
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={handleRegistrationSubmit}>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={registrationForm.name}
+                    onChange={handleRegistrationChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-brand-turquoise focus:ring-2 focus:ring-brand-turquoise-light"
+                    placeholder="John Doe"
+                    disabled={registrationLoading}
+                    autoComplete="name"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={registrationForm.email}
+                    onChange={handleRegistrationChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-brand-turquoise focus:ring-2 focus:ring-brand-turquoise-light"
+                    placeholder="your.email@example.com"
+                    disabled={registrationLoading}
+                    autoComplete="email"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={registrationForm.password}
+                    onChange={handleRegistrationChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-brand-turquoise focus:ring-2 focus:ring-brand-turquoise-light"
+                    placeholder="Minimum 6 characters"
+                    disabled={registrationLoading}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmPassword">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={registrationForm.confirmPassword}
+                    onChange={handleRegistrationChange}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-brand-turquoise focus:ring-2 focus:ring-brand-turquoise-light"
+                    placeholder="Re-enter password"
+                    disabled={registrationLoading}
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                {registrationError && (
+                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {registrationError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={registrationLoading}
+                  className={`w-full bg-brand-turquoise hover:bg-brand-turquoise-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${
+                    registrationLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {registrationLoading ? 'Creating Account & Saving Profile...' : 'Create Account & Save Profile'}
+                </button>
+              </form>
+
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-600">
+                  By creating an account, you'll be able to save your accessibility profile and access personalized features.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Otherwise show the wizard (for unauthenticated users, users without profile, or edit mode)
   return (
     <>
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8 border-2 border-brand-turquoise">
         <div className="mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-brand-turquoise mb-2">
-            Accessibility Profile Setup
+            {isEditMode && existingProfile ? 'Edit Accessibility Profile' : 'Accessibility Profile Setup'}
           </h2>
           <p className="text-brand-brown">
-            Help us personalize your experience by sharing your accessibility needs and preferences.
+            {isEditMode && existingProfile 
+              ? 'Update your accessibility needs and preferences.' 
+              : 'Help us personalize your experience by sharing your accessibility needs and preferences.'}
           </p>
         </div>
 
@@ -606,10 +992,10 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
             {onCancel && (
               <button
                 type="button"
-                onClick={onCancel}
+                onClick={isEditMode ? handleCancelEdit : onCancel}
                 className="px-6 py-3 border-2 border-gray-300 text-gray-600 rounded-lg font-semibold hover:bg-gray-50 transition-all"
               >
-                Cancel
+                {isEditMode ? 'Cancel Edit' : 'Cancel'}
               </button>
             )}
             
@@ -619,7 +1005,7 @@ const AccessibilityProfileWizard: React.FC<AccessibilityProfileWizardProps> = ({
               disabled={isSubmitting}
               className="px-6 py-3 bg-brand-turquoise text-white rounded-lg font-semibold hover:bg-brand-turquoise-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Saving...' : step === 4 ? 'Save Profile' : 'Continue →'}
+              {isSubmitting ? 'Saving...' : step === 4 ? (isEditMode ? 'Update Profile' : 'Save Profile') : 'Continue →'}
             </button>
           </div>
         </div>
