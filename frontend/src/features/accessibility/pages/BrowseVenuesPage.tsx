@@ -86,6 +86,8 @@ const BrowseVenuesPage: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [useLocation, setUseLocation] = useState(false);
   const [sortByDistance, setSortByDistance] = useState(false);
+  const [favoriteVenueIds, setFavoriteVenueIds] = useState<Set<string>>(new Set());
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
 
   // Fetch user location
   useEffect(() => {
@@ -110,6 +112,46 @@ const BrowseVenuesPage: React.FC = () => {
       );
     }
   }, [useLocation]);
+
+  // Fetch favorite venue IDs when user is authenticated
+  useEffect(() => {
+    const fetchFavoriteVenueIds = async () => {
+      if (!user) {
+        setFavoriteVenueIds(new Set());
+        return;
+      }
+
+      try {
+        setFavoritesLoading(true);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setFavoriteVenueIds(new Set());
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/venues/favourites`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setFavoriteVenueIds(new Set(data.venueIds || []));
+        } else {
+          console.error('Failed to fetch favorite venues:', response.status);
+          setFavoriteVenueIds(new Set());
+        }
+      } catch (error) {
+        console.error('Error fetching favorite venues:', error);
+        setFavoriteVenueIds(new Set());
+      } finally {
+        setFavoritesLoading(false);
+      }
+    };
+
+    fetchFavoriteVenueIds();
+  }, [user]);
 
   // Fetch venues with current filters
   const fetchVenues = useCallback(async () => {
@@ -228,6 +270,71 @@ const BrowseVenuesPage: React.FC = () => {
 
   // Unique venue types for dropdown
   const uniqueVenueTypes = Array.from(new Set(venues.map(v => v.venue_type).filter(Boolean)));
+
+  // Toggle favorite status
+  const handleToggleFavorite = async (venue: AccessibleVenue, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering venue card click
+    e.preventDefault();
+
+    if (!user) {
+      // Redirect to login if not authenticated
+      navigate('/login');
+      return;
+    }
+
+    const venueIdStr = venue.id.toString();
+    const isCurrentlyFavorite = favoriteVenueIds.has(venueIdStr);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      if (isCurrentlyFavorite) {
+        // Remove from favorites
+        const response = await fetch(`${API_BASE_URL}/api/venues/favourite/${venueIdStr}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          // Update local state
+          setFavoriteVenueIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(venueIdStr);
+            return newSet;
+          });
+        } else {
+          console.error('Failed to remove favorite:', response.status);
+        }
+      } else {
+        // Add to favorites
+        const response = await fetch(`${API_BASE_URL}/api/venues/favourite/${venueIdStr}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          // Update local state
+          setFavoriteVenueIds(prev => {
+            const newSet = new Set(prev);
+            newSet.add(venueIdStr);
+            return newSet;
+          });
+        } else {
+          console.error('Failed to add favorite:', response.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
 
   if (loading && venues.length === 0) {
     return (
@@ -416,9 +523,22 @@ const BrowseVenuesPage: React.FC = () => {
                           )}
                         </div>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getAccessibilityLevelColor(venue.accessibility_level)}`}>
-                        {venue.accessibility_level}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => handleToggleFavorite(venue, e)}
+                          className="text-2xl focus:outline-none hover:scale-110 transition-transform"
+                          title={favoriteVenueIds.has(venue.id.toString()) ? "Remove from favorites" : "Add to favorites"}
+                        >
+                          {favoriteVenueIds.has(venue.id.toString()) ? (
+                            <span className="text-yellow-500">★</span> // Filled star
+                          ) : (
+                            <span className="text-gray-400">☆</span> // Outlined star
+                          )}
+                        </button>
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getAccessibilityLevelColor(venue.accessibility_level)}`}>
+                          {venue.accessibility_level}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Address */}

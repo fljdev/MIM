@@ -217,4 +217,138 @@ router.delete('/favorite-venues/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/venues/favourites - Get favorited venue IDs for current user
+router.get('/venues/favourites', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+
+  try {
+    const result = await pool.query(
+      `SELECT venue_id 
+       FROM favorite_venues 
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    const venueIds = result.rows.map(row => row.venue_id);
+    res.json({ venueIds });
+
+  } catch (error) {
+    console.error('Error fetching favorited venue IDs:', error);
+    res.status(500).json({ error: 'Failed to fetch favorited venues' });
+  }
+});
+
+// POST /api/venues/favourite/:venueId - Add accessible venue to favorites
+router.post('/venues/favourite/:venueId', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+  const venueId = req.params.venueId; // String, as per VARCHAR schema
+
+  try {
+    // Validate venue ID
+    if (!venueId || venueId.trim() === '') {
+      return res.status(400).json({ error: 'Venue ID is required' });
+    }
+
+    // Check if venue exists in accessible_venues table
+    const venueResult = await pool.query(
+      `SELECT 
+        id, venue_name, address, latitude, longitude, venue_type
+       FROM accessible_venues 
+       WHERE id = $1`,
+      [parseInt(venueId)] // Convert to int for accessible_venues lookup
+    );
+
+    if (venueResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Venue not found' });
+    }
+
+    const venue = venueResult.rows[0];
+
+    // Check for duplicate (user_id + venue_id UNIQUE constraint)
+    const duplicateCheck = await pool.query(
+      'SELECT id FROM favorite_venues WHERE user_id = $1 AND venue_id = $2',
+      [userId, venueId]
+    );
+
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(409).json({ 
+        error: 'Venue is already in your favorites' 
+      });
+    }
+
+    // Insert new favorite venue
+    const result = await pool.query(
+      `INSERT INTO favorite_venues 
+       (user_id, venue_id, venue_name, venue_address, venue_lat, venue_lng, venue_type, created_at) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP) 
+       RETURNING *`,
+      [
+        userId,
+        venueId,
+        venue.venue_name,
+        venue.address || null,
+        venue.latitude || null,
+        venue.longitude || null,
+        venue.venue_type || null
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+
+  } catch (error) {
+    console.error('Error adding venue to favorites:', error);
+    
+    // Handle unique constraint violation
+    if (error.code === '23505') { // unique_violation
+      return res.status(409).json({ 
+        error: 'Venue is already in your favorites' 
+      });
+    }
+    
+    res.status(500).json({ error: 'Failed to add venue to favorites' });
+  }
+});
+
+// DELETE /api/venues/favourite/:venueId - Remove accessible venue from favorites
+router.delete('/venues/favourite/:venueId', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+  const venueId = req.params.venueId;
+
+  try {
+    // Validate venue ID
+    if (!venueId || venueId.trim() === '') {
+      return res.status(400).json({ error: 'Venue ID is required' });
+    }
+
+    // Verify the favorite belongs to authenticated user and delete
+    const result = await pool.query(
+      `DELETE FROM favorite_venues 
+       WHERE user_id = $1 AND venue_id = $2
+       RETURNING id, venue_name`,
+      [userId, venueId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Favorite venue not found or does not belong to you' 
+      });
+    }
+
+    const deletedFavorite = result.rows[0];
+
+    res.json({
+      message: 'Venue removed from favorites',
+      deletedId: deletedFavorite.id,
+      venueName: deletedFavorite.venue_name
+    });
+
+  } catch (error) {
+    console.error('Error deleting favorite venue:', error);
+    res.status(500).json({ error: 'Failed to remove venue from favorites' });
+  }
+});
+
 module.exports = router;

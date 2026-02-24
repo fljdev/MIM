@@ -13,6 +13,8 @@ const VenueDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'physical' | 'sensory'>('overview');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     const fetchVenueDetails = async () => {
@@ -40,6 +42,103 @@ const VenueDetailPage: React.FC = () => {
       fetchVenueDetails();
     }
   }, [id]);
+
+  // Check if venue is favorite when user or venue changes
+  useEffect(() => {
+    const checkIfFavorite = async () => {
+      if (!user || !venue) {
+        setIsFavorite(false);
+        return;
+      }
+
+      try {
+        setFavoriteLoading(true);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setIsFavorite(false);
+          return;
+        }
+
+        // Fetch all favorited venue IDs
+        const response = await fetch(`${API_BASE_URL}/api/venues/favourites`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const favoriteIds = new Set(data.venueIds || []);
+          setIsFavorite(favoriteIds.has(venue.id.toString()));
+        } else {
+          setIsFavorite(false);
+        }
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+        setIsFavorite(false);
+      } finally {
+        setFavoriteLoading(false);
+      }
+    };
+
+    checkIfFavorite();
+  }, [user, venue]);
+
+  // Toggle favorite status
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      navigate('/login');
+      return;
+    }
+
+    if (!venue) return;
+
+    try {
+      setFavoriteLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const venueIdStr = venue.id.toString();
+      
+      if (isFavorite) {
+        // Remove from favorites
+        const response = await fetch(`${API_BASE_URL}/api/venues/favourite/${venueIdStr}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          setIsFavorite(false);
+        } else {
+          console.error('Failed to remove favorite:', response.status);
+        }
+      } else {
+        // Add to favorites
+        const response = await fetch(`${API_BASE_URL}/api/venues/favourite/${venueIdStr}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          setIsFavorite(true);
+        } else {
+          console.error('Failed to add favorite:', response.status);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
   const handlePlanJourney = () => {
     if (venue) {
@@ -155,6 +254,21 @@ const VenueDetailPage: React.FC = () => {
               <span className="text-2xl">♿</span>
               <span className="font-bold">{venue.accessibility_level}</span>
             </div>
+            <button
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
+              className="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-full hover:bg-opacity-30 transition-all disabled:opacity-50"
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              {favoriteLoading ? (
+                <span className="text-sm">...</span>
+              ) : isFavorite ? (
+                <span className="text-2xl text-yellow-400">★</span>
+              ) : (
+                <span className="text-2xl text-gray-300">☆</span>
+              )}
+              <span className="font-bold">{isFavorite ? "Favorited" : "Favorite"}</span>
+            </button>
             {venue.user_rating && (
               <div className="flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-full">
                 <span className="text-2xl">⭐</span>
