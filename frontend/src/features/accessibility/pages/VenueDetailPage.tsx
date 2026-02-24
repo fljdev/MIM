@@ -3,6 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import { API_BASE_URL } from '../../../Config';
 import { AccessibleVenue } from './BrowseVenuesPage';
+import SimpleMap from '../../../components/SimpleMap';
+
+// Helper function to parse latitude/longitude values that may be strings or numbers
+const parseCoordinate = (coord: string | number | undefined): number | undefined => {
+  if (coord === undefined || coord === null) return undefined;
+  if (typeof coord === 'number') return coord;
+  const parsed = parseFloat(coord);
+  return isNaN(parsed) ? undefined : parsed;
+};
 
 const VenueDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -142,12 +151,14 @@ const VenueDetailPage: React.FC = () => {
 
   const handlePlanJourney = () => {
     if (venue) {
+      const lat = parseCoordinate(venue.latitude);
+      const lng = parseCoordinate(venue.longitude);
       navigate('/journey-planner', { 
         state: { 
           destinationVenue: {
             name: venue.venue_name,
-            lat: venue.latitude,
-            lng: venue.longitude,
+            lat: lat,
+            lng: lng,
             address: venue.address
           }
         } 
@@ -231,6 +242,10 @@ const VenueDetailPage: React.FC = () => {
       default: return '🏢';
     }
   };
+
+  // Parse coordinates for display
+  const lat = parseCoordinate(venue.latitude);
+  const lng = parseCoordinate(venue.longitude);
 
   return (
     <div className="min-h-screen bg-brand-cream">
@@ -686,6 +701,33 @@ const VenueDetailPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Map */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-brand-turquoise">
+              <h3 className="text-xl font-bold text-brand-turquoise mb-4">Venue Location</h3>
+              {lat !== undefined && lng !== undefined ? (
+                <SimpleMap
+                  latitude={lat}
+                  longitude={lng}
+                  height="300px"
+                  width="100%"
+                  markerTitle={venue.venue_name}
+                  className="mt-2"
+                />
+              ) : (
+                <div className="bg-gray-100 rounded-lg flex items-center justify-center h-48">
+                  <div className="text-center p-4">
+                    <div className="text-4xl mb-2">📍</div>
+                    <p className="text-gray-600">Location data not available</p>
+                    <p className="text-sm text-gray-500 mt-1">Map cannot be displayed</p>
+                  </div>
+                </div>
+              )}
+              <div className="mt-4 text-sm text-gray-600">
+                <p className="font-medium mb-1">📍 {venue.address}</p>
+                <p className="text-xs">Lat: {lat?.toFixed(6) || 'N/A'}, Lng: {lng?.toFixed(6) || 'N/A'}</p>
               </div>
             </div>
 
