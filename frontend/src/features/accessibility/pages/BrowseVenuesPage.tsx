@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import { API_BASE_URL } from '../../../Config';
+import MultiMarkerMap from '../../../components/MultiMarkerMap';
 
 // Types for accessible venues from the new API
 export interface AccessibleVenue {
@@ -9,8 +10,8 @@ export interface AccessibleVenue {
   venue_name: string;
   address: string;
   eircode?: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: string | number;
+  longitude?: string | number;
   venue_type: string;
   category?: string;
   phone?: string;
@@ -88,6 +89,7 @@ const BrowseVenuesPage: React.FC = () => {
   const [sortByDistance, setSortByDistance] = useState(false);
   const [favoriteVenueIds, setFavoriteVenueIds] = useState<Set<string>>(new Set());
   const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [mapView, setMapView] = useState(false); // New state for map view toggle
 
   // Fetch user location
   useEffect(() => {
@@ -371,7 +373,25 @@ const BrowseVenuesPage: React.FC = () => {
           {/* Left Column - Filters */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-emerald-500 sticky top-8">
-              <h2 className="text-xl font-bold text-emerald-700 mb-6">Filter Venues</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-emerald-700">Filter Venues</h2>
+                <button
+                  onClick={() => setMapView(!mapView)}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg font-semibold hover:bg-emerald-200 transition-all"
+                >
+                  {mapView ? (
+                    <>
+                      <span className="text-lg">📋</span>
+                      <span>List View</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-lg">🗺️</span>
+                      <span>Map View</span>
+                    </>
+                  )}
+                </button>
+              </div>
               
               {/* Location toggle */}
               <div className="mb-6">
@@ -485,7 +505,7 @@ const BrowseVenuesPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column - Venue List */}
+          {/* Right Column - Venue List or Map */}
           <div className="lg:col-span-3">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
@@ -500,145 +520,182 @@ const BrowseVenuesPage: React.FC = () => {
               </div>
             )}
 
-            {/* Venue Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {venues.map((venue) => (
-                <div
-                  key={venue.id}
-                  onClick={() => handleVenueClick(venue.id)}
-                  className="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-transparent hover:border-emerald-500 hover:shadow-xl transition-all cursor-pointer"
-                >
-                  {/* Venue Header */}
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">{venue.venue_name}</h3>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-2xl">{getVenueTypeIcon(venue.venue_type)}</span>
-                          <span className="text-gray-600">{venue.venue_type}</span>
-                          {venue.distance_km !== undefined && (
-                            <span className="ml-2 px-2 py-1 bg-emerald-100 text-emerald-700 text-sm rounded-full">
-                              {venue.distance_km.toFixed(1)} km away
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => handleToggleFavorite(venue, e)}
-                          className="text-2xl focus:outline-none hover:scale-110 transition-transform"
-                          title={favoriteVenueIds.has(venue.id.toString()) ? "Remove from favorites" : "Add to favorites"}
-                        >
-                          {favoriteVenueIds.has(venue.id.toString()) ? (
-                            <span className="text-yellow-500">★</span> // Filled star
-                          ) : (
-                            <span className="text-gray-400">☆</span> // Outlined star
-                          )}
-                        </button>
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getAccessibilityLevelColor(venue.accessibility_level)}`}>
-                          {venue.accessibility_level}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Address */}
-                    <p className="text-gray-600 mb-4">
-                      <span className="font-medium">📍</span> {venue.address || 'Address not available'}
+            {/* View Toggle Header (only shown in map view) */}
+            {mapView && (
+              <div className="mb-6 bg-white rounded-xl shadow-lg p-6 border-2 border-emerald-500">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-bold text-emerald-700 mb-1">Venue Map View</h2>
+                    <p className="text-gray-600">
+                      Click on markers to view venue details. Colors indicate accessibility levels.
                     </p>
-
-                    {/* Accessibility Features */}
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-700 mb-2">Accessibility Features:</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {venue.wheelchair_entrance && (
-                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-1">
-                            ♿ Entrance
-                          </span>
-                        )}
-                        {venue.wheelchair_bathroom && (
-                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-1">
-                            🚽 Bathroom
-                          </span>
-                        )}
-                        {venue.accessible_parking_nearby && (
-                          <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm flex items-center gap-1">
-                            🅿️ Parking
-                          </span>
-                        )}
-                        {venue.level_access_internal && (
-                          <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm flex items-center gap-1">
-                            📐 Level Access
-                          </span>
-                        )}
-                        {venue.quiet_space_available && (
-                          <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm flex items-center gap-1">
-                            🤫 Quiet Space
-                          </span>
-                        )}
-                        {!venue.wheelchair_entrance && !venue.wheelchair_bathroom && !venue.accessible_parking_nearby && !venue.level_access_internal && !venue.quiet_space_available && (
-                          <span className="text-gray-500 text-sm">No specific features recorded</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Additional Info */}
-                    <div className="flex justify-between items-center text-sm text-gray-500">
-                      <div>
-                        {venue.data_source && (
-                          <span>Source: {venue.data_source}</span>
-                        )}
-                      </div>
-                      <div>
-                        {venue.user_rating && (
-                          <span className="flex items-center gap-1">
-                            ⭐ {venue.user_rating.toFixed(1)} ({venue.total_ratings || 0})
-                          </span>
-                        )}
-                      </div>
-                    </div>
                   </div>
-
-                  {/* Footer */}
-                  <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">
-                        {venue.currently_operating ? '✅ Currently Open' : '❌ Currently Closed'}
-                      </span>
-                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all">
-                        View Details →
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => setMapView(false)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all"
+                  >
+                    <span className="text-lg">📋</span>
+                    <span>Switch to List View</span>
+                  </button>
                 </div>
-              ))}
-            </div>
-
-            {/* No Results */}
-            {venues.length === 0 && !loading && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">😔</div>
-                <h3 className="text-2xl font-bold text-gray-700 mb-2">No venues found</h3>
-                <p className="text-gray-600 mb-6">Try adjusting your filters to see more results.</p>
-                <button
-                  onClick={handleResetFilters}
-                  className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all"
-                >
-                  Reset Filters
-                </button>
               </div>
             )}
 
-            {/* Load More Button */}
-            {pagination.hasMore && (
-              <div className="text-center mt-8">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loading}
-                  className="px-8 py-4 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Loading...' : `Load More (${pagination.total - pagination.offset - venues.length} remaining)`}
-                </button>
+            {/* Map View */}
+            {mapView ? (
+              <div className="mb-8">
+                <MultiMarkerMap
+                  venues={venues}
+                  height="600px"
+                  width="100%"
+                  zoom={userLocation ? 13 : 12}
+                  center={userLocation || undefined}
+                  className="rounded-xl"
+                />
               </div>
+            ) : (
+              /* List View (Venue Cards Grid) */
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {venues.map((venue) => (
+                    <div
+                      key={venue.id}
+                      onClick={() => handleVenueClick(venue.id)}
+                      className="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-transparent hover:border-emerald-500 hover:shadow-xl transition-all cursor-pointer"
+                    >
+                      {/* Venue Header */}
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">{venue.venue_name}</h3>
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-2xl">{getVenueTypeIcon(venue.venue_type)}</span>
+                              <span className="text-gray-600">{venue.venue_type}</span>
+                              {venue.distance_km !== undefined && (
+                                <span className="ml-2 px-2 py-1 bg-emerald-100 text-emerald-700 text-sm rounded-full">
+                                  {venue.distance_km.toFixed(1)} km away
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => handleToggleFavorite(venue, e)}
+                              className="text-2xl focus:outline-none hover:scale-110 transition-transform"
+                              title={favoriteVenueIds.has(venue.id.toString()) ? "Remove from favorites" : "Add to favorites"}
+                            >
+                              {favoriteVenueIds.has(venue.id.toString()) ? (
+                                <span className="text-yellow-500">★</span> // Filled star
+                              ) : (
+                                <span className="text-gray-400">☆</span> // Outlined star
+                              )}
+                            </button>
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getAccessibilityLevelColor(venue.accessibility_level)}`}>
+                              {venue.accessibility_level}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Address */}
+                        <p className="text-gray-600 mb-4">
+                          <span className="font-medium">📍</span> {venue.address || 'Address not available'}
+                        </p>
+
+                        {/* Accessibility Features */}
+                        <div className="mb-4">
+                          <h4 className="font-medium text-gray-700 mb-2">Accessibility Features:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {venue.wheelchair_entrance && (
+                              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-1">
+                                ♿ Entrance
+                              </span>
+                            )}
+                            {venue.wheelchair_bathroom && (
+                              <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-1">
+                                🚽 Bathroom
+                              </span>
+                            )}
+                            {venue.accessible_parking_nearby && (
+                              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm flex items-center gap-1">
+                                🅿️ Parking
+                              </span>
+                            )}
+                            {venue.level_access_internal && (
+                              <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm flex items-center gap-1">
+                                📐 Level Access
+                              </span>
+                            )}
+                            {venue.quiet_space_available && (
+                              <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm flex items-center gap-1">
+                                🤫 Quiet Space
+                              </span>
+                            )}
+                            {!venue.wheelchair_entrance && !venue.wheelchair_bathroom && !venue.accessible_parking_nearby && !venue.level_access_internal && !venue.quiet_space_available && (
+                              <span className="text-gray-500 text-sm">No specific features recorded</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Additional Info */}
+                        <div className="flex justify-between items-center text-sm text-gray-500">
+                          <div>
+                            {venue.data_source && (
+                              <span>Source: {venue.data_source}</span>
+                            )}
+                          </div>
+                          <div>
+                            {venue.user_rating && (
+                              <span className="flex items-center gap-1">
+                                ⭐ {venue.user_rating.toFixed(1)} ({venue.total_ratings || 0})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">
+                            {venue.currently_operating ? '✅ Currently Open' : '❌ Currently Closed'}
+                          </span>
+                          <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all">
+                            View Details →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* No Results */}
+                {venues.length === 0 && !loading && (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">😔</div>
+                    <h3 className="text-2xl font-bold text-gray-700 mb-2">No venues found</h3>
+                    <p className="text-gray-600 mb-6">Try adjusting your filters to see more results.</p>
+                    <button
+                      onClick={handleResetFilters}
+                      className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all"
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                )}
+
+                {/* Load More Button */}
+                {pagination.hasMore && (
+                  <div className="text-center mt-8">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={loading}
+                      className="px-8 py-4 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Loading...' : `Load More (${pagination.total - pagination.offset - venues.length} remaining)`}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
