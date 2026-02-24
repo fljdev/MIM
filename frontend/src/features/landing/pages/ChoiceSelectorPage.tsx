@@ -87,16 +87,17 @@ const ChoiceSelectorPage: React.FC = () => {
       {/* Quick Stats */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
         <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-white">1,200+</div>
-          <div className="text-white opacity-90">Accessible Venues</div>
-        </div>
-        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
           <div className="text-2xl font-bold text-white">50+</div>
-          <div className="text-white opacity-90">Specialized Transport Services</div>
+          <div className="text-white opacity-90">Accessible Venues</div>
+          <div className="text-sm text-white opacity-80 mt-1">Prototype — more coming soon</div>
         </div>
         <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-white">300+</div>
-          <div className="text-white opacity-90">Autism-Friendly Events</div>
+          <div className="text-2xl font-bold text-white">4</div>
+          <div className="text-white opacity-90">Journey Modes</div>
+        </div>
+        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-white">Free</div>
+          <div className="text-white opacity-90">Free to Use</div>
         </div>
       </div>
 
