@@ -5,6 +5,20 @@ import { TransportService, JourneyOption } from '../../../types/Accessibility';
 import LocationAutocomplete from '../../meetup/components/LocationAutocomplete';
 import { API_BASE_URL } from '../../../Config';
 import { AccessibleVenue } from './BrowseVenuesPage';
+import { calculateDistance } from '../../../lib/calculations/travelTimeCalculator';
+import { calculateIrishCarbonSavings, shouldShowCarbonSavings, getSourceText } from '../../../utils/irishCarbonCalculator';
+
+// Extended interface for journey options with carbon savings
+interface JourneyOptionWithCarbon extends JourneyOption {
+  carbonSavings?: {
+    emissionsGrams: number;
+    carEmissionsGrams: number;
+    savingsGrams: number;
+    savingsPerKm: number;
+    modeName: string;
+    message: string;
+  } | null;
+}
 
 const JourneyPlanner: React.FC = () => {
   const navigate = useNavigate();
@@ -24,8 +38,11 @@ const JourneyPlanner: React.FC = () => {
   const [sensoryNeeds, setSensoryNeeds] = useState<string[]>([]);
   const [transportPreference, setTransportPreference] = useState<string>('all');
   
+  // State for public transport sub-selection
+  const [publicTransportSubMode, setPublicTransportSubMode] = useState<'bus' | 'luas' | 'dart' | null>(null);
+  
   // State for results
-  const [journeyOptions, setJourneyOptions] = useState<JourneyOption[]>([]);
+  const [journeyOptions, setJourneyOptions] = useState<JourneyOptionWithCarbon[]>([]);
   const [transportServices, setTransportServices] = useState<TransportService[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,6 +132,26 @@ const JourneyPlanner: React.FC = () => {
     setError(null);
 
     try {
+      // Calculate distance between origin and destination for carbon savings
+      const distanceKm = calculateDistance(
+        currentLocationCoords.lat,
+        currentLocationCoords.lng,
+        destinationCoords.lat,
+        destinationCoords.lng
+      );
+
+      // Determine transport mode for carbon calculation
+      let carbonTransportMode = transportPreference;
+      if (transportPreference === 'public' && publicTransportSubMode) {
+        carbonTransportMode = publicTransportSubMode;
+      }
+
+      // Calculate carbon savings if applicable
+      let carbonSavings = null;
+      if (shouldShowCarbonSavings(carbonTransportMode)) {
+        carbonSavings = calculateIrishCarbonSavings(distanceKm, carbonTransportMode);
+      }
+
       // In a real app, this would call the backend API to calculate journey options
       // For now, we'll mock some data
       const mockJourneyOptions: JourneyOption[] = [
@@ -184,7 +221,13 @@ const JourneyPlanner: React.FC = () => {
         filteredOptions = mockJourneyOptions.filter(option => option.transportType === transportPreference);
       }
 
-      setJourneyOptions(filteredOptions);
+      // Update journey options with carbon data
+      const journeyOptionsWithCarbon = filteredOptions.map(option => ({
+        ...option,
+        carbonSavings: carbonSavings && option.transportType === 'public' ? carbonSavings : null
+      }));
+
+      setJourneyOptions(journeyOptionsWithCarbon);
     } catch (err) {
       setError('Failed to plan journey. Please try again.');
       console.error(err);
@@ -435,7 +478,13 @@ const JourneyPlanner: React.FC = () => {
                         {['all', 'specialized', 'public', 'car_parking', 'taxi'].map((type) => (
                           <button
                             key={type}
-                            onClick={() => setTransportPreference(type)}
+                            onClick={() => {
+                              setTransportPreference(type);
+                              // Reset sub-mode when switching away from public transport
+                              if (type !== 'public') {
+                                setPublicTransportSubMode(null);
+                              }
+                            }}
                             className={`px-4 py-2 rounded-lg border-2 font-semibold transition-all ${transportPreference === type ? 'bg-brand-turquoise text-white border-brand-turquoise' : 'bg-white text-gray-700 border-gray-300 hover:border-brand-turquoise'}`}
                           >
                             {type === 'all' && '🚦 All Options'}
@@ -446,6 +495,31 @@ const JourneyPlanner: React.FC = () => {
                           </button>
                         ))}
                       </div>
+                      
+                      {/* Public Transport Sub-selection */}
+                      {transportPreference === 'public' && (
+                        <div className="mt-4 pl-4 border-l-4 border-brand-turquoise">
+                          <h5 className="font-bold text-gray-700 mb-3">Select Public Transport Type</h5>
+                          <div className="flex flex-wrap gap-3">
+                            {['bus', 'luas', 'dart'].map((subType) => (
+                              <button
+                                key={subType}
+                                onClick={() => setPublicTransportSubMode(subType as 'bus' | 'luas' | 'dart')}
+                                className={`px-4 py-2 rounded-lg border-2 font-semibold transition-all ${publicTransportSubMode === subType ? 'bg-brand-turquoise text-white border-brand-turquoise' : 'bg-white text-gray-700 border-gray-300 hover:border-brand-turquoise'}`}
+                              >
+                                {subType === 'bus' && '🚌 Dublin Bus'}
+                                {subType === 'luas' && '🚊 Luas'}
+                                {subType === 'dart' && '🚆 DART'}
+                              </button>
+                            ))}
+                          </div>
+                          {!publicTransportSubMode && (
+                            <p className="mt-2 text-sm text-amber-600">
+                              Please select a specific public transport type to see carbon savings.
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -661,6 +735,20 @@ const JourneyPlanner: React.FC = () => {
                               <li key={index}>{warning}</li>
                             ))}
                           </ul>
+                        </div>
+                      )}
+
+                      {/* Carbon Saving Indicator */}
+                      {journey.carbonSavings && journey.carbonSavings.message && (
+                        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xl">🌱</span>
+                            <h6 className="font-bold text-green-800">Environmental Impact</h6>
+                          </div>
+                          <p className="text-green-700 mb-2">{journey.carbonSavings.message}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {getSourceText()}
+                          </p>
                         </div>
                       )}
                     </div>
