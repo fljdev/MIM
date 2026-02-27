@@ -1,8 +1,66 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../auth/contexts/AuthContext';
+import { API_BASE_URL } from '../../../Config';
 
 const ChoiceSelectorPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [user]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      setMessage('Please enter a valid email address');
+      setMessageType('error');
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage('');
+    setMessageType('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/waitlist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+      
+      if (response.status === 201) {
+        setMessage("You're subscribed — we'll keep you posted!");
+        setMessageType('success');
+        setEmail('');
+      } else if (response.status === 200 && data.message === "You're already on the list!") {
+        setMessage("Looks like you're already subscribed!");
+        setMessageType('error');
+      } else {
+        setMessage(data.error || 'Something went wrong. Please try again.');
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Waitlist submission error:', error);
+      setMessage('Network error. Please check your connection and try again.');
+      setMessageType('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark flex flex-col items-center justify-center p-6 pt-20">
@@ -125,6 +183,58 @@ const ChoiceSelectorPage: React.FC = () => {
             <h4 className="font-bold mb-1">Special Events</h4>
             <p className="text-sm opacity-90">Autism-friendly screenings, quiet hours</p>
           </div>
+        </div>
+      </div>
+
+      {/* Newsletter Signup */}
+      <div className="w-full bg-brand-turquoise-dark py-12 px-6 mt-12">
+        <div className="max-w-2xl mx-auto text-center">
+          <h3 className="text-3xl font-bold text-white mb-4">Stay in the Loop</h3>
+          <p className="text-white opacity-90 mb-8 text-lg">
+            Get notified about new accessible venues and MiM updates.
+          </p>
+          
+          <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <div className="flex-1 max-w-md">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  user?.email ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                } focus:outline-none focus:ring-2 focus:ring-brand-turquoise focus:border-transparent`}
+                disabled={!!user?.email}
+                required
+              />
+              {user?.email && (
+                <p className="text-white text-sm mt-2 text-left">
+                  Using your account email: <span className="font-semibold">{user.email}</span>
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-8 py-3 bg-white text-brand-turquoise-dark font-bold rounded-lg hover:bg-gray-100 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {isLoading ? 'Subscribing...' : 'Subscribe'}
+            </button>
+          </form>
+          
+          {message && (
+            <div className={`mt-6 p-4 rounded-lg ${
+              messageType === 'success' 
+                ? 'bg-green-100 text-green-800 border border-green-200' 
+                : 'bg-red-100 text-red-800 border border-red-200'
+            }`}>
+              <p className="font-medium">{message}</p>
+            </div>
+          )}
+          
+          <p className="text-white opacity-75 text-sm mt-8">
+            We respect your privacy. No spam, unsubscribe anytime.
+          </p>
         </div>
       </div>
 
