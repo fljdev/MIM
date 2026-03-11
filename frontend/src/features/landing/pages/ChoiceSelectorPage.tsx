@@ -122,20 +122,20 @@ const ChoiceSelectorPage: React.FC = () => {
           <span className="text-2xl text-brand-turquoise">→</span>
         </button>
 
-        {/* Browse Accessible Venues */}
+        {/* MiM Town - Circular Economy */}
         <button
-          onClick={() => navigate('/browse-venues')}
+          onClick={() => navigate('/mim-town/dashboard')}
           className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
         >
           <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">
-            <span className="text-3xl">🏪</span>
+            <span className="text-3xl">♻️</span>
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-bold text-brand-turquoise mb-1">
-              Browse Accessible Venues
+              MiM Town - Circular Economy
             </h3>
             <p className="text-gray-600">
-              Discover venues with step-free access, accessible toilets, and sensory-friendly features
+              B2B platform for Irish SMEs to track, manage, and report on waste reduction and material reuse
             </p>
           </div>
           <span className="text-2xl text-brand-turquoise">→</span>

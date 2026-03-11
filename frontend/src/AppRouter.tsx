@@ -20,6 +20,11 @@ import VenueDetailPage from './features/accessibility/pages/VenueDetailPage';
 import JourneyPlanner from './features/accessibility/pages/JourneyPlanner';
 import BrowseVenuesPage from './features/accessibility/pages/BrowseVenuesPage';
 
+// Import MiM Town components
+import MimTownDashboard from './features/mim-town/pages/MimTownDashboard';
+import BusinessProfileWizard from './features/mim-town/components/BusinessProfileWizard';
+import BrowseMaterialsPage from './features/mim-town/pages/BrowseMaterialsPage';
+
 // Import Navbar
 import Navbar from './components/Navbar';
 
@@ -58,6 +63,11 @@ const AppRouter: React.FC = () => {
         <Route path="/journey-planner" element={<ProtectedRoute><JourneyPlanner /></ProtectedRoute>} />
         <Route path="/browse-venues" element={<BrowseVenuesPage />} />
         <Route path="/venues/:id" element={<ProtectedRoute><VenueDetailPage /></ProtectedRoute>} />
+
+        {/* MiM Town - Circular Economy Platform */}
+        <Route path="/mim-town/dashboard" element={<ProtectedRoute><MimTownDashboard /></ProtectedRoute>} />
+        <Route path="/mim-town/business-profile" element={<ProtectedRoute><BusinessProfileWizard /></ProtectedRoute>} />
+        <Route path="/mim-town/materials" element={<BrowseMaterialsPage />} />
 
         {/* Login/Signup page */}
         <Route path="/login" element={<LoginPage />} />

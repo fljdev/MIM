@@ -17,6 +17,8 @@ const carbonRoutes = require('./routes/carbonRoutes');
 const accessibilityProfileRoutes = require('./routes/accessibilityProfile');
 const venuesRoutes = require('./routes/venues');
 const accessibleVenuesRoutes = require('./routes/accessibleVenues');
+const businessesRoutes = require('./routes/businesses');
+const materialsRoutes = require('./routes/materials');
 
 app.use(cors());
 app.use(express.json());
@@ -104,6 +106,10 @@ app.use('/api', venuesRoutes);
 
 // Accessible venues routes (new comprehensive accessible venues table)
 app.use('/api', accessibleVenuesRoutes);
+
+// MiM Town circular economy routes
+app.use('/api/businesses', businessesRoutes);
+app.use('/api/materials', materialsRoutes);
 
 // Mock transport services endpoint for journey planner
 app.get('/api/transport-services', (req, res) => {

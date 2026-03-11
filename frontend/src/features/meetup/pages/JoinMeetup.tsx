@@ -124,59 +124,69 @@ const JoinMeetup: React.FC = () => {
     }
   };
 
-  const handleUseCurrentLocation = () => {
+  const handleUseCurrentLocation = async () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
       return;
     }
 
     setGettingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+      
+      const coords = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
 
-        // Validate Dublin bounds
-        const dublinBounds = {
-          north: 53.4,
-          south: 53.2,
-          east: -6.0,
-          west: -6.5
-        };
+      // Validate Dublin bounds
+      const dublinBounds = {
+        north: 53.4,
+        south: 53.2,
+        east: -6.0,
+        west: -6.5
+      };
 
-        if (
-          coords.lat >= dublinBounds.south &&
-          coords.lat <= dublinBounds.north &&
-          coords.lng >= dublinBounds.west &&
-          coords.lng <= dublinBounds.east
-        ) {
-          setLocationCoords(coords);
+      if (
+        coords.lat >= dublinBounds.south &&
+        coords.lat <= dublinBounds.north &&
+        coords.lng >= dublinBounds.west &&
+        coords.lng <= dublinBounds.east
+      ) {
+        setLocationCoords(coords);
 
-          // Reverse geocode to get address
-          try {
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ location: coords }, (results, status) => {
-              if (status === 'OK' && results && results[0]) {
-                setLocation(results[0].formatted_address);
-              }
-            });
-          } catch (err) {
-            console.error('Geocoding error:', err);
+        // Reverse geocode using Google Maps Geocoding REST API
+        try {
+          const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+          if (!apiKey) {
+            throw new Error('Google Maps API key not configured');
+          }
+          
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`
+          );
+          const data = await response.json();
+          
+          if (data.status === 'OK' && data.results && data.results[0]) {
+            setLocation(data.results[0].formatted_address);
+          } else {
             setLocation(`${coords.lat}, ${coords.lng}`);
           }
-        } else {
-          setLocationError('Your current location is outside Dublin City');
+        } catch (err) {
+          console.error('Geocoding error:', err);
+          setLocation(`${coords.lat}, ${coords.lng}`);
         }
-        setGettingLocation(false);
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        alert('Failed to get your location. Please enter it manually.');
-        setGettingLocation(false);
+      } else {
+        setLocationError('Your current location is outside Dublin City');
       }
-    );
+    } catch (error) {
+      console.error('Geolocation error:', error);
+      alert('Failed to get your location. Please enter it manually.');
+    } finally {
+      setGettingLocation(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
