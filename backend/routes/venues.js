@@ -68,8 +68,8 @@ router.get('/venues', async (req, res) => {
         s.quiet_space_available,
         s.staff_autism_trained
       FROM venues v
-      LEFT JOIN venue_physical_accessibility p ON v.id = p.venue_id AND p.verified = true
-      LEFT JOIN venue_sensory_accessibility s ON v.id = s.venue_id AND s.verified = true
+      LEFT JOIN legacy_venue_physical_accessibility p ON v.id = p.venue_id AND p.verified = true
+      LEFT JOIN legacy_venue_sensory_accessibility s ON v.id = s.venue_id AND s.verified = true
       WHERE 1=1
     `;
 
@@ -132,8 +132,8 @@ router.get('/venues', async (req, res) => {
     let countQuery = `
       SELECT COUNT(*) as total
       FROM venues v
-      LEFT JOIN venue_physical_accessibility p ON v.id = p.venue_id AND p.verified = true
-      LEFT JOIN venue_sensory_accessibility s ON v.id = s.venue_id AND s.verified = true
+      LEFT JOIN legacy_venue_physical_accessibility p ON v.id = p.venue_id AND p.verified = true
+      LEFT JOIN legacy_venue_sensory_accessibility s ON v.id = s.venue_id AND s.verified = true
       WHERE 1=1
     `;
     const countParams = [];
@@ -219,19 +219,19 @@ router.get('/venues/:id', async (req, res) => {
 
     // Get physical accessibility
     const physicalResult = await pool.query(
-      'SELECT * FROM venue_physical_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC LIMIT 1',
+      'SELECT * FROM legacy_venue_physical_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC LIMIT 1',
       [id]
     );
 
     // Get sensory accessibility
     const sensoryResult = await pool.query(
-      'SELECT * FROM venue_sensory_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC LIMIT 1',
+      'SELECT * FROM legacy_venue_sensory_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC LIMIT 1',
       [id]
     );
 
     // Get special events
     const eventsResult = await pool.query(
-      'SELECT * FROM venue_special_events WHERE venue_id = $1 AND active = true AND next_occurrence > NOW() ORDER BY next_occurrence ASC',
+      'SELECT * FROM legacy_venue_special_events WHERE venue_id = $1 AND active = true AND next_occurrence > NOW() ORDER BY next_occurrence ASC',
       [id]
     );
 
@@ -242,7 +242,7 @@ router.get('/venues/:id', async (req, res) => {
         AVG(overall_rating) as average_rating,
         SUM(CASE WHEN would_recommend THEN 1 ELSE 0 END) as would_recommend_count,
         SUM(CASE WHEN accessibility_needs_met THEN 1 ELSE 0 END) as needs_met_count
-       FROM accessibility_reviews WHERE venue_id = $1`,
+       FROM legacy_accessibility_reviews WHERE venue_id = $1`,
       [id]
     );
 
@@ -315,9 +315,9 @@ router.get('/venues/:id/accessibility', async (req, res) => {
 
   try {
     const [physicalResult, sensoryResult, eventsResult] = await Promise.all([
-      pool.query('SELECT * FROM venue_physical_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC', [id]),
-      pool.query('SELECT * FROM venue_sensory_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC', [id]),
-      pool.query('SELECT * FROM venue_special_events WHERE venue_id = $1 AND active = true ORDER BY next_occurrence ASC', [id])
+      pool.query('SELECT * FROM legacy_venue_physical_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC', [id]),
+      pool.query('SELECT * FROM legacy_venue_sensory_accessibility WHERE venue_id = $1 ORDER BY last_updated DESC', [id]),
+      pool.query('SELECT * FROM legacy_venue_special_events WHERE venue_id = $1 AND active = true ORDER BY next_occurrence ASC', [id])
     ]);
 
     res.json({
@@ -347,7 +347,7 @@ router.post('/venues/:id/physical-access', authenticateToken, async (req, res) =
     }
 
     const result = await pool.query(
-      `INSERT INTO venue_physical_accessibility (
+      `INSERT INTO legacy_venue_physical_accessibility (
         venue_id, submitted_by,
         step_free_entrance, entrance_steps_count, ramp_available, automatic_door,
         door_width_cm, door_type,
@@ -422,7 +422,7 @@ router.post('/venues/:id/sensory-access', authenticateToken, async (req, res) =>
     }
 
     const result = await pool.query(
-      `INSERT INTO venue_sensory_accessibility (
+      `INSERT INTO legacy_venue_sensory_accessibility (
         venue_id, submitted_by,
         noise_level, background_music, music_volume, live_music,
         lighting_type, flickering_lights, adjustable_lighting,
@@ -479,7 +479,7 @@ router.put('/venues/:id/physical-access/:accessId', authenticateToken, async (re
   try {
     // Check if the accessibility entry exists and belongs to the user or user is admin
     const existingCheck = await pool.query(
-      'SELECT submitted_by FROM venue_physical_accessibility WHERE id = $1 AND venue_id = $2',
+      'SELECT submitted_by FROM legacy_venue_physical_accessibility WHERE id = $1 AND venue_id = $2',
       [accessId, id]
     );
 
@@ -492,7 +492,7 @@ router.put('/venues/:id/physical-access/:accessId', authenticateToken, async (re
     }
 
     const result = await pool.query(
-      `UPDATE venue_physical_accessibility
+      `UPDATE legacy_venue_physical_accessibility
        SET 
          step_free_entrance = $1,
          entrance_steps_count = $2,
@@ -580,7 +580,7 @@ router.put('/venues/:id/sensory-access/:accessId', authenticateToken, async (req
   try {
     // Check if the accessibility entry exists and belongs to the user or user is admin
     const existingCheck = await pool.query(
-      'SELECT submitted_by FROM venue_sensory_accessibility WHERE id = $1 AND venue_id = $2',
+      'SELECT submitted_by FROM legacy_venue_sensory_accessibility WHERE id = $1 AND venue_id = $2',
       [accessId, id]
     );
 
@@ -593,7 +593,7 @@ router.put('/venues/:id/sensory-access/:accessId', authenticateToken, async (req
     }
 
     const result = await pool.query(
-      `UPDATE venue_sensory_accessibility
+      `UPDATE legacy_venue_sensory_accessibility
        SET 
          noise_level = $1,
          background_music = $2,

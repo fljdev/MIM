@@ -46,7 +46,7 @@ const LoginPage: React.FC = () => {
 
       localStorage.setItem('token', data.token);
       login(data.user, data.token);
-      navigate('/profile');
+      navigate('/mim-town/dashboard');
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
     } finally {
@@ -95,7 +95,7 @@ const LoginPage: React.FC = () => {
       }
       
       login(data.user, data.token);
-      navigate('/profile');
+      navigate('/mim-town/dashboard');
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
     } finally {

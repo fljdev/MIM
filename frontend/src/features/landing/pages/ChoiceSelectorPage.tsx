@@ -62,136 +62,170 @@ const ChoiceSelectorPage: React.FC = () => {
     }
   };
 
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/mim-town/dashboard');
+    } else {
+      navigate('/login?signup=true');
+    }
+  };
+
+  const handleGoToDashboard = () => {
+    navigate('/mim-town/dashboard');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark flex flex-col items-center justify-center p-6 pt-20">
-      {/* Logo/Title */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-          MiM
-        </h1>
-        <p className="text-xl md:text-2xl text-white opacity-90">
-          Make It Manageable
+      {/* Hero Section */}
+      <div className="text-center max-w-4xl mx-auto mb-12">
+        <div className="inline-block mb-6">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 mx-auto">
+            <span className="text-5xl">♻️</span>
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
+            MiM Town
+          </h1>
+          <h2 className="text-2xl md:text-3xl text-white opacity-90">
+            Materials in Motion
+          </h2>
+        </div>
+        
+        <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
+          The circular economy marketplace for Irish SMEs
         </p>
-        <p className="text-lg text-white opacity-80 mt-2">
-          Accessible journey planning for everyone
-        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <button
+            onClick={handleGetStarted}
+            className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            {user ? 'Go to Dashboard' : 'Get Started'}
+          </button>
+          {user && (
+            <button
+              onClick={handleGoToDashboard}
+              className="px-8 py-4 bg-transparent border-2 border-white text-white text-xl font-bold rounded-xl hover:bg-white/10 transition-all duration-300"
+            >
+              Browse Materials
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Main Question */}
-      <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
-        How can we help you today?
-      </h2>
-
-      {/* Three Big Buttons */}
-      <div className="flex flex-col gap-6 w-full max-w-lg">
-        {/* Plan My Journey */}
-        <button
-          onClick={() => navigate('/journey-planner')}
-          className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
-        >
-          <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">
-            <span className="text-3xl">🚶‍♀️</span>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-brand-turquoise mb-1">
-              Plan My Journey
-            </h3>
-            <p className="text-gray-600">
-              Find accessible venues and plan your journey with specialized transport options
+      {/* Value Propositions */}
+      <div className="max-w-6xl w-full mb-16">
+        <h3 className="text-3xl font-bold text-white text-center mb-8">
+          Transform Your Business with Circular Economy
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl">📦</span>
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">List Surplus Materials</h4>
+            <p className="text-white/90">
+              Turn waste into revenue by listing excess materials, by-products, or unused inventory for other businesses to reuse.
             </p>
           </div>
-          <span className="text-2xl text-brand-turquoise">→</span>
-        </button>
-
-        {/* Set Up Accessibility Profile */}
-        <button
-          onClick={() => navigate('/accessibility-profile')}
-          className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
-        >
-          <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">
-            <span className="text-3xl">♿</span>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-brand-turquoise mb-1">
-              Set Up My Accessibility Profile
-            </h3>
-            <p className="text-gray-600">
-              Tell us about your mobility, sensory needs, and transportation preferences
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl">🔍</span>
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Find What You Need Nearby</h4>
+            <p className="text-white/90">
+              Source materials locally from other Irish SMEs, reducing procurement costs and supporting the local economy.
             </p>
           </div>
-          <span className="text-2xl text-brand-turquoise">→</span>
-        </button>
-
-        {/* MiM Town - Circular Economy */}
-        <button
-          onClick={() => navigate('/mim-town/dashboard')}
-          className="flex items-center gap-4 p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-left border-2 border-brand-turquoise"
-        >
-          <div className="w-16 h-16 bg-brand-cream rounded-full flex items-center justify-center">
-            <span className="text-3xl">♻️</span>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-brand-turquoise mb-1">
-              MiM Town - Circular Economy
-            </h3>
-            <p className="text-gray-600">
-              B2B platform for Irish SMEs to track, manage, and report on waste reduction and material reuse
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl">📊</span>
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Track Your Sustainability Impact</h4>
+            <p className="text-white/90">
+              Monitor waste reduction, carbon savings, and circular economy metrics for EU compliance and sustainability reporting.
             </p>
           </div>
-          <span className="text-2xl text-brand-turquoise">→</span>
-        </button>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
-        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-white">Dozens of</div>
-          <div className="text-white opacity-90">Accessible Venues</div>
-          <div className="text-sm text-white opacity-80 mt-1">Prototype — more coming soon</div>
-        </div>
-        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-white">Multiple</div>
-          <div className="text-white opacity-90">Transport Modes Available</div>
-        </div>
-        <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-white">Free</div>
-          <div className="text-white opacity-90">Free to Use</div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="mt-12 text-center text-white max-w-2xl">
-        <h3 className="text-2xl font-bold mb-4">What Makes Us Different</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <div className="text-2xl mb-2">♿</div>
-            <h4 className="font-bold mb-1">Physical Accessibility</h4>
-            <p className="text-sm opacity-90">Step-free access, parking, toilets, door widths</p>
+      {/* How It Works */}
+      <div className="max-w-4xl w-full mb-16">
+        <h3 className="text-3xl font-bold text-white text-center mb-8">
+          Simple 3-Step Process
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+              1
+            </div>
+            <h4 className="text-xl font-bold text-white mb-2">Register Your Business</h4>
+            <p className="text-white/80">
+              Create your free business profile in minutes
+            </p>
           </div>
-          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <div className="text-2xl mb-2">🎵</div>
-            <h4 className="font-bold mb-1">Sensory Environment</h4>
-            <p className="text-sm opacity-90">Noise levels, lighting, crowd information</p>
+          
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+              2
+            </div>
+            <h4 className="text-xl font-bold text-white mb-2">List or Source Materials</h4>
+            <p className="text-white/80">
+              Add available materials or browse what others have listed
+            </p>
           </div>
-          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <div className="text-2xl mb-2">🚌</div>
-            <h4 className="font-bold mb-1">Specialized Transport</h4>
-            <p className="text-sm opacity-90">IWA, Enable Ireland, accessible taxis</p>
-          </div>
-          <div className="bg-white bg-opacity-10 p-4 rounded-lg">
-            <div className="text-2xl mb-2">🎬</div>
-            <h4 className="font-bold mb-1">Special Events</h4>
-            <p className="text-sm opacity-90">Autism-friendly screenings, quiet hours</p>
+          
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+              3
+            </div>
+            <h4 className="text-xl font-bold text-white mb-2">Connect & Transact</h4>
+            <p className="text-white/80">
+              Arrange collection, track transactions, and measure impact
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Newsletter Signup */}
-      <div className="w-full bg-brand-turquoise-dark py-12 px-6 mt-12">
-        <div className="max-w-2xl mx-auto text-center">
-          <h3 className="text-3xl font-bold text-white mb-4">Stay in the Loop</h3>
-          <p className="text-white opacity-90 mb-8 text-lg">
-            Get notified about new accessible venues and MiM updates.
+      {/* Platform Stats */}
+      <div className="max-w-4xl w-full mb-16">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
+          <h3 className="text-2xl font-bold text-white text-center mb-8">
+            Join Growing Irish Businesses
+          </h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">89+</div>
+              <div className="text-white/80">Irish SMEs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">1,247+</div>
+              <div className="text-white/80">Materials Listed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">567+</div>
+              <div className="text-white/80">Tonnes Diverted</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">23.5+</div>
+              <div className="text-white/80">Tonnes CO₂ Saved</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Join Beta Waitlist */}
+      <div className="w-full max-w-2xl mb-16">
+        <div className="bg-brand-turquoise-dark rounded-2xl p-8 border-2 border-white">
+          <h3 className="text-3xl font-bold text-white text-center mb-4">
+            Join the MiM Town Beta
+          </h3>
+          <p className="text-white/90 text-center mb-8 text-lg">
+            Be among the first Irish SMEs to transform waste into opportunity. Get early access to the circular economy platform.
           </p>
           
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
@@ -200,7 +234,7 @@ const ChoiceSelectorPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="Enter your business email"
                 className={`w-full px-4 py-3 rounded-lg border ${
                   user?.email ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
                 } focus:outline-none focus:ring-2 focus:ring-brand-turquoise focus:border-transparent`}
@@ -218,7 +252,7 @@ const ChoiceSelectorPage: React.FC = () => {
               disabled={isLoading}
               className="px-8 py-3 bg-white text-brand-turquoise-dark font-bold rounded-lg hover:bg-gray-100 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
-              {isLoading ? 'Subscribing...' : 'Subscribe'}
+              {isLoading ? 'Subscribing...' : 'Join Beta'}
             </button>
           </form>
           
@@ -232,15 +266,16 @@ const ChoiceSelectorPage: React.FC = () => {
             </div>
           )}
           
-          <p className="text-white opacity-75 text-sm mt-8">
+          <p className="text-white/75 text-sm text-center mt-6">
             We respect your privacy. No spam, unsubscribe anytime.
           </p>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="mt-12 text-center text-white opacity-80 text-sm">
-        <p>© 2025 MiM | Make It Manageable - Accessible journey planning for everyone</p>
+      <div className="mt-12 text-center text-white/80 text-sm max-w-2xl">
+        <p className="mb-2">© 2025 MiM Town | Materials in Motion - Circular Economy Platform for Irish SMEs</p>
+        <p>Helping Irish businesses reduce waste, save costs, and meet EU sustainability regulations</p>
       </div>
     </div>
   );

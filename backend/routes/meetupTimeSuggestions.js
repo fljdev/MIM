@@ -62,7 +62,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
     // Insert the suggestion
     const result = await pool.query(
-      `INSERT INTO meetup_time_suggestions 
+      `INSERT INTO legacy_meetup_time_suggestions 
        (meetup_id, suggested_by_user_id, suggested_date, suggested_time_start, suggested_time_end, message)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
@@ -107,7 +107,7 @@ router.get('/:meetupId', authenticateToken, async (req, res) => {
         mts.*,
         u.name as suggested_by_name,
         u.email as suggested_by_email
-       FROM meetup_time_suggestions mts
+       FROM legacy_meetup_time_suggestions mts
        JOIN users u ON u.id = mts.suggested_by_user_id
        WHERE mts.meetup_id = $1
        ORDER BY mts.created_at DESC`,
@@ -135,8 +135,8 @@ router.patch('/:suggestionId/accept', authenticateToken, async (req, res) => {
     // Get the suggestion and verify user is the meetup creator
     const suggestionResult = await pool.query(
       `SELECT mts.*, m.created_by
-       FROM meetup_time_suggestions mts
-       JOIN meetups m ON m.id = mts.meetup_id
+       FROM legacy_meetup_time_suggestions mts
+       JOIN legacy_meetups m ON m.id = mts.meetup_id
        WHERE mts.id = $1`,
       [suggestionId]
     );
@@ -153,7 +153,7 @@ router.patch('/:suggestionId/accept', authenticateToken, async (req, res) => {
 
     // Update the meetup with the new proposed time
     await pool.query(
-      `UPDATE meetups
+      `UPDATE legacy_meetups
        SET proposed_date = $1,
            proposed_time_start = $2,
            proposed_time_end = $3
@@ -163,7 +163,7 @@ router.patch('/:suggestionId/accept', authenticateToken, async (req, res) => {
 
     // Mark this suggestion as accepted
     await pool.query(
-      `UPDATE meetup_time_suggestions
+      `UPDATE legacy_meetup_time_suggestions
        SET status = 'accepted', updated_at = CURRENT_TIMESTAMP
        WHERE id = $1`,
       [suggestionId]
@@ -171,7 +171,7 @@ router.patch('/:suggestionId/accept', authenticateToken, async (req, res) => {
 
     // Mark all other suggestions for this meetup as rejected
     await pool.query(
-      `UPDATE meetup_time_suggestions
+      `UPDATE legacy_meetup_time_suggestions
        SET status = 'rejected', updated_at = CURRENT_TIMESTAMP
        WHERE meetup_id = $1 AND id != $2 AND status = 'pending'`,
       [suggestion.meetup_id, suggestionId]

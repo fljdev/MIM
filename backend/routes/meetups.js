@@ -50,11 +50,11 @@ async function resolveMeetupId(pool, idOrCode) {
     return parseInt(idOrCode);
   }
   
-  // It's a meetup code, look up the actual ID
-  const result = await pool.query(
-    'SELECT id FROM meetups WHERE meetup_code = $1',
-    [idOrCode.toUpperCase()]
-  );
+    // It's a meetup code, look up the actual ID
+    const result = await pool.query(
+      'SELECT id FROM legacy_meetups WHERE meetup_code = $1',
+      [idOrCode.toUpperCase()]
+    );
   
   if (result.rows.length === 0) {
     return null;
@@ -155,7 +155,7 @@ router.post('/create', authenticateToken, async (req, res) => {
     while (codeExists && attempts < maxAttempts) {
       meetup_code = generateMeetupCode();
       const checkResult = await pool.query(
-        'SELECT id FROM meetups WHERE meetup_code = $1',
+        'SELECT id FROM legacy_meetups WHERE meetup_code = $1',
         [meetup_code]
       );
       codeExists = checkResult.rows.length > 0;
@@ -172,7 +172,7 @@ router.post('/create', authenticateToken, async (req, res) => {
 
     // Insert new meetup
     const meetupResult = await pool.query(
-      `INSERT INTO meetups (
+      `INSERT INTO legacy_meetups (
         meetup_code,
         created_by,
         created_by_name,
@@ -216,7 +216,7 @@ router.post('/create', authenticateToken, async (req, res) => {
     console.log(`[Meetup Debug] Storing participant with transit_mode: ${selectedTransitMode}`);
     console.log(`[Meetup Debug] Creator location coordinates: lat=${creator_location.lat}, lng=${creator_location.lng}`);
     await pool.query(
-      `INSERT INTO meetup_participants (
+      `INSERT INTO legacy_meetup_participants (
         meetup_id,
         user_id,
         participant_name,
@@ -281,7 +281,7 @@ router.get('/code/:meetupCode', async (req, res) => {
         proposed_time_end,
         is_time_flexible,
         created_at
-      FROM meetups
+      FROM legacy_meetups
       WHERE meetup_code = $1`,
       [meetupCode.toUpperCase()]
     );
@@ -294,7 +294,7 @@ router.get('/code/:meetupCode', async (req, res) => {
 
     // Count participants
     const countResult = await pool.query(
-      'SELECT COUNT(*) as count FROM meetup_participants WHERE meetup_id = $1',
+      'SELECT COUNT(*) as count FROM legacy_meetup_participants WHERE meetup_id = $1',
       [meetup.id]
     );
 
@@ -372,9 +372,9 @@ router.get('/:shareableCode/invitation', async (req, res) => {
         mp.location_lat,
         mp.location_lng,
         mp.transit_mode
-      FROM meetups m
+      FROM legacy_meetups m
       LEFT JOIN users u ON m.created_by = u.id
-      LEFT JOIN meetup_participants mp ON m.id = mp.meetup_id AND mp.user_id = m.created_by
+      LEFT JOIN legacy_meetup_participants mp ON m.id = mp.meetup_id AND mp.user_id = m.created_by
       WHERE m.meetup_code = $1`,
       [shareableCode.toUpperCase()]
     );
@@ -473,7 +473,7 @@ router.post('/code/:meetupCode/join', async (req, res) => {
 
     // Find meetup by code
     const meetupResult = await pool.query(
-      'SELECT id, status FROM meetups WHERE meetup_code = $1',
+      'SELECT id, status FROM legacy_meetups WHERE meetup_code = $1',
       [meetupCode.toUpperCase()]
     );
 
@@ -485,7 +485,7 @@ router.post('/code/:meetupCode/join', async (req, res) => {
 
     // Count current participants
     const countResult = await pool.query(
-      'SELECT COUNT(*) as count FROM meetup_participants WHERE meetup_id = $1',
+    'SELECT COUNT(*) as count FROM legacy_meetup_participants WHERE meetup_id = $1',
       [meetup.id]
     );
 
@@ -498,7 +498,7 @@ router.post('/code/:meetupCode/join', async (req, res) => {
 
     // Insert new participant (user_id = NULL for guest/anonymous users)
     const participantResult = await pool.query(
-      `INSERT INTO meetup_participants (
+      `INSERT INTO legacy_meetup_participants (
         meetup_id,
         user_id,
         participant_name,
@@ -526,7 +526,7 @@ router.post('/code/:meetupCode/join', async (req, res) => {
 
     // Count again after insert
     const newCountResult = await pool.query(
-      'SELECT COUNT(*) as count FROM meetup_participants WHERE meetup_id = $1',
+      'SELECT COUNT(*) as count FROM legacy_meetup_participants WHERE meetup_id = $1',
       [meetup.id]
     );
 
@@ -536,7 +536,7 @@ router.post('/code/:meetupCode/join', async (req, res) => {
     // Note: calculation_status remains 'pending' until organizer manually triggers calculation
     if (newCount === 2) {
       await pool.query(
-        `UPDATE meetups
+        `UPDATE legacy_meetups
          SET status = 'active'
          WHERE id = $1`,
         [meetup.id]
@@ -585,7 +585,7 @@ router.post('/:shareableId/accept', authenticateToken, async (req, res) => {
 
     // Find meetup by shareable ID (meetup_code)
     const meetupResult = await pool.query(
-      'SELECT id, status FROM meetups WHERE meetup_code = $1',
+      'SELECT id, status FROM legacy_meetups WHERE meetup_code = $1',
       [shareableId.toUpperCase()]
     );
 
@@ -602,7 +602,7 @@ router.post('/:shareableId/accept', authenticateToken, async (req, res) => {
 
     // Count current participants
     const countResult = await pool.query(
-      'SELECT COUNT(*) as count FROM meetup_participants WHERE meetup_id = $1',
+      'SELECT COUNT(*) as count FROM legacy_meetup_participants WHERE meetup_id = $1',
       [meetup.id]
     );
 
@@ -615,7 +615,7 @@ router.post('/:shareableId/accept', authenticateToken, async (req, res) => {
 
     // Check if user is already a participant
     const existingParticipant = await pool.query(
-      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      'SELECT id FROM legacy_meetup_participants WHERE meetup_id = $1 AND user_id = $2',
       [meetup.id, userId]
     );
 
@@ -625,7 +625,7 @@ router.post('/:shareableId/accept', authenticateToken, async (req, res) => {
 
     // Get creator's location to use as default for joiner (they'll update later)
     const creatorParticipant = await pool.query(
-      'SELECT location_name, location_lat, location_lng FROM meetup_participants WHERE meetup_id = $1 AND user_id IS NOT NULL ORDER BY joined_at LIMIT 1',
+      'SELECT location_name, location_lat, location_lng FROM legacy_meetup_participants WHERE meetup_id = $1 AND user_id IS NOT NULL ORDER BY joined_at LIMIT 1',
       [meetup.id]
     );
 
@@ -666,7 +666,7 @@ router.post('/:shareableId/accept', authenticateToken, async (req, res) => {
 
     // Update meetup status to 'accepted'
     await pool.query(
-      `UPDATE meetups
+      `UPDATE legacy_meetups
        SET status = 'accepted'
        WHERE id = $1`,
       [meetup.id]
@@ -735,7 +735,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
     // Check if meetup exists and user is a participant
     const meetupResult = await pool.query(
       `SELECT m.id, m.status, mp.id as participant_id
-       FROM meetups m
+       FROM legacy_meetups m
        LEFT JOIN meetup_participants mp ON m.id = mp.meetup_id AND mp.user_id = $1
        WHERE m.id = $2`,
       [userId, meetupId]
@@ -757,7 +757,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
 
     // Update joiner's participant record with preferences
     await pool.query(
-      `UPDATE meetup_participants
+      `UPDATE legacy_meetup_participants
        SET location_name = $1,
            location_lat = $2,
            location_lng = $3,
@@ -776,7 +776,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
 
     // Update meetup status to 'preferences_set'
     await pool.query(
-      `UPDATE meetups
+      `UPDATE legacy_meetups
        SET status = 'preferences_set'
        WHERE id = $1`,
       [meetupId]
@@ -790,7 +790,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
         location_lat,
         location_lng,
         transit_mode
-      FROM meetup_participants
+      FROM legacy_meetup_participants
       WHERE meetup_id = $1`,
       [meetupId]
     );
@@ -804,7 +804,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
     // Get meetup details for calculation
     const meetupDetails = await pool.query(
       `SELECT meetup_vibe, budget_level, fairness_mode, meetup_code
-       FROM meetups WHERE id = $1`,
+       FROM legacy_meetups WHERE id = $1`,
       [meetupId]
     );
 
@@ -857,7 +857,7 @@ router.post('/:id/joiner-preferences', authenticateToken, async (req, res) => {
 
     // Store results in database
     await pool.query(
-      `UPDATE meetups
+      `UPDATE legacy_meetups
       SET
         calculated_midpoint_lat = $1,
         calculated_midpoint_lng = $2,
@@ -917,7 +917,7 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
 
     // Check if user is a participant
     const participantCheck = await pool.query(
-      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      'SELECT id FROM legacy_meetup_participants WHERE meetup_id = $1 AND user_id = $2',
       [actualMeetupId, userId]
     );
 
@@ -942,7 +942,7 @@ router.get('/:id/lobby', authenticateToken, async (req, res) => {
         proposed_time_start,
         proposed_time_end,
         is_time_flexible
-      FROM meetups
+      FROM legacy_meetups
       WHERE id = $1`,
       [actualMeetupId]
     );
@@ -1266,7 +1266,7 @@ router.post('/:code/vote', authenticateToken, async (req, res) => {
         
         // Update meetup status to confirmed
         await pool.query(
-          `UPDATE meetups SET status = 'confirmed' WHERE id = $1`,
+          `UPDATE legacy_meetups SET status = 'confirmed' WHERE id = $1`,
           [meetupId]
         );
         
@@ -1368,7 +1368,7 @@ router.post('/:id/confirm', authenticateToken, async (req, res) => {
     // Get meetup details
     const meetupResult = await pool.query(
       `SELECT id, status, calculated_venues
-       FROM meetups WHERE id = $1`,
+       FROM legacy_meetups WHERE id = $1`,
       [meetupId]
     );
 
@@ -1390,7 +1390,7 @@ router.post('/:id/confirm', authenticateToken, async (req, res) => {
 
     // Update meetup status to 'confirmed'
     await pool.query(
-      `UPDATE meetups
+      `UPDATE legacy_meetups
        SET status = 'confirmed'
        WHERE id = $1`,
       [meetupId]
@@ -1427,7 +1427,7 @@ router.get('/:id/info', authenticateToken, async (req, res) => {
 
     const meetupResult = await pool.query(
       `SELECT id, meetup_code, meetup_vibe, created_at
-       FROM meetups WHERE id = $1`,
+       FROM legacy_meetups WHERE id = $1`,
       [meetupId]
     );
 
