@@ -98,7 +98,7 @@ router.post('/journey', authenticateToken, async (req, res) => {
 
     // Check if user is a participant in this meetup
     const participantCheck = await pool.query(
-      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      'SELECT id FROM legacy_meetup_participants WHERE meetup_id = $1 AND user_id = $2',
       [meetup_id, userId]
     );
 
@@ -121,7 +121,7 @@ router.post('/journey', authenticateToken, async (req, res) => {
 
     // Update participant record with distance and carbon data
     await pool.query(
-      `UPDATE meetup_participants 
+      `UPDATE legacy_meetup_participants 
        SET distance_km = $1, 
            carbon_emitted = $2,
            transit_mode = $3,
@@ -204,8 +204,8 @@ router.get('/user/:id', authenticateToken, async (req, res) => {
         m.meetup_title,
         m.meetup_vibe,
         m.meetup_code
-      FROM meetup_participants mp
-      LEFT JOIN meetups m ON mp.meetup_id = m.id
+      FROM legacy_meetup_participants mp
+      LEFT JOIN legacy_meetups m ON mp.meetup_id = m.id
       WHERE mp.user_id = $1 AND mp.carbon_emitted IS NOT NULL
       ORDER BY mp.joined_at DESC`,
       [targetUserId]
@@ -305,7 +305,7 @@ router.get('/meetup/:id', authenticateToken, async (req, res) => {
 
     // Check if user is a participant in this meetup
     const participantCheck = await pool.query(
-      'SELECT id FROM meetup_participants WHERE meetup_id = $1 AND user_id = $2',
+      'SELECT id FROM legacy_meetup_participants WHERE meetup_id = $1 AND user_id = $2',
       [meetupId, userId]
     );
 
@@ -324,7 +324,7 @@ router.get('/meetup/:id', authenticateToken, async (req, res) => {
         meetup_vibe,
         status,
         confirmed_venue_name
-      FROM meetups
+      FROM legacy_meetups
       WHERE id = $1`,
       [meetupId]
     );
@@ -343,7 +343,7 @@ router.get('/meetup/:id', authenticateToken, async (req, res) => {
         transit_mode as mode,
         carbon_emitted,
         location_name
-      FROM meetup_participants
+      FROM legacy_meetup_participants
       WHERE meetup_id = $1
       ORDER BY carbon_emitted DESC`,
       [meetupId]
@@ -408,7 +408,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
         SUM(carbon_emitted) as total_carbon_kg,
         AVG(carbon_emitted) as avg_per_journey,
         SUM(distance_km) as total_distance_km
-      FROM meetup_participants
+      FROM legacy_meetup_participants
       WHERE user_id IS NOT NULL AND carbon_emitted > 0
     `);
 
@@ -421,7 +421,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
         COUNT(*) as count,
         SUM(carbon_emitted) as total_emissions,
         SUM(distance_km) as total_distance
-      FROM meetup_participants
+      FROM legacy_meetup_participants
       WHERE carbon_emitted > 0
       GROUP BY transit_mode
       ORDER BY count DESC
@@ -447,7 +447,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
         SUM(mp.carbon_emitted) as total_carbon_kg,
         COUNT(*) as journey_count,
         AVG(mp.carbon_emitted) as avg_per_journey
-      FROM meetup_participants mp
+      FROM legacy_meetup_participants mp
       JOIN users u ON mp.user_id = u.id
       WHERE mp.carbon_emitted > 0
       GROUP BY mp.user_id, u.name
@@ -626,7 +626,7 @@ router.patch('/meetup/:id/update', authenticateToken, async (req, res) => {
         location_lat,
         location_lng,
         transit_mode
-      FROM meetup_participants
+      FROM legacy_meetup_participants
       WHERE meetup_id = $1 AND user_id = $2`,
       [meetupId, userId]
     );
@@ -655,7 +655,7 @@ router.patch('/meetup/:id/update', authenticateToken, async (req, res) => {
 
     // Update participant record
     await pool.query(
-      `UPDATE meetup_participants 
+      `UPDATE legacy_meetup_participants 
        SET distance_km = $1, 
            carbon_emitted = $2,
            updated_at = NOW()
@@ -699,8 +699,8 @@ router.post('/meetup/:id/batch-update', authenticateToken, async (req, res) => {
     // Check if user is organizer or participant
     const meetupCheck = await pool.query(
       `SELECT m.id, m.created_by
-       FROM meetups m
-       JOIN meetup_participants mp ON m.id = mp.meetup_id
+       FROM legacy_meetups m
+       JOIN legacy_meetup_participants mp ON m.id = mp.meetup_id
        WHERE m.id = $1 AND (m.created_by = $2 OR mp.user_id = $2)`,
       [meetupId, userId]
     );
@@ -726,7 +726,7 @@ router.post('/meetup/:id/batch-update', authenticateToken, async (req, res) => {
         location_lat,
         location_lng,
         transit_mode
-      FROM meetup_participants
+      FROM legacy_meetup_participants
       WHERE meetup_id = $1`,
       [meetupId]
     );
@@ -749,8 +749,8 @@ router.post('/meetup/:id/batch-update', authenticateToken, async (req, res) => {
       );
 
       await pool.query(
-        `UPDATE meetup_participants 
-         SET distance_km = $1, 
+        `UPDATE legacy_meetup_participants
+         SET distance_km = $1,
              carbon_emitted = $2,
              updated_at = NOW()
          WHERE id = $3`,

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -15,430 +16,159 @@ const LandingPage: React.FC<LandingPageProps> = ({
   user,
   onLogout,
 }) => {
-  return (
-    <div style={{
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
-      lineHeight: '1.6',
-      color: '#44403C',
-    }}>
-      {/* Header */}
-      <header style={{
-        background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-        padding: '1rem 2rem',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      }}>
-        <nav style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            color: 'white',
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'white',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-            }}>
-              🎯
-            </div>
-            <span>Meet in Middle</span>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            {user ? (
-              <>
-                <span style={{ color: 'white', alignSelf: 'center' }}>
-                  Hi, {user.name}!
-                </span>
-                <button
-                  onClick={onLogout}
-                  style={{
-                    padding: '0.6rem 1.5rem',
-                    borderRadius: '8px',
-                    border: '2px solid white',
-                    background: 'transparent',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    transition: 'all 0.3s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#14B8A6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={onOpenLogin}
-                  style={{
-                    padding: '0.6rem 1.5rem',
-                    borderRadius: '8px',
-                    border: '2px solid white',
-                    background: 'transparent',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    transition: 'all 0.3s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#14B8A6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                >
-                  Login
-                </button>
-                <button
-                  onClick={onOpenSignup}
-                  style={{
-                    padding: '0.6rem 1.5rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: 'white',
-                    color: '#14B8A6',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                    transition: 'all 0.3s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-                  }}
-                >
-                  Sign Up
-                </button>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
+  const navigate = useNavigate();
 
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/mim-town/dashboard');
+    } else {
+      navigate('/login?signup=true');
+    }
+  };
+
+  const handleGoToDashboard = () => {
+    navigate('/mim-town/dashboard');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark flex flex-col items-center justify-center p-6 pt-20">
       {/* Hero Section */}
-      <section style={{
-        background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-        color: 'white',
-        padding: '5rem 2rem 4rem',
-        textAlign: 'center',
-      }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h1 style={{
-            fontSize: '3.5rem',
-            marginBottom: '1.5rem',
-            lineHeight: '1.2',
-            fontWeight: '700',
-          }}>
-            Fair, Sustainable Meetups.<br />In Minutes.
+      <div className="text-center max-w-4xl mx-auto mb-12">
+        <div className="inline-block mb-6">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 mx-auto">
+            <span className="text-5xl">♻️</span>
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
+            MiM Town
           </h1>
-          <p style={{
-            fontSize: '1.5rem',
-            marginBottom: '2rem',
-            opacity: '0.95',
-            fontWeight: '300',
-          }}>
-            Stop texting back and forth. Start meeting in the middle.
-          </p>
-          <p style={{
-            fontSize: '1.1rem',
-            marginBottom: '3rem',
-            opacity: '0.9',
-            maxWidth: '700px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
-          }}>
-            The only Dublin app that finds meeting spots based on each person's actual travel time.
-            Whether you're driving, taking the Luas, or walking—everyone gets a fair journey.
-          </p>
-          {/* Only show Create Meetup button if user is logged in */}
+          <h2 className="text-2xl md:text-3xl text-white opacity-90">
+            Materials in Motion
+          </h2>
+        </div>
+        
+        <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
+          The circular economy marketplace for Irish SMEs
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <button
+            onClick={handleGetStarted}
+            className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            {user ? 'Go to Dashboard' : 'Get Started'}
+          </button>
           {user && (
             <button
-              onClick={onGetStarted}
-              style={{
-                background: 'white',
-                color: '#14B8A6',
-                padding: '1rem 3rem',
-                fontSize: '1.2rem',
-                borderRadius: '12px',
-                border: 'none',
-                cursor: 'pointer',
-                fontWeight: '600',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-                transition: 'all 0.3s',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.4)';
-                e.currentTarget.style.background = '#FAF5F1';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
-                e.currentTarget.style.background = 'white';
-              }}
+              onClick={handleGoToDashboard}
+              className="px-8 py-4 bg-transparent border-2 border-white text-white text-xl font-bold rounded-xl hover:bg-white/10 transition-all duration-300"
             >
-              ✨ Create Meetup
+              Browse Materials
             </button>
           )}
         </div>
-      </section>
+      </div>
 
-      {/* Features Section */}
-      <section style={{ padding: '5rem 2rem', background: '#FAF5F1' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{
-            textAlign: 'center',
-            fontSize: '2.5rem',
-            marginBottom: '1rem',
-            color: '#14B8A6',
-          }}>
-            Why MiM Makes Meeting Easy
-          </h2>
-          <p style={{
-            textAlign: 'center',
-            fontSize: '1.2rem',
-            color: '#78350F',
-            marginBottom: '4rem',
-          }}>
-            Built for Dublin. Built for fairness.
-          </p>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2rem',
-          }}>
-            {[
-              {
-                icon: '⚖️',
-                title: 'Truly Fair',
-                description: 'Each person picks their travel mode—walking, cycling, Luas, DART, or driving. We calculate actual travel times, not just distance.',
-              },
-              {
-                icon: '🌱',
-                title: 'Sustainable',
-                description: 'Track your carbon footprint. Choose eco-friendly venues. Make sustainable choices without sacrificing convenience.',
-              },
-              {
-                icon: '💰',
-                title: 'Budget-Friendly',
-                description: 'Filter venues by price range. Find amazing spots that work for everyone\'s wallet, from casual cafés to budget-conscious pubs.',
-              },
-              {
-                icon: '⚡',
-                title: 'Lightning Fast',
-                description: 'No more 20-minute group chats. Get personalized venue recommendations in minutes, every time.',
-              },
-              {
-                icon: '🚇',
-                title: 'Dublin-Smart',
-                description: 'Integrated with TFI, Luas, DART, and Dublin Bus. We know the city\'s transport like the back of our hand.',
-              },
-              {
-                icon: '🏳️‍🌈',
-                title: 'Inclusive',
-                description: 'Filter for accessible venues, LGBTQ+ friendly spaces, and private meeting spots. Everyone should feel welcome.',
-              },
-            ].map((feature, index) => (
-              <div
-                key={index}
-                style={{
-                  background: 'white',
-                  padding: '2rem',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-                  transition: 'all 0.3s',
-                  border: '2px solid transparent',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(20, 184, 166, 0.15)';
-                  e.currentTarget.style.borderColor = '#2DD4BF';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)';
-                  e.currentTarget.style.borderColor = 'transparent';
-                }}
-              >
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-                  {feature.icon}
-                </div>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  marginBottom: '1rem',
-                  color: '#14B8A6',
-                }}>
-                  {feature.title}
-                </h3>
-                <p style={{ color: '#78350F', lineHeight: '1.6' }}>
-                  {feature.description}
-                </p>
-              </div>
-            ))}
+      {/* Value Propositions */}
+      <div className="max-w-6xl w-full mb-16">
+        <h3 className="text-3xl font-bold text-white text-center mb-8">
+          Transform Your Business with Circular Economy
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl">📦</span>
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">List Surplus Materials</h4>
+            <p className="text-white/90">
+              Turn waste into revenue by listing excess materials, by-products, or unused inventory for other businesses to reuse.
+            </p>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl">🔍</span>
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Find What You Need Nearby</h4>
+            <p className="text-white/90">
+              Source materials locally from other Irish SMEs, reducing procurement costs and supporting the local economy.
+            </p>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl">📊</span>
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Track Your Sustainability Impact</h4>
+            <p className="text-white/90">
+              Monitor waste reduction, carbon savings, and circular economy metrics for EU compliance and sustainability reporting.
+            </p>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* How It Works */}
-      <section style={{ padding: '5rem 2rem', background: 'white' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <h2 style={{
-            textAlign: 'center',
-            fontSize: '2.5rem',
-            marginBottom: '3rem',
-            color: '#14B8A6',
-          }}>
-            How It Works
-          </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '2rem',
-          }}>
-            {[
-              {
-                number: '1',
-                title: 'Add Locations',
-                description: 'Your friends share where they\'re starting from anywhere in Dublin',
-              },
-              {
-                number: '2',
-                title: 'Choose Transport',
-                description: 'Each person picks their mode—walking, cycling, public transport, or driving',
-              },
-              {
-                number: '3',
-                title: 'Get Venues',
-                description: 'MiM instantly shows fair meeting spots based on real travel times',
-              },
-              {
-                number: '4',
-                title: 'Meet Up!',
-                description: 'Pick your favorite spot and enjoy your time together',
-              },
-            ].map((step, index) => (
-              <div key={index} style={{ textAlign: 'center', padding: '1.5rem' }}>
-                <div style={{
-                  width: '60px',
-                  height: '60px',
-                  background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-                  color: 'white',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem',
-                  fontWeight: 'bold',
-                  margin: '0 auto 1rem',
-                }}>
-                  {step.number}
-                </div>
-                <h3 style={{
-                  fontSize: '1.3rem',
-                  marginBottom: '0.5rem',
-                  color: '#14B8A6',
-                }}>
-                  {step.title}
-                </h3>
-                <p style={{ color: '#78350F' }}>
-                  {step.description}
-                </p>
-              </div>
-            ))}
+      <div className="max-w-4xl w-full mb-16">
+        <h3 className="text-3xl font-bold text-white text-center mb-8">
+          Simple 3-Step Process
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+              1
+            </div>
+            <h4 className="text-xl font-bold text-white mb-2">Register Your Business</h4>
+            <p className="text-white/80">
+              Create your free business profile in minutes
+            </p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+              2
+            </div>
+            <h4 className="text-xl font-bold text-white mb-2">List or Source Materials</h4>
+            <p className="text-white/80">
+              Add available materials or browse what others have listed
+            </p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+              3
+            </div>
+            <h4 className="text-xl font-bold text-white mb-2">Connect & Transact</h4>
+            <p className="text-white/80">
+              Arrange collection, track transactions, and measure impact
+            </p>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Final CTA */}
-      <section style={{
-        background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-        color: 'white',
-        padding: '4rem 2rem',
-        textAlign: 'center',
-      }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-          Ready to revolutionize your social plans?
-        </h2>
-        <p style={{ fontSize: '1.2rem', marginBottom: '2rem', opacity: '0.9' }}>
-          Join Dublin's fairest way to meet up
-        </p>
-        {/* Only show Get Started button if user is logged in */}
-        {user && (
+      <div className="max-w-4xl w-full mb-16">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 text-center">
+          <h3 className="text-3xl font-bold text-white mb-4">
+            Ready to Transform Your Business?
+          </h3>
+          <p className="text-xl text-white/90 mb-8">
+            Join Irish SMEs already saving costs and reducing waste with MiM Town
+          </p>
           <button
-            onClick={onGetStarted}
-            style={{
-              background: 'white',
-              color: '#14B8A6',
-              padding: '1rem 3rem',
-              fontSize: '1.2rem',
-              borderRadius: '12px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '600',
-              boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-              transition: 'all 0.3s',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px)';
-              e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,0,0,0.4)';
-              e.currentTarget.style.background = '#FAF5F1';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.3)';
-              e.currentTarget.style.background = 'white';
-            }}
+            onClick={handleGetStarted}
+            className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            ✨ Get Started Free
+            {user ? 'Go to Dashboard' : 'Get Started Free'}
           </button>
-        )}
-      </section>
+        </div>
+      </div>
 
       {/* Footer */}
-      <footer style={{
-        background: '#44403C',
-        color: '#FAF5F1',
-        padding: '2rem',
-        textAlign: 'center',
-      }}>
-        <p>© 2025 MiM - Meet in the Middle | Making Dublin meetups fair for everyone</p>
-      </footer>
+      <div className="mt-12 text-center text-white/80 text-sm max-w-2xl">
+        <p className="mb-2">© 2025 MiM Town | Materials in Motion - Circular Economy Platform for Irish SMEs</p>
+        <p>Helping Irish businesses reduce waste, save costs, and meet EU sustainability regulations</p>
+      </div>
     </div>
   );
 };

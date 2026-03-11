@@ -65,7 +65,7 @@ router.post('/accessibility-profile', authenticateToken, async (req, res) => {
   try {
     // Check if profile already exists
     const existingProfile = await pool.query(
-      'SELECT id FROM user_accessibility_profiles WHERE user_id = $1',
+      'SELECT id FROM legacy_user_accessibility_profiles WHERE user_id = $1',
       [userId]
     );
 
@@ -73,7 +73,7 @@ router.post('/accessibility-profile', authenticateToken, async (req, res) => {
     if (existingProfile.rows.length > 0) {
       // Update existing profile
         result = await pool.query(
-          `UPDATE user_accessibility_profiles 
+          `UPDATE legacy_user_accessibility_profiles 
            SET 
              mobility_type = $1,
              transport_access = $2,
@@ -109,7 +109,7 @@ router.post('/accessibility-profile', authenticateToken, async (req, res) => {
     } else {
       // Create new profile
       result = await pool.query(
-        `INSERT INTO user_accessibility_profiles (
+        `INSERT INTO legacy_user_accessibility_profiles (
           user_id, mobility_type, transport_access, autism, light_sensitivity,
           noise_sensitivity, crowd_sensitivity, hearing_impaired, vision_impaired,
           service_dog, cognitive_needs, preferred_transport_services, avoid_features
@@ -153,7 +153,7 @@ router.get('/accessibility-profile/me', authenticateToken, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT * FROM user_accessibility_profiles WHERE user_id = $1',
+      'SELECT * FROM legacy_user_accessibility_profiles WHERE user_id = $1',
       [userId]
     );
 
@@ -183,7 +183,7 @@ router.get('/accessibility-profile/:userId', authenticateToken, async (req, res)
 
   try {
     const result = await pool.query(
-      'SELECT * FROM user_accessibility_profiles WHERE user_id = $1',
+      'SELECT * FROM legacy_user_accessibility_profiles WHERE user_id = $1',
       [userId]
     );
 
@@ -252,7 +252,7 @@ router.put('/accessibility-profile/:userId', authenticateToken, async (req, res)
     paramCount++;
 
     const updateQuery = `
-      UPDATE user_accessibility_profiles 
+      UPDATE legacy_user_accessibility_profiles 
       SET ${updateFields.join(', ')}
       WHERE user_id = $${paramCount}
       RETURNING *
@@ -287,7 +287,7 @@ router.delete('/accessibility-profile/:userId', authenticateToken, async (req, r
 
   try {
     const result = await pool.query(
-      'DELETE FROM user_accessibility_profiles WHERE user_id = $1 RETURNING *',
+      'DELETE FROM legacy_user_accessibility_profiles WHERE user_id = $1 RETURNING *',
       [userId]
     );
 

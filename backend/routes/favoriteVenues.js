@@ -255,7 +255,7 @@ router.post('/venues/favourite/:venueId', authenticateToken, async (req, res) =>
     const venueResult = await pool.query(
       `SELECT 
         id, venue_name, address, latitude, longitude, venue_type
-       FROM accessible_venues 
+       FROM legacy_accessible_venues 
        WHERE id = $1`,
       [parseInt(venueId)] // Convert to int for accessible_venues lookup
     );

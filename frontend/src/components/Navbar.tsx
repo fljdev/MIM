@@ -105,7 +105,8 @@ const Navbar: React.FC = () => {
             >
               Home
             </Link>
-            <Link
+            {/* TODO: Temporarily hidden for MiM Town focus */}
+            {/* <Link
               to="/journey-planner"
               className={`font-medium transition-colors ${
                 isActive('/journey-planner')
@@ -114,8 +115,9 @@ const Navbar: React.FC = () => {
               }`}
             >
               Journey Planner
-            </Link>
-            <Link
+            </Link> */}
+            {/* TODO: Temporarily hidden for MiM Town focus */}
+            {/* <Link
               to="/browse-venues"
               className={`font-medium transition-colors ${
                 isActive('/browse-venues')
@@ -124,7 +126,7 @@ const Navbar: React.FC = () => {
               }`}
             >
               Browse Venues
-            </Link>
+            </Link> */}
             <Link
               to="/mim-town/dashboard"
               className={`font-medium transition-colors ${

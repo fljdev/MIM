@@ -80,16 +80,16 @@ function App() {
     const token = localStorage.getItem('token') || '';
     login(newUser, token);
     setIsRegisterModalOpen(false);
-    // Redirect to profile page after registration
-    navigate('/profile');
+    // Redirect to MiM Town dashboard after registration
+    navigate('/mim-town/dashboard');
   };
 
   const handleLoginSuccess = (loggedInUser: { id: number; email: string; name: string }) => {
     const token = localStorage.getItem('token') || '';
     login(loggedInUser, token);
     setIsLoginModalOpen(false);
-    // Redirect to profile page after login
-    navigate('/profile');
+    // Redirect to MiM Town dashboard after login
+    navigate('/mim-town/dashboard');
   };
 
   const handleLogout = () => {

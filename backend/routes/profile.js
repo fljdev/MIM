@@ -75,8 +75,8 @@ router.get('/profile', authenticateToken, async (req, res) => {
     // Get count of active meetups (status != 'completed' AND expires_at > NOW())
     const activeMeetupsResult = await pool.query(
       `SELECT COUNT(DISTINCT m.id) as count
-       FROM meetups m
-       JOIN meetup_participants mp ON m.id = mp.meetup_id
+       FROM legacy_meetups m
+       JOIN legacy_meetup_participants mp ON m.id = mp.meetup_id
        WHERE mp.user_id = $1 
          AND m.status != 'completed' 
          AND m.expires_at > NOW()`,

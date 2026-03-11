@@ -95,7 +95,7 @@ router.get('/accessible-venues', async (req, res) => {
         total_ratings,
         created_at,
         updated_at
-      FROM accessible_venues
+      FROM legacy_accessible_venues
       WHERE currently_operating = TRUE
     `;
 
@@ -207,7 +207,7 @@ router.get('/accessible-venues', async (req, res) => {
       }
     }
     
-    const countQuery = `SELECT COUNT(*) as total FROM accessible_venues ${countWhereClause}`;
+    const countQuery = `SELECT COUNT(*) as total FROM legacy_accessible_venues ${countWhereClause}`;
     
     // Execute count query
     const countResult = await pool.query(countQuery, countWhereParams);
@@ -301,7 +301,7 @@ router.get('/accessible-venues/:id', async (req, res) => {
         total_ratings,
         created_at,
         updated_at
-      FROM accessible_venues 
+      FROM legacy_accessible_venues 
       WHERE id = $1`,
       [id]
     );
@@ -368,7 +368,7 @@ router.post('/accessible-venues', authenticateAdminToken, async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO accessible_venues (
+      `INSERT INTO legacy_accessible_venues (
         venue_name,
         address,
         eircode,
@@ -477,7 +477,7 @@ router.put('/accessible-venues/:id', authenticateAdminToken, async (req, res) =>
   try {
     // Check if venue exists
     const venueCheck = await pool.query(
-      'SELECT id FROM accessible_venues WHERE id = $1',
+      'SELECT id FROM legacy_accessible_venues WHERE id = $1',
       [id]
     );
 
@@ -521,7 +521,7 @@ router.put('/accessible-venues/:id', authenticateAdminToken, async (req, res) =>
     values.push(id);
 
     const query = `
-      UPDATE accessible_venues 
+      UPDATE legacy_accessible_venues 
       SET ${fields.join(', ')}
       WHERE id = $${paramCount}
       RETURNING *
