@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../../Config';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -17,6 +18,8 @@ const LandingPage: React.FC<LandingPageProps> = ({
   onLogout,
 }) => {
   const navigate = useNavigate();
+  const [hasBusinessProfile, setHasBusinessProfile] = useState<boolean>(false);
+  const [checkingBusinessProfile, setCheckingBusinessProfile] = useState(false);
 
   const handleGetStarted = () => {
     if (user) {
@@ -29,6 +32,44 @@ const LandingPage: React.FC<LandingPageProps> = ({
   const handleGoToDashboard = () => {
     navigate('/mim-town/dashboard');
   };
+
+  const handleCreateBusinessProfile = () => {
+    navigate('/mim-town/business-profile');
+  };
+
+  useEffect(() => {
+    const checkBusinessProfile = async () => {
+      if (!user) {
+        setHasBusinessProfile(false);
+        return;
+      }
+      
+      setCheckingBusinessProfile(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setHasBusinessProfile(false);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/businesses/my/business`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        setHasBusinessProfile(response.ok);
+      } catch (error) {
+        console.error('Error checking business profile:', error);
+        setHasBusinessProfile(false);
+      } finally {
+        setCheckingBusinessProfile(false);
+      }
+    };
+    
+    checkBusinessProfile();
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark flex flex-col items-center justify-center p-6 pt-20">
@@ -51,19 +92,46 @@ const LandingPage: React.FC<LandingPageProps> = ({
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <button
-            onClick={handleGetStarted}
-            className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-          >
-            {user ? 'Go to Dashboard' : 'Get Started'}
-          </button>
-          {user && (
+          {!user ? (
+            // Logged-out users: ONE button
+            <button
+              onClick={handleGetStarted}
+              className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Get Started Free
+            </button>
+          ) : checkingBusinessProfile ? (
+            // While checking business profile, show single button
+            <button
+              onClick={handleGetStarted}
+              className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Loading...
+            </button>
+          ) : hasBusinessProfile ? (
+            // Logged-in with business profile: ONE button
             <button
               onClick={handleGoToDashboard}
-              className="px-8 py-4 bg-transparent border-2 border-white text-white text-xl font-bold rounded-xl hover:bg-white/10 transition-all duration-300"
+              className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              Browse Materials
+              Go to Your Dashboard
             </button>
+          ) : (
+            // Logged-in without business profile: TWO buttons
+            <>
+              <button
+                onClick={handleGoToDashboard}
+                className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                Go to Your Dashboard
+              </button>
+              <button
+                onClick={handleCreateBusinessProfile}
+                className="px-8 py-4 bg-transparent border-2 border-white text-white text-xl font-bold rounded-xl hover:bg-white/10 transition-all duration-300"
+              >
+                Create Business Profile
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -159,7 +227,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
             onClick={handleGetStarted}
             className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            {user ? 'Go to Dashboard' : 'Get Started Free'}
+            {!user ? 'Get Started Free' : 'Go to Your Dashboard'}
           </button>
         </div>
       </div>
