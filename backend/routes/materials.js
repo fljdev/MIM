@@ -770,4 +770,118 @@ router.delete('/:id', authenticateToken, authorizeBusiness, async (req, res) => 
   }
 });
 
+// POST /api/materials/:id/enquire - Send enquiry for a material (authenticated, business users only)
+router.post('/:id/enquire', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+  const { id } = req.params;
+
+  try {
+    // 1. Get the logged-in user's business ID
+    // First try to get business_profile_id from users table (added in migration 010)
+    let buyerBusinessId = null;
+    
+    try {
+      // Check if users table has business_profile_id column
+      const userResult = await pool.query(
+        'SELECT business_profile_id FROM users WHERE id = $1',
+        [userId]
+      );
+      
+      if (userResult.rows.length > 0 && userResult.rows[0].business_profile_id) {
+        buyerBusinessId = userResult.rows[0].business_profile_id;
+        console.log(`Found business ID ${buyerBusinessId} from users.business_profile_id for user ${userId}`);
+      }
+    } catch (error) {
+      // Column might not exist if migration 010 not applied yet
+      console.log(`business_profile_id column may not exist: ${error.message}`);
+    }
+    
+    // Fallback: query businesses table by owner_id
+    if (!buyerBusinessId) {
+      const businessResult = await pool.query(
+        'SELECT id FROM businesses WHERE owner_id = $1',
+        [userId]
+      );
+
+      if (businessResult.rows.length === 0) {
+        return res.status(400).json({ 
+          error: 'You need a business profile to send enquiries. Please create a business profile first.' 
+        });
+      }
+
+      buyerBusinessId = businessResult.rows[0].id;
+      console.log(`Found business ID ${buyerBusinessId} from businesses.owner_id for user ${userId}`);
+    }
+
+    // 2. Get the material by ID
+    const materialResult = await pool.query(
+      `SELECT m.id, m.business_id as seller_business_id, m.title, 
+              b.owner_id as seller_owner_id
+       FROM materials m
+       JOIN businesses b ON m.business_id = b.id
+       WHERE m.id = $1`,
+      [id]
+    );
+
+    if (materialResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Material not found' });
+    }
+
+    const material = materialResult.rows[0];
+    const sellerBusinessId = material.seller_business_id;
+
+    // 3. Prevent the material owner from enquiring on their own listing
+    if (buyerBusinessId === sellerBusinessId) {
+      return res.status(400).json({ 
+        error: 'You cannot send an enquiry for your own material listing.' 
+      });
+    }
+
+    // 4. Check for duplicate enquiry (same buyer/material with status 'enquiry')
+    const duplicateCheck = await pool.query(
+      `SELECT id FROM transactions 
+       WHERE material_id = $1 
+         AND buyer_id = $2 
+         AND status = 'enquiry'`,
+      [id, buyerBusinessId]
+    );
+
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(200).json({ 
+        message: 'Enquiry already sent' 
+      });
+    }
+
+    // 5. Insert a new transaction record with status 'enquiry'
+    const transactionResult = await pool.query(
+      `INSERT INTO transactions (
+        material_id, seller_id, buyer_id, 
+        quantity_exchanged, unit, status, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      RETURNING id, created_at`,
+      [
+        id,
+        sellerBusinessId,
+        buyerBusinessId,
+        null, // quantity_exchanged (NULL for enquiry)
+        null, // unit (NULL for enquiry)
+        'enquiry'
+      ]
+    );
+
+    res.status(201).json({
+      message: 'Enquiry sent successfully',
+      enquiry: {
+        id: transactionResult.rows[0].id,
+        created_at: transactionResult.rows[0].created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('Error sending enquiry:', error);
+    res.status(500).json({ error: 'Failed to send enquiry' });
+  }
+});
+
 module.exports = router;

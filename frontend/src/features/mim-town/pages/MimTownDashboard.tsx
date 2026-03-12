@@ -12,6 +12,8 @@ const MimTownDashboard: React.FC = () => {
   const [stats, setStats] = useState<CircularEconomyStats | null>(null);
   const [recentMaterials, setRecentMaterials] = useState<Material[]>([]);
   const [userBusiness, setUserBusiness] = useState<BusinessProfile | null>(null);
+  const [enquiries, setEnquiries] = useState<any[]>([]);
+  const [enquiriesLoading, setEnquiriesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false);
@@ -44,6 +46,8 @@ const MimTownDashboard: React.FC = () => {
         if (businessResponse.ok) {
           const businessData = await businessResponse.json();
           setUserBusiness(businessData.business);
+          // Fetch enquiries for this business
+          fetchEnquiries(token, businessData.business.id);
         } else if (businessResponse.status !== 404) {
           console.error('Failed to fetch business:', businessResponse.status);
         }
@@ -80,6 +84,32 @@ const MimTownDashboard: React.FC = () => {
 
     fetchDashboardData();
   }, [user]);
+
+  const fetchEnquiries = async (token: string, businessId: string) => {
+    try {
+      setEnquiriesLoading(true);
+      const response = await fetch(`${API_BASE_URL}/api/businesses/my/enquiries`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEnquiries(data.enquiries || []);
+      } else if (response.status === 404) {
+        // No business profile or no enquiries - set empty array
+        setEnquiries([]);
+      } else {
+        console.error('Failed to fetch enquiries:', response.status);
+      }
+    } catch (err) {
+      console.error('Error fetching enquiries:', err);
+    } finally {
+      setEnquiriesLoading(false);
+    }
+  };
 
   const fetchMaterials = async () => {
     try {
@@ -234,7 +264,7 @@ const MimTownDashboard: React.FC = () => {
             </div>
 
             {/* Recent Materials */}
-            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-emerald-500">
+            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-emerald-500 mb-8">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-emerald-700">Recent Available Materials</h2>
                 <button
@@ -299,6 +329,57 @@ const MimTownDashboard: React.FC = () => {
                   >
                     List Your First Material
                   </button>
+                </div>
+              )}
+            </div>
+
+            {/* Enquiries Section */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-emerald-500">
+              <h2 className="text-xl font-bold text-emerald-700 mb-4">Incoming Enquiries</h2>
+              
+              {enquiriesLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading enquiries...</p>
+                </div>
+              ) : enquiries.length > 0 ? (
+                <div className="space-y-4">
+                  {enquiries.map((enquiry) => (
+                    <div 
+                      key={enquiry.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-emerald-300 hover:shadow-md transition-all"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-bold text-gray-800 mb-1">{enquiry.material_title}</h3>
+                          <p className="text-gray-600 text-sm mb-2">
+                            Enquiry from <span className="font-semibold">{enquiry.buyer_business_name}</span>
+                          </p>
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                              Status: {enquiry.status}
+                            </span>
+                            <span className="text-gray-600">
+                              Received: {new Date(enquiry.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-semibold">
+                            Enquiry
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">📨</div>
+                  <p className="text-gray-600 mb-4">No enquiries yet</p>
+                  <p className="text-sm text-gray-500">
+                    When other businesses express interest in your materials, they'll appear here.
+                  </p>
                 </div>
               )}
             </div>
