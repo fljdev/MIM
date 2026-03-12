@@ -70,7 +70,21 @@ router.get('/', async (req, res) => {
   try {
     let query = `
       SELECT 
-        m.*,
+        m.id,
+        m.title as name,
+        m.description,
+        m.material_type,
+        m.business_id,
+        m.quantity,
+        m.unit,
+        m.condition,
+        m.price_per_unit,
+        m.latitude,
+        m.longitude,
+        m.available_from,
+        m.available_until,
+        m.created_at,
+        m.updated_at,
         ws.name as waste_stream_name,
         ws.disposal_method,
         ws.icon_key,
@@ -126,9 +140,8 @@ router.get('/', async (req, res) => {
 
     if (search) {
       query += ` AND (
-        m.name ILIKE $${paramCount} OR 
-        m.description ILIKE $${paramCount} OR 
-        m.keywords ILIKE $${paramCount} OR
+        m.title ILIKE $${paramCount} OR 
+        m.description ILIKE $${paramCount} OR
         b.name ILIKE $${paramCount}
       )`;
       params.push(`%${search}%`);
@@ -213,9 +226,8 @@ router.get('/', async (req, res) => {
 
     if (search) {
       countQuery += ` AND (
-        m.name ILIKE $${paramCount} OR 
-        m.description ILIKE $${paramCount} OR 
-        m.keywords ILIKE $${paramCount} OR
+        m.title ILIKE $${paramCount} OR 
+        m.description ILIKE $${paramCount} OR
         b.name ILIKE $${paramCount}
       )`;
       countParams.push(`%${search}%`);
@@ -285,7 +297,21 @@ router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-        m.*,
+        m.id,
+        m.title as name,
+        m.description,
+        m.material_type,
+        m.business_id,
+        m.quantity,
+        m.unit,
+        m.condition,
+        m.price_per_unit,
+        m.latitude,
+        m.longitude,
+        m.available_from,
+        m.available_until,
+        m.created_at,
+        m.updated_at,
         ws.name as waste_stream_name,
         ws.disposal_method,
         ws.icon_key,
@@ -317,7 +343,7 @@ router.get('/:id', async (req, res) => {
     // Get related materials from same business
     const relatedResult = await pool.query(
       `SELECT 
-        m.id, m.name, m.description, m.condition, m.quantity, m.unit,
+        m.id, m.title as name, m.description, m.condition, m.quantity, m.unit,
         m.price_per_unit, m.created_at,
         ws.name as waste_stream_name,
         ws.icon_key
@@ -363,7 +389,21 @@ router.get('/my/materials', authenticateToken, authorizeBusiness, async (req, re
 
     let query = `
       SELECT 
-        m.*,
+        m.id,
+        m.title as name,
+        m.description,
+        m.material_type,
+        m.business_id,
+        m.quantity,
+        m.unit,
+        m.condition,
+        m.price_per_unit,
+        m.latitude,
+        m.longitude,
+        m.available_from,
+        m.available_until,
+        m.created_at,
+        m.updated_at,
         ws.name as waste_stream_name,
         ws.disposal_method,
         ws.icon_key
@@ -425,11 +465,8 @@ router.post('/', authenticateToken, authorizeBusiness, async (req, res) => {
     unit,
     condition,
     price_per_unit,
-    currency,
     available_from,
-    available_until,
-    keywords,
-    images
+    available_until
   } = req.body;
 
   try {
@@ -451,7 +488,7 @@ router.post('/', authenticateToken, authorizeBusiness, async (req, res) => {
     }
 
     // Validate condition
-    const validConditions = ['available', 'reserved', 'sold', 'unavailable'];
+    const validConditions = ['available', 'reserved', 'exchanged', 'archived'];
     if (!validConditions.includes(condition)) {
       return res.status(400).json({ 
         error: `Invalid condition. Must be one of: ${validConditions.join(', ')}` 
@@ -473,11 +510,25 @@ router.post('/', authenticateToken, authorizeBusiness, async (req, res) => {
     // Create material
     const result = await pool.query(
       `INSERT INTO materials (
-        name, description, material_type, business_id, quantity, unit,
-        condition, price_per_unit, currency, available_from, available_until,
-        keywords, images
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      RETURNING *`,
+        title, description, material_type, business_id, quantity, unit,
+        condition, price_per_unit, available_from, available_until
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING 
+        id,
+        title as name,
+        description,
+        material_type,
+        business_id,
+        quantity,
+        unit,
+        condition,
+        price_per_unit,
+        latitude,
+        longitude,
+        available_from,
+        available_until,
+        created_at,
+        updated_at`,
       [
         name,
         description || null,
@@ -487,11 +538,8 @@ router.post('/', authenticateToken, authorizeBusiness, async (req, res) => {
         unit || null,
         condition,
         price_per_unit ? parseFloat(price_per_unit) : null,
-        currency || 'EUR',
         available_from || null,
-        available_until || null,
-        keywords || null,
-        images || null
+        available_until || null
       ]
     );
 
@@ -519,11 +567,8 @@ router.put('/:id', authenticateToken, authorizeBusiness, async (req, res) => {
     unit,
     condition,
     price_per_unit,
-    currency,
     available_from,
-    available_until,
-    keywords,
-    images
+    available_until
   } = req.body;
 
   try {
@@ -560,7 +605,7 @@ router.put('/:id', authenticateToken, authorizeBusiness, async (req, res) => {
 
     // Validate condition if provided
     if (condition !== undefined) {
-      const validConditions = ['available', 'reserved', 'sold', 'unavailable'];
+      const validConditions = ['available', 'reserved', 'exchanged', 'archived'];
       if (!validConditions.includes(condition)) {
         return res.status(400).json({ 
           error: `Invalid condition. Must be one of: ${validConditions.join(', ')}` 
@@ -574,7 +619,7 @@ router.put('/:id', authenticateToken, authorizeBusiness, async (req, res) => {
     let paramCount = 1;
 
     if (name !== undefined) {
-      updateFields.push(`name = $${paramCount}`);
+      updateFields.push(`title = $${paramCount}`);
       updateValues.push(name);
       paramCount++;
     }
@@ -615,12 +660,6 @@ router.put('/:id', authenticateToken, authorizeBusiness, async (req, res) => {
       paramCount++;
     }
 
-    if (currency !== undefined) {
-      updateFields.push(`currency = $${paramCount}`);
-      updateValues.push(currency);
-      paramCount++;
-    }
-
     if (available_from !== undefined) {
       updateFields.push(`available_from = $${paramCount}`);
       updateValues.push(available_from);
@@ -630,18 +669,6 @@ router.put('/:id', authenticateToken, authorizeBusiness, async (req, res) => {
     if (available_until !== undefined) {
       updateFields.push(`available_until = $${paramCount}`);
       updateValues.push(available_until);
-      paramCount++;
-    }
-
-    if (keywords !== undefined) {
-      updateFields.push(`keywords = $${paramCount}`);
-      updateValues.push(keywords);
-      paramCount++;
-    }
-
-    if (images !== undefined) {
-      updateFields.push(`images = $${paramCount}`);
-      updateValues.push(images);
       paramCount++;
     }
 
@@ -659,7 +686,22 @@ router.put('/:id', authenticateToken, authorizeBusiness, async (req, res) => {
       UPDATE materials 
       SET ${updateFields.join(', ')}
       WHERE id = $${paramCount}
-      RETURNING *
+      RETURNING 
+        id,
+        title as name,
+        description,
+        material_type,
+        business_id,
+        quantity,
+        unit,
+        condition,
+        price_per_unit,
+        latitude,
+        longitude,
+        available_from,
+        available_until,
+        created_at,
+        updated_at
     `;
 
     const result = await pool.query(updateQuery, updateValues);
