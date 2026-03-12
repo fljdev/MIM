@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import { API_BASE_URL } from '../../../Config';
+import { Recycle, MapPin, BarChart3, Handshake } from 'lucide-react';
 
 const ChoiceSelectorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -218,6 +219,66 @@ const ChoiceSelectorPage: React.FC = () => {
         </div>
       </div>
 
+      {/* What MiM Town Can Do */}
+      <div className="max-w-6xl w-full mb-16">
+        <h3 className="text-3xl font-bold text-white text-center mb-8">
+          What can MiM Town do for your business?
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+          {/* Card 1: Turn Waste into Value */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <Recycle className="w-8 h-8 text-brand-turquoise-dark" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Turn Waste into Value</h4>
+            <p className="text-white/90">
+              List surplus stock, offcuts, packaging or by-products and connect with businesses that need them. What costs you money to dispose of could generate revenue instead.
+            </p>
+          </div>
+          
+          {/* Card 2: Source Materials Locally */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <MapPin className="w-8 h-8 text-brand-turquoise-dark" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Source Materials Locally</h4>
+            <p className="text-white/90">
+              Find what you need from other Irish SMEs nearby. Reduce procurement costs and lead times while keeping money in the local economy.
+            </p>
+          </div>
+          
+          {/* Card 3: Prove Your Sustainability Credentials */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <BarChart3 className="w-8 h-8 text-brand-turquoise-dark" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Prove Your Sustainability Credentials</h4>
+            <p className="text-white/90">
+              Every material exchange generates verified impact data — carbon saved, waste diverted from landfill, circular transactions completed. Ready for CSRD reporting and ESG disclosures.
+            </p>
+          </div>
+          
+          {/* Card 4: Build Your Circular Supply Chain */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
+              <Handshake className="w-8 h-8 text-brand-turquoise-dark" />
+            </div>
+            <h4 className="text-xl font-bold text-white mb-3">Build Your Circular Supply Chain</h4>
+            <p className="text-white/90">
+              Connect with recyclers, manufacturers, distributors and retailers across Ireland who are already committed to circular practices.
+            </p>
+          </div>
+        </div>
+        
+        {/* Regulatory Banner */}
+        <div className="bg-brand-turquoise/20 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center">
+          <p className="text-white text-lg">
+            EU regulations are tightening. CSRD compliance is coming for SMEs. Businesses that build circular practices now will be ahead of the curve.
+          </p>
+        </div>
+      </div>
+
       {/* How It Works */}
       <div className="max-w-4xl w-full mb-16">
         <h3 className="text-3xl font-bold text-white text-center mb-8">
@@ -260,9 +321,12 @@ const ChoiceSelectorPage: React.FC = () => {
       {/* Platform Stats */}
       <div className="max-w-4xl w-full mb-16">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-          <h3 className="text-2xl font-bold text-white text-center mb-8">
-            Join Growing Irish Businesses
+          <h3 className="text-2xl font-bold text-white text-center mb-4">
+            Our Targets
           </h3>
+          <p className="text-white/80 text-center mb-6">
+            Figures represent projected platform targets, not current data.
+          </p>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center">
