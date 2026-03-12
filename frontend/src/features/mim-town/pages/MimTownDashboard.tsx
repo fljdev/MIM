@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import { API_BASE_URL } from '../../../Config';
 import { BusinessProfile, Material, CircularEconomyStats } from '../../../types/MimTown';
+import AddMaterialModal from '../components/AddMaterialModal';
 
 const MimTownDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ const MimTownDashboard: React.FC = () => {
   const [userBusiness, setUserBusiness] = useState<BusinessProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -78,6 +80,18 @@ const MimTownDashboard: React.FC = () => {
 
     fetchDashboardData();
   }, [user]);
+
+  const fetchMaterials = async () => {
+    try {
+      const materialsResponse = await fetch(`${API_BASE_URL}/api/materials?limit=5`);
+      if (materialsResponse.ok) {
+        const materialsData = await materialsResponse.json();
+        setRecentMaterials(materialsData.materials || []);
+      }
+    } catch (err) {
+      console.error('Error fetching materials:', err);
+    }
+  };
 
   const handleNavigateToBusinessProfile = () => {
     navigate('/mim-town/business-profile');
@@ -280,7 +294,7 @@ const MimTownDashboard: React.FC = () => {
                   <div className="text-4xl mb-4">📦</div>
                   <p className="text-gray-600 mb-4">No materials listed yet</p>
                   <button
-                    onClick={handleNavigateToAddMaterial}
+                    onClick={() => setIsAddMaterialOpen(true)}
                     className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all"
                   >
                     List Your First Material
@@ -366,7 +380,7 @@ const MimTownDashboard: React.FC = () => {
               
               <div className="space-y-3">
                 <button
-                  onClick={handleNavigateToAddMaterial}
+                  onClick={() => setIsAddMaterialOpen(true)}
                   className="w-full flex items-center gap-3 p-3 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-all"
                 >
                   <span className="text-xl">📦</span>
@@ -509,6 +523,16 @@ const MimTownDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Material Modal */}
+      <AddMaterialModal 
+        isOpen={isAddMaterialOpen}
+        onClose={() => setIsAddMaterialOpen(false)}
+        onSuccess={() => {
+          setIsAddMaterialOpen(false);
+          fetchMaterials();
+        }}
+      />
     </div>
   );
 };
