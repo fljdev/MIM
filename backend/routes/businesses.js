@@ -137,6 +137,86 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/businesses/my/business - Get current user's business (authenticated)
+router.get('/my/business', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+        b.id, b.name, b.description, b.registered_number, b.website, b.phone,
+        b.address, b.latitude, b.longitude, b.owner_id, b.verified, 
+        b.business_type, b.created_at, b.updated_at,
+        u.name as owner_name, u.email as owner_email
+       FROM businesses b
+       LEFT JOIN users u ON b.owner_id = u.id
+       WHERE b.owner_id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No business profile found for this user' });
+    }
+
+    res.json({ business: result.rows[0] });
+
+  } catch (error) {
+    console.error('Error fetching user business:', error);
+    res.status(500).json({ error: 'Failed to fetch business profile' });
+  }
+});
+
+// GET /api/businesses/my/enquiries - Get incoming enquiries for logged-in user's business (authenticated)
+router.get('/my/enquiries', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+
+  try {
+    // Get user's business ID
+    const businessResult = await pool.query(
+      'SELECT id FROM businesses WHERE owner_id = $1',
+      [userId]
+    );
+
+    if (businessResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No business profile found' });
+    }
+
+    const businessId = businessResult.rows[0].id;
+
+    // Get enquiries where this business is the seller
+    const result = await pool.query(
+      `SELECT 
+        t.id,
+        t.material_id,
+        t.seller_id,
+        t.buyer_id,
+        t.quantity_exchanged,
+        t.unit,
+        t.status,
+        t.notes,
+        t.created_at,
+        t.updated_at,
+        m.title as material_title,
+        b.name as buyer_business_name
+       FROM transactions t
+       JOIN materials m ON t.material_id = m.id
+       JOIN businesses b ON t.buyer_id = b.id
+       WHERE t.seller_id = $1 
+         AND t.status = 'enquiry'
+       ORDER BY t.created_at DESC`,
+      [businessId]
+    );
+
+    res.json({ enquiries: result.rows });
+
+  } catch (error) {
+    console.error('Error fetching enquiries:', error);
+    res.status(500).json({ error: 'Failed to fetch enquiries' });
+  }
+});
+
 // GET /api/businesses/:id - Get business by ID (public)
 router.get('/:id', async (req, res) => {
   const pool = req.app.locals.pool;
@@ -166,36 +246,6 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching business:', error);
     res.status(500).json({ error: 'Failed to fetch business' });
-  }
-});
-
-// GET /api/businesses/my - Get current user's business (authenticated)
-router.get('/my/business', authenticateToken, async (req, res) => {
-  const pool = req.app.locals.pool;
-  const userId = req.user.userId;
-
-  try {
-    const result = await pool.query(
-      `SELECT 
-        b.id, b.name, b.description, b.registered_number, b.website, b.phone,
-        b.address, b.latitude, b.longitude, b.owner_id, b.verified, 
-        b.business_type, b.created_at, b.updated_at,
-        u.name as owner_name, u.email as owner_email
-       FROM businesses b
-       LEFT JOIN users u ON b.owner_id = u.id
-       WHERE b.owner_id = $1`,
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'No business profile found for this user' });
-    }
-
-    res.json({ business: result.rows[0] });
-
-  } catch (error) {
-    console.error('Error fetching user business:', error);
-    res.status(500).json({ error: 'Failed to fetch business profile' });
   }
 });
 

@@ -67,9 +67,6 @@ const MaterialDetailPage: React.FC = () => {
       
       if (response.ok) {
         setEnquirySent(true);
-      } else if (response.status === 404) {
-        // Endpoint not yet implemented
-        setEnquiryError('Enquiry feature coming soon. For now, please contact the business directly.');
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || `Request failed with status ${response.status}`);

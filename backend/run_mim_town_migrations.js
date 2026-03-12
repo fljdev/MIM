@@ -36,11 +36,12 @@ async function runMigration(filePath) {
 async function runAllMigrations() {
   const migrationsPath = path.join(__dirname, 'database', 'migrations');
   
-  // Only run MiM Town migrations (009, 010, 011)
+  // Only run MiM Town migrations (009, 010, 011, 012)
   const migrationsToRun = [
     '009_create_mim_town_tables.sql',
     '010_modify_users_favorites.sql', 
-    '011_archive_legacy_tables.sql'
+    '011_archive_legacy_tables.sql',
+    '012_make_quantity_exchanged_nullable.sql'
   ];
   
   console.log('=== RUNNING MIM TOWN MIGRATIONS ===');

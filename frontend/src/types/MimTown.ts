@@ -1,6 +1,6 @@
 export type BusinessType = 'manufacturer' | 'distributor' | 'recycler' | 'retailer' | 'wholesaler' | 'service' | 'other';
 export type MaterialCondition = 'available' | 'reserved' | 'sold' | 'unavailable';
-export type TransactionStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type TransactionStatus = 'enquiry' | 'negotiation' | 'agreed' | 'collection-arranged' | 'collected' | 'completed' | 'cancelled' | 'disputed';
 export type UserRole = 'app_user' | 'business' | 'admin';
 
 export interface BusinessProfile {
