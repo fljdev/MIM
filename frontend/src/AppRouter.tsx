@@ -24,6 +24,7 @@ import BrowseVenuesPage from './features/accessibility/pages/BrowseVenuesPage';
 import MimTownDashboard from './features/mim-town/pages/MimTownDashboard';
 import BusinessProfileWizard from './features/mim-town/components/BusinessProfileWizard';
 import BrowseMaterialsPage from './features/mim-town/pages/BrowseMaterialsPage';
+import MaterialDetailPage from './features/mim-town/pages/MaterialDetailPage';
 
 // Import Navbar
 import Navbar from './components/Navbar';
@@ -68,6 +69,7 @@ const AppRouter: React.FC = () => {
         <Route path="/mim-town/dashboard" element={<ProtectedRoute><MimTownDashboard /></ProtectedRoute>} />
         <Route path="/mim-town/business-profile" element={<ProtectedRoute><BusinessProfileWizard /></ProtectedRoute>} />
         <Route path="/mim-town/materials" element={<BrowseMaterialsPage />} />
+        <Route path="/mim-town/materials/:id" element={<MaterialDetailPage />} />
 
         {/* Login/Signup page */}
         <Route path="/login" element={<LoginPage />} />
