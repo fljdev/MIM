@@ -63,11 +63,15 @@ export interface Material {
   disposal_method?: string;
   icon_key?: string;
   business_name?: string;
+  business_description?: string;
   business_verified?: boolean;
   business_type?: BusinessType;
   business_address?: string;
   business_lat?: number;
   business_lng?: number;
+  registered_number?: string;
+  website?: string;
+  phone?: string;
   owner_name?: string;
   owner_email?: string;
 }

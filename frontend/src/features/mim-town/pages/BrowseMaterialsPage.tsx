@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../../Config';
 import { Material, MaterialSearchFilters } from '../../../types/MimTown';
@@ -20,11 +20,7 @@ const BrowseMaterialsPage: React.FC = () => {
     hasMore: false
   });
 
-  useEffect(() => {
-    fetchMaterials();
-  }, [filters]);
-
-  const fetchMaterials = async () => {
+  const fetchMaterials = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,7 +66,11 @@ const BrowseMaterialsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.limit, pagination.offset]);
+
+  useEffect(() => {
+    fetchMaterials();
+  }, [fetchMaterials]);
 
   const handleFilterChange = (key: keyof MaterialSearchFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -295,7 +295,13 @@ const BrowseMaterialsPage: React.FC = () => {
                       <span className="text-sm text-gray-600">
                         {material.condition === 'available' ? '✅ Available Now' : '⏳ Not Available'}
                       </span>
-                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/mim-town/materials/${material.id}`);
+                        }}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all"
+                      >
                         View Details →
                       </button>
                     </div>
