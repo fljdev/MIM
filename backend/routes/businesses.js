@@ -305,6 +305,9 @@ router.post('/', authenticateToken, async (req, res) => {
       }
     }
 
+    // Start transaction
+    await pool.query('BEGIN');
+
     // Create business
     const result = await pool.query(
       `INSERT INTO businesses (
@@ -324,12 +327,30 @@ router.post('/', authenticateToken, async (req, res) => {
       [result.rows[0].id, 'business', userId]
     );
 
+    // Generate new JWT token with updated role
+    const newToken = jwt.sign(
+      {
+        userId: req.user.userId,
+        email: req.user.email,
+        role: 'business',
+        name: req.user.name
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Commit transaction
+    await pool.query('COMMIT');
+
     res.status(201).json({
       message: 'Business profile created successfully',
-      business: result.rows[0]
+      business: result.rows[0],
+      token: newToken // Return new token for immediate access
     });
 
   } catch (error) {
+    // Rollback transaction on error
+    await pool.query('ROLLBACK').catch(() => {}); // Ignore rollback errors
     console.error('Error creating business:', error);
     res.status(500).json({ error: 'Failed to create business profile' });
   }
