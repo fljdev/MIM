@@ -128,16 +128,6 @@ const Navbar: React.FC = () => {
               Browse Venues
             </Link> */}
             <Link
-              to="/mim-town/dashboard"
-              className={`font-medium transition-colors ${
-                isActive('/mim-town/dashboard') || location.pathname.startsWith('/mim-town')
-                  ? 'text-brand-turquoise'
-                  : 'text-gray-600 hover:text-brand-turquoise'
-              }`}
-            >
-              MiM
-            </Link>
-            <Link
               to="/valuation"
               className={`font-medium transition-colors ${
                 isActive('/valuation')
