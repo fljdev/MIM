@@ -81,10 +81,10 @@ const LandingPage: React.FC<LandingPageProps> = ({
             <span className="text-5xl">♻️</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-            MiM Town
+            MiM
           </h1>
           <h2 className="text-2xl md:text-3xl text-white opacity-90">
-            Materials in Motion
+            Metals in Motion
           </h2>
         </div>
         
@@ -179,7 +179,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
       {/* What MiM Town Can Do */}
       <div className="max-w-6xl w-full mb-16">
         <h3 className="text-3xl font-bold text-white text-center mb-8">
-          What can MiM Town do for your business?
+          What can MiM do for your business?
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -282,7 +282,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
             Ready to Transform Your Business?
           </h3>
           <p className="text-xl text-white/90 mb-8">
-            Join Irish SMEs already saving costs and reducing waste with MiM Town
+            Join Irish SMEs already saving costs and reducing waste with MiM
           </p>
           <button
             onClick={handleGetStarted}
@@ -295,7 +295,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Footer */}
       <div className="mt-12 text-center text-white/80 text-sm max-w-2xl">
-        <p className="mb-2">© 2025 MiM Town | Materials in Motion - Circular Economy Platform for Irish SMEs</p>
+        <p className="mb-2">© 2025 MiM | Metals in Motion - Circular Economy Platform for Irish SMEs</p>
         <p>Helping Irish businesses reduce waste, save costs, and meet EU sustainability regulations</p>
       </div>
     </div>

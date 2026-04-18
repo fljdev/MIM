@@ -1,7 +1,7 @@
 # Accessible Venues Database & API Implementation
 
 ## Overview
-Successfully implemented the complete database layer and API for storing and browsing accessible venues in the MiM (Make It Manageable) application. The implementation includes database schema, CSV import, backend API routes, and a responsive frontend browsing page.
+Successfully implemented the complete database layer and API for storing and browsing accessible venues in the MiM (Metals in Motion) application. The implementation includes database schema, CSV import, backend API routes, and a responsive frontend browsing page.
 
 ## ✅ Deliverables Completed
 

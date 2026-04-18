@@ -1,58 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import { API_BASE_URL } from '../../../Config';
-import { Recycle, MapPin, BarChart3, Handshake } from 'lucide-react';
 
 const ChoiceSelectorPage: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
   
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [hasBusinessProfile, setHasBusinessProfile] = useState<boolean>(false);
-  const [checkingBusinessProfile, setCheckingBusinessProfile] = useState(false);
 
   useEffect(() => {
     if (user?.email) {
       setEmail(user.email);
     }
-  }, [user]);
-
-  useEffect(() => {
-    const checkBusinessProfile = async () => {
-      if (!user) {
-        setHasBusinessProfile(false);
-        return;
-      }
-      
-      setCheckingBusinessProfile(true);
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setHasBusinessProfile(false);
-          return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/api/businesses/my/business`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        setHasBusinessProfile(response.ok);
-      } catch (error) {
-        console.error('Error checking business profile:', error);
-        setHasBusinessProfile(false);
-      } finally {
-        setCheckingBusinessProfile(false);
-      }
-    };
-    
-    checkBusinessProfile();
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,20 +60,12 @@ const ChoiceSelectorPage: React.FC = () => {
     }
   };
 
-  const handleGetStarted = () => {
-    if (user) {
-      navigate('/mim-town/dashboard');
-    } else {
-      navigate('/login?signup=true');
+  const handleJoinWaitlist = () => {
+    // Scroll to waitlist form
+    const waitlistElement = document.getElementById('waitlist-form');
+    if (waitlistElement) {
+      waitlistElement.scrollIntoView({ behavior: 'smooth' });
     }
-  };
-
-  const handleGoToDashboard = () => {
-    navigate('/mim-town/dashboard');
-  };
-
-  const handleCreateBusinessProfile = () => {
-    navigate('/mim-town/business-profile');
   };
 
   return (
@@ -121,242 +74,76 @@ const ChoiceSelectorPage: React.FC = () => {
       <div className="text-center max-w-4xl mx-auto mb-12">
         <div className="inline-block mb-6">
           <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 mx-auto">
-            <span className="text-5xl">♻️</span>
+            <span className="text-5xl">🪙</span>
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-            MiM Town
+            Real money. 5,000 years of proof.
           </h1>
-          <h2 className="text-2xl md:text-3xl text-white opacity-90">
-            Materials in Motion
+          <h2 className="text-2xl md:text-3xl text-white opacity-90 mb-4">
+            Learn to stack. Buy with confidence. Trade with trust.
           </h2>
+          <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
+            Ireland and Europe's home for physical gold and silver.
+          </p>
         </div>
         
-        <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
-          The circular economy marketplace for Irish SMEs
-        </p>
-        
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          {!user ? (
-            // Logged-out users: ONE button
-            <button
-              onClick={handleGetStarted}
-              className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Get Started Free
-            </button>
-          ) : checkingBusinessProfile ? (
-            // While checking business profile, show single button
-            <button
-              onClick={handleGetStarted}
-              className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Loading...
-            </button>
-          ) : hasBusinessProfile ? (
-            // Logged-in with business profile: ONE button
-            <button
-              onClick={handleGoToDashboard}
-              className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Go to Your Dashboard
-            </button>
-          ) : (
-            // Logged-in without business profile: TWO buttons
-            <>
-              <button
-                onClick={handleGoToDashboard}
-                className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-              >
-                Go to Your Dashboard
-              </button>
-              <button
-                onClick={handleCreateBusinessProfile}
-                className="px-8 py-4 bg-transparent border-2 border-white text-white text-xl font-bold rounded-xl hover:bg-white/10 transition-all duration-300"
-              >
-                Create Business Profile
-              </button>
-            </>
-          )}
+          <button
+            onClick={handleJoinWaitlist}
+            className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+          >
+            Join the Waitlist
+          </button>
         </div>
       </div>
 
       {/* Value Propositions */}
       <div className="max-w-6xl w-full mb-16">
         <h3 className="text-3xl font-bold text-white text-center mb-8">
-          Transform Your Business with Circular Economy
+          Your Precious Metals Journey Starts Here
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-              <span className="text-3xl">📦</span>
+              <span className="text-3xl">📚</span>
             </div>
-            <h4 className="text-xl font-bold text-white mb-3">List Surplus Materials</h4>
+            <h4 className="text-xl font-bold text-white mb-3">Learn</h4>
             <p className="text-white/90">
-              Turn waste into revenue by listing excess materials, by-products, or unused inventory for other businesses to reuse.
+              Beginner guides to gold and silver stacking. Understand the fundamentals of precious metals investing, storage, and security.
             </p>
           </div>
           
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-              <span className="text-3xl">🔍</span>
+              <span className="text-3xl">💡</span>
             </div>
-            <h4 className="text-xl font-bold text-white mb-3">Find What You Need Nearby</h4>
+            <h4 className="text-xl font-bold text-white mb-3">Buy Smart</h4>
             <p className="text-white/90">
-              Source materials locally from other Irish SMEs, reducing procurement costs and supporting the local economy.
+              Navigate dealers, VAT, and premiums across the EU. Make informed purchasing decisions with transparent pricing and trusted sellers.
             </p>
           </div>
           
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-              <span className="text-3xl">📊</span>
+              <span className="text-3xl">🤝</span>
             </div>
-            <h4 className="text-xl font-bold text-white mb-3">Track Your Sustainability Impact</h4>
+            <h4 className="text-xl font-bold text-white mb-3">Trade with Trust</h4>
             <p className="text-white/90">
-              Monitor waste reduction, carbon savings, and circular economy metrics for EU compliance and sustainability reporting.
+              A marketplace built for the precious metals community. Buy, sell, and trade with verified members in a secure environment.
             </p>
           </div>
         </div>
       </div>
 
-      {/* What MiM Town Can Do */}
-      <div className="max-w-6xl w-full mb-16">
-        <h3 className="text-3xl font-bold text-white text-center mb-8">
-          What can MiM Town do for your business?
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-          {/* Card 1: Turn Waste into Value */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-              <Recycle className="w-8 h-8 text-brand-turquoise-dark" />
-            </div>
-            <h4 className="text-xl font-bold text-white mb-3">Turn Waste into Value</h4>
-            <p className="text-white/90">
-              List surplus stock, offcuts, packaging or by-products and connect with businesses that need them. What costs you money to dispose of could generate revenue instead.
-            </p>
-          </div>
-          
-          {/* Card 2: Source Materials Locally */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-              <MapPin className="w-8 h-8 text-brand-turquoise-dark" />
-            </div>
-            <h4 className="text-xl font-bold text-white mb-3">Source Materials Locally</h4>
-            <p className="text-white/90">
-              Find what you need from other Irish SMEs nearby. Reduce procurement costs and lead times while keeping money in the local economy.
-            </p>
-          </div>
-          
-          {/* Card 3: Prove Your Sustainability Credentials */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-              <BarChart3 className="w-8 h-8 text-brand-turquoise-dark" />
-            </div>
-            <h4 className="text-xl font-bold text-white mb-3">Prove Your Sustainability Credentials</h4>
-            <p className="text-white/90">
-              Every material exchange generates verified impact data — carbon saved, waste diverted from landfill, circular transactions completed. Ready for CSRD reporting and ESG disclosures.
-            </p>
-          </div>
-          
-          {/* Card 4: Build Your Circular Supply Chain */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
-              <Handshake className="w-8 h-8 text-brand-turquoise-dark" />
-            </div>
-            <h4 className="text-xl font-bold text-white mb-3">Build Your Circular Supply Chain</h4>
-            <p className="text-white/90">
-              Connect with recyclers, manufacturers, distributors and retailers across Ireland who are already committed to circular practices.
-            </p>
-          </div>
-        </div>
-        
-        {/* Regulatory Banner */}
-        <div className="bg-brand-turquoise/20 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center">
-          <p className="text-white text-lg">
-            EU regulations are tightening. CSRD compliance is coming for SMEs. Businesses that build circular practices now will be ahead of the curve.
-          </p>
-        </div>
-      </div>
-
-      {/* How It Works */}
-      <div className="max-w-4xl w-full mb-16">
-        <h3 className="text-3xl font-bold text-white text-center mb-8">
-          Simple 3-Step Process
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
-              1
-            </div>
-            <h4 className="text-xl font-bold text-white mb-2">Register Your Business</h4>
-            <p className="text-white/80">
-              Create your free business profile in minutes
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
-              2
-            </div>
-            <h4 className="text-xl font-bold text-white mb-2">List or Source Materials</h4>
-            <p className="text-white/80">
-              Add available materials or browse what others have listed
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
-              3
-            </div>
-            <h4 className="text-xl font-bold text-white mb-2">Connect & Transact</h4>
-            <p className="text-white/80">
-              Arrange collection, track transactions, and measure impact
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Platform Stats */}
-      <div className="max-w-4xl w-full mb-16">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-          <h3 className="text-2xl font-bold text-white text-center mb-4">
-            Our Targets
-          </h3>
-          <p className="text-white/80 text-center mb-6">
-            Figures represent projected platform targets, not current data.
-          </p>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">89+</div>
-              <div className="text-white/80">Irish SMEs</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">1,247+</div>
-              <div className="text-white/80">Materials Listed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">567+</div>
-              <div className="text-white/80">Tonnes Diverted</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">23.5+</div>
-              <div className="text-white/80">Tonnes CO₂ Saved</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Join Beta Waitlist */}
-      <div className="w-full max-w-2xl mb-16">
+      {/* Join Waitlist */}
+      <div id="waitlist-form" className="w-full max-w-2xl mb-16">
         <div className="bg-brand-turquoise-dark rounded-2xl p-8 border-2 border-white">
           <h3 className="text-3xl font-bold text-white text-center mb-4">
-            Join the MiM Town Beta
+            Join the Waitlist
           </h3>
           <p className="text-white/90 text-center mb-8 text-lg">
-            Be among the first Irish SMEs to transform waste into opportunity. Get early access to the circular economy platform.
+            Be first when we launch. Get early access to Ireland and Europe's premier precious metals community and marketplace.
           </p>
           
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 justify-center items-center">
@@ -365,7 +152,7 @@ const ChoiceSelectorPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your business email"
+                placeholder="Enter your email"
                 className={`w-full px-4 py-3 rounded-lg border ${
                   user?.email ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
                 } focus:outline-none focus:ring-2 focus:ring-brand-turquoise focus:border-transparent`}
@@ -383,7 +170,7 @@ const ChoiceSelectorPage: React.FC = () => {
               disabled={isLoading}
               className="px-8 py-3 bg-white text-brand-turquoise-dark font-bold rounded-lg hover:bg-gray-100 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
-              {isLoading ? 'Subscribing...' : 'Join Beta'}
+              {isLoading ? 'Subscribing...' : 'Join Waitlist'}
             </button>
           </form>
           
@@ -405,8 +192,8 @@ const ChoiceSelectorPage: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-12 text-center text-white/80 text-sm max-w-2xl">
-        <p className="mb-2">© 2025 MiM Town | Materials in Motion - Circular Economy Platform for Irish SMEs</p>
-        <p>Helping Irish businesses reduce waste, save costs, and meet EU sustainability regulations</p>
+        <p className="mb-2">© 2025 MiM | Metals in Motion - Ireland and Europe's precious metals community</p>
+        <p>Real money for real people. Building wealth with gold and silver.</p>
       </div>
     </div>
   );

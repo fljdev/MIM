@@ -1,7 +1,7 @@
-# MiM Town MVP Implementation Plan
+# MiM MVP Implementation Plan
 
 ## Overview
-Migrate from MiM (wheelchair accessibility journey planner) to MiM Town (B2B circular economy platform for Irish SMEs). Database schema migration completed successfully.
+Migrate from MiM (wheelchair accessibility journey planner) to MiM (Metals in Motion - B2B circular economy platform for Irish SMEs). Database schema migration completed successfully.
 
 ## Completed Milestones
 ✅ **Database Schema Migration** (009, 010, 011)

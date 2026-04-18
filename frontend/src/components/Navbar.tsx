@@ -87,7 +87,7 @@ const Navbar: React.FC = () => {
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               <div className="w-10 h-10 bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark rounded-full flex items-center justify-center">
-                <span className="text-white text-xl">♻️</span>
+                <span className="text-white text-xl">🪙</span>
               </div>
               <span className="text-xl font-bold text-gray-800">MiM</span>
             </Link>
@@ -135,7 +135,7 @@ const Navbar: React.FC = () => {
                   : 'text-gray-600 hover:text-brand-turquoise'
               }`}
             >
-              MiM Town
+              MiM
             </Link>
           </div>
 
