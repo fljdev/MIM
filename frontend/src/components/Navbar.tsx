@@ -137,6 +137,16 @@ const Navbar: React.FC = () => {
             >
               MiM
             </Link>
+            <Link
+              to="/valuation"
+              className={`font-medium transition-colors ${
+                isActive('/valuation')
+                  ? 'text-brand-turquoise'
+                  : 'text-gray-600 hover:text-brand-turquoise'
+              }`}
+            >
+              Valuation
+            </Link>
           </div>
 
           {/* Right: Auth State */}

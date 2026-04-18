@@ -26,6 +26,9 @@ import BusinessProfileWizard from './features/mim-town/components/BusinessProfil
 import BrowseMaterialsPage from './features/mim-town/pages/BrowseMaterialsPage';
 import MaterialDetailPage from './features/mim-town/pages/MaterialDetailPage';
 
+// Import ValuationCalculator
+import ValuationCalculator from './features/valuation/pages/ValuationCalculator';
+
 // Import Navbar
 import Navbar from './components/Navbar';
 
@@ -70,6 +73,9 @@ const AppRouter: React.FC = () => {
         <Route path="/mim-town/business-profile" element={<ProtectedRoute><BusinessProfileWizard /></ProtectedRoute>} />
         <Route path="/mim-town/materials" element={<BrowseMaterialsPage />} />
         <Route path="/mim-town/materials/:id" element={<MaterialDetailPage />} />
+
+        {/* Valuation Calculator */}
+        <Route path="/valuation" element={<ValuationCalculator />} />
 
         {/* Login/Signup page */}
         <Route path="/login" element={<LoginPage />} />
