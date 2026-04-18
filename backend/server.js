@@ -19,6 +19,7 @@ const venuesRoutes = require('./routes/venues');
 const accessibleVenuesRoutes = require('./routes/accessibleVenues');
 const businessesRoutes = require('./routes/businesses');
 const materialsRoutes = require('./routes/materials');
+const valuationRoutes = require('./routes/valuation');
 
 app.use(cors());
 app.use(express.json());
@@ -110,6 +111,9 @@ app.use('/api', accessibleVenuesRoutes);
 // MiM Town circular economy routes
 app.use('/api/businesses', businessesRoutes);
 app.use('/api/materials', materialsRoutes);
+
+// Money in Metals valuation routes
+app.use('/api/valuation', valuationRoutes);
 
 // Mock transport services endpoint for journey planner
 app.get('/api/transport-services', (req, res) => {
