@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/contexts/AuthContext';
 import { API_BASE_URL } from '../../../Config';
+import heroImage from '../../../MiM_Image.jpg';
 
 const ChoiceSelectorPage: React.FC = () => {
   const { user } = useAuth();
@@ -71,29 +72,33 @@ const ChoiceSelectorPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark flex flex-col items-center justify-center p-6 pt-20">
       {/* Hero Section */}
-      <div className="text-center max-w-4xl mx-auto mb-12">
-        <div className="inline-block mb-6">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 mx-auto">
-            <span className="text-5xl">🪙</span>
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-            Real money. 5,000 years of proof.
+      <div className="flex flex-col lg:flex-row items-center justify-between max-w-6xl mx-auto mb-12 gap-8 lg:gap-16">
+        {/* Text Content */}
+        <div className="flex-1 text-center lg:text-left order-2 lg:order-1">
+          <h1 className="text-teal-300 uppercase tracking-widest font-bold text-3xl mb-4">
+            MONEY IN METALS
           </h1>
-          <h2 className="text-2xl md:text-3xl text-white opacity-90 mb-4">
-            Learn to stack. Buy with confidence. Trade with trust.
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+            Real money doesn't always look like money.
           </h2>
-          <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
-            Ireland and Europe's home for physical gold and silver.
+          <p className="text-xl md:text-2xl text-white/90 font-light mb-8">
+            Find out what yours is worth.
           </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
           <button
             onClick={handleJoinWaitlist}
             className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
             Join the Waitlist
           </button>
+        </div>
+        
+        {/* Hero Image */}
+        <div className="flex-1 order-1 lg:order-2">
+          <img 
+            src={heroImage} 
+            alt="Money in Metals" 
+            className="mix-blend-luminosity opacity-90 max-w-full h-auto"
+          />
         </div>
       </div>
 
