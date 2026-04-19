@@ -62,15 +62,17 @@ const ValuationCalculator: React.FC = () => {
   useEffect(() => {
     const fetchSpotPrices = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/valuation/spot-prices`);
+        const response = await fetch(`${API_BASE_URL}/api/prices`);
         if (response.ok) {
           const data = await response.json();
-          if (data.prices) {
-            setSpotPrices({
-              gold: data.prices.gold?.eur || 1800.50,
-              silver: data.prices.silver?.eur || 22.75
-            });
-          }
+          // New endpoint returns goldPerOz and silverPerOz in EUR
+          setSpotPrices({
+            gold: data.goldPerOz || 1800.50,
+            silver: data.silverPerOz || 22.75
+          });
+        } else {
+          // Fallback prices if API returns error
+          setSpotPrices({ gold: 1800.50, silver: 22.75 });
         }
       } catch (error) {
         console.error('Error fetching spot prices:', error);

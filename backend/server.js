@@ -20,6 +20,7 @@ const accessibleVenuesRoutes = require('./routes/accessibleVenues');
 const businessesRoutes = require('./routes/businesses');
 const materialsRoutes = require('./routes/materials');
 const valuationRoutes = require('./routes/valuation');
+const pricesRoutes = require('./routes/prices');
 
 app.use(cors());
 app.use(express.json());
@@ -114,6 +115,11 @@ app.use('/api/materials', materialsRoutes);
 
 // Money in Metals valuation routes
 app.use('/api/valuation', valuationRoutes);
+
+// Live gold/silver prices routes
+console.log('Registering prices routes at /api/prices');
+app.use('/api/prices', pricesRoutes);
+console.log('Prices routes registered');
 
 // Mock transport services endpoint for journey planner
 app.get('/api/transport-services', (req, res) => {

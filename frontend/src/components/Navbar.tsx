@@ -10,6 +10,12 @@ const Navbar: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [hasAccessibilityProfile, setHasAccessibilityProfile] = useState<boolean | null>(null);
   const [checkingAccessibility, setCheckingAccessibility] = useState(false);
+  const [prices, setPrices] = useState<{ gold: number | null; silver: number | null; loading: boolean; error: boolean }>({
+    gold: null,
+    silver: null,
+    loading: true,
+    error: false
+  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -66,6 +72,38 @@ const Navbar: React.FC = () => {
 
     checkAccessibilityProfile();
   }, [user]);
+
+  // Fetch live gold and silver prices
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        setPrices(prev => ({ ...prev, loading: true, error: false }));
+        const response = await fetch(`${API_BASE_URL}/api/prices`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          setPrices({
+            gold: data.goldPerOz,
+            silver: data.silverPerOz,
+            loading: false,
+            error: false
+          });
+        } else {
+          setPrices(prev => ({ ...prev, loading: false, error: true }));
+        }
+      } catch (error) {
+        console.error('Error fetching metal prices:', error);
+        setPrices(prev => ({ ...prev, loading: false, error: true }));
+      }
+    };
+
+    fetchPrices();
+    
+    // Refresh prices every 5 minutes (300,000 ms)
+    const intervalId = setInterval(fetchPrices, 5 * 60 * 1000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -140,6 +178,34 @@ const Navbar: React.FC = () => {
             >
               Valuation
             </Link>
+          </div>
+
+          {/* Live Prices Display */}
+          <div className="flex items-center gap-4">
+            {prices.loading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-amber-500"></div>
+                <span className="text-xs text-gray-500">Loading prices...</span>
+              </div>
+            ) : prices.error ? (
+              <div className="text-xs text-red-500">Price error</div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-amber-700">Au</span>
+                  <span className="text-sm font-bold text-amber-900">
+                    €{prices.gold ? Math.round(prices.gold).toLocaleString() : '—'}
+                  </span>
+                </div>
+                <div className="h-4 w-px bg-gray-300"></div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs font-bold text-gray-600">Ag</span>
+                  <span className="text-sm font-bold text-gray-800">
+                    €{prices.silver ? Math.round(prices.silver).toLocaleString() : '—'}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right: Auth State */}
