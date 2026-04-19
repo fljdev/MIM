@@ -192,7 +192,7 @@ const ChoiceSelectorPage: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-12 text-center text-white/80 text-sm max-w-2xl">
-        <p className="mb-2">© 2025 MiM | Metals in Motion - Ireland and Europe's precious metals community</p>
+        <p className="mb-2">© 2025 MiM | Money in Metals - Ireland and Europe's precious metals community</p>
         <p>Real money for real people. Building wealth with gold and silver.</p>
       </div>
     </div>

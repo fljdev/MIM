@@ -180,7 +180,7 @@ const ValuationCalculator: React.FC = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-amber-900 mb-4">
             <Calculator className="inline-block mr-3" />
-            Gold & Silver Valuation Calculator
+            MiM — Gold & Silver Valuation Calculator
           </h1>
           <p className="text-lg text-amber-800 max-w-3xl mx-auto">
             Find out what your gold and silver items are really worth. Get accurate scrap value, market value, and collector value estimates.

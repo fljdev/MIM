@@ -84,12 +84,12 @@ const LandingPage: React.FC<LandingPageProps> = ({
             MiM
           </h1>
           <h2 className="text-2xl md:text-3xl text-white opacity-90">
-            Metals in Motion
+            Money in Metals
           </h2>
         </div>
         
         <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">
-          The circular economy marketplace for Irish SMEs
+          Ireland and Europe's home for physical gold and silver.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -295,7 +295,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Footer */}
       <div className="mt-12 text-center text-white/80 text-sm max-w-2xl">
-        <p className="mb-2">© 2025 MiM | Metals in Motion - Circular Economy Platform for Irish SMEs</p>
+        <p className="mb-2">© 2025 MiM | Money in Metals - Ireland and Europe's home for physical gold and silver</p>
         <p>Helping Irish businesses reduce waste, save costs, and meet EU sustainability regulations</p>
       </div>
     </div>

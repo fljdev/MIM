@@ -84,12 +84,15 @@ const Navbar: React.FC = () => {
             {/* Logo - links to home */}
             <Link
               to="/"
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex flex-col items-start hover:opacity-80 transition-opacity"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark rounded-full flex items-center justify-center">
-                <span className="text-white text-xl">🪙</span>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-brand-turquoise to-brand-turquoise-dark rounded-full flex items-center justify-center">
+                  <span className="text-white text-xl">🪙</span>
+                </div>
+                <span className="text-xl font-bold text-gray-800">MiM</span>
               </div>
-              <span className="text-xl font-bold text-gray-800">MiM</span>
+              <span className="text-xs text-gray-600 ml-12 -mt-1">Money in Metals</span>
             </Link>
           </div>
 
