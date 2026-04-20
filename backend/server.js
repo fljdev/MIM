@@ -13,14 +13,14 @@ const waitlistRoutes = require('./routes/waitlist');
 const meetupTimeSuggestionsRouter = require('./routes/meetupTimeSuggestions');
 const profileRoutes = require('./routes/profile');
 const favoriteVenuesRoutes = require('./routes/favoriteVenues');
-const carbonRoutes = require('./routes/carbonRoutes');
 const accessibilityProfileRoutes = require('./routes/accessibilityProfile');
 const venuesRoutes = require('./routes/venues');
 const accessibleVenuesRoutes = require('./routes/accessibleVenues');
-const businessesRoutes = require('./routes/businesses');
-const materialsRoutes = require('./routes/materials');
 const valuationRoutes = require('./routes/valuation');
 const pricesRoutes = require('./routes/prices');
+const holdingsRouter = require('./routes/holdings');
+const listingsRouter = require('./routes/listings');
+const offersRouter = require('./routes/offers');
 
 app.use(cors());
 app.use(express.json());
@@ -97,9 +97,6 @@ app.use('/api', profileRoutes);
 // Favorite venues routes
 app.use('/api', favoriteVenuesRoutes);
 
-// Carbon tracking routes
-app.use('/api/carbon', carbonRoutes);
-
 // Accessibility Profile routes
 app.use('/api', accessibilityProfileRoutes);
 
@@ -109,10 +106,6 @@ app.use('/api', venuesRoutes);
 // Accessible venues routes (new comprehensive accessible venues table)
 app.use('/api', accessibleVenuesRoutes);
 
-// MiM Town circular economy routes
-app.use('/api/businesses', businessesRoutes);
-app.use('/api/materials', materialsRoutes);
-
 // Money in Metals valuation routes
 app.use('/api/valuation', valuationRoutes);
 
@@ -120,6 +113,21 @@ app.use('/api/valuation', valuationRoutes);
 console.log('Registering prices routes at /api/prices');
 app.use('/api/prices', pricesRoutes);
 console.log('Prices routes registered');
+
+// Holdings routes
+console.log('Registering holdings routes at /api/holdings');
+app.use('/api/holdings', holdingsRouter);
+console.log('Holdings routes registered');
+
+// Listings routes
+console.log('Registering listings routes at /api/listings');
+app.use('/api/listings', listingsRouter);
+console.log('Listings routes registered');
+
+// Offers routes
+console.log('Registering offers routes at /api/offers');
+app.use('/api/offers', offersRouter);
+console.log('Offers routes registered');
 
 // Mock transport services endpoint for journey planner
 app.get('/api/transport-services', (req, res) => {

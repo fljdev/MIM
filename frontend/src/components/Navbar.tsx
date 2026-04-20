@@ -178,6 +178,26 @@ const Navbar: React.FC = () => {
             >
               Valuation
             </Link>
+            <Link
+              to="/portfolio"
+              className={`font-medium transition-colors ${
+                isActive('/portfolio')
+                  ? 'text-brand-turquoise'
+                  : 'text-gray-600 hover:text-brand-turquoise'
+              }`}
+            >
+              Portfolio
+            </Link>
+            <Link
+              to="/marketplace"
+              className={`font-medium transition-colors ${
+                isActive('/marketplace')
+                  ? 'text-brand-turquoise'
+                  : 'text-gray-600 hover:text-brand-turquoise'
+              }`}
+            >
+              Marketplace
+            </Link>
           </div>
 
           {/* Live Prices Display */}

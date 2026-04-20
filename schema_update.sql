@@ -1,0 +1,2 @@
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS offer_amount NUMERIC(12,2);
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS message TEXT;

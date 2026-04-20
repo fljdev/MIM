@@ -20,14 +20,15 @@ import VenueDetailPage from './features/accessibility/pages/VenueDetailPage';
 import JourneyPlanner from './features/accessibility/pages/JourneyPlanner';
 import BrowseVenuesPage from './features/accessibility/pages/BrowseVenuesPage';
 
-// Import MiM Town components
-import MimTownDashboard from './features/mim-town/pages/MimTownDashboard';
-import BusinessProfileWizard from './features/mim-town/components/BusinessProfileWizard';
-import BrowseMaterialsPage from './features/mim-town/pages/BrowseMaterialsPage';
-import MaterialDetailPage from './features/mim-town/pages/MaterialDetailPage';
 
 // Import ValuationCalculator
 import ValuationCalculator from './features/valuation/pages/ValuationCalculator';
+
+// Import Portfolio
+import Portfolio from './pages/Portfolio';
+
+// Import Marketplace
+import Marketplace from './pages/Marketplace';
 
 // Import Navbar
 import Navbar from './components/Navbar';
@@ -68,11 +69,6 @@ const AppRouter: React.FC = () => {
         <Route path="/browse-venues" element={<BrowseVenuesPage />} />
         <Route path="/venues/:id" element={<ProtectedRoute><VenueDetailPage /></ProtectedRoute>} />
 
-        {/* MiM Town - Circular Economy Platform */}
-        <Route path="/mim-town/dashboard" element={<ProtectedRoute><MimTownDashboard /></ProtectedRoute>} />
-        <Route path="/mim-town/business-profile" element={<ProtectedRoute><BusinessProfileWizard /></ProtectedRoute>} />
-        <Route path="/mim-town/materials" element={<BrowseMaterialsPage />} />
-        <Route path="/mim-town/materials/:id" element={<MaterialDetailPage />} />
 
         {/* Valuation Calculator */}
         <Route path="/valuation" element={<ValuationCalculator />} />
@@ -93,6 +89,12 @@ const AppRouter: React.FC = () => {
 
         {/* Profile route */}
         <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
+
+        {/* Portfolio route */}
+        <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+
+        {/* Marketplace route - public */}
+        <Route path="/marketplace" element={<Marketplace />} />
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
