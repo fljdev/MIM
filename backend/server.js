@@ -21,6 +21,7 @@ const pricesRoutes = require('./routes/prices');
 const holdingsRouter = require('./routes/holdings');
 const listingsRouter = require('./routes/listings');
 const offersRouter = require('./routes/offers');
+const holdingImagesRouter = require('./routes/holdingImages');
 
 app.use(cors());
 app.use(express.json());
@@ -128,6 +129,11 @@ console.log('Listings routes registered');
 console.log('Registering offers routes at /api/offers');
 app.use('/api/offers', offersRouter);
 console.log('Offers routes registered');
+
+// Holding images routes
+console.log('Registering holding images routes');
+app.use('/api/holdings/:id/images', holdingImagesRouter);
+console.log('Holding images routes registered');
 
 // Mock transport services endpoint for journey planner
 app.get('/api/transport-services', (req, res) => {

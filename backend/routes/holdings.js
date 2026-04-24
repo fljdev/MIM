@@ -44,7 +44,7 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        h.*,
+        h.id,h.user_id,h.metal_type,h.category,h.name,h.quantity,h.weight_grams,h.purity,h.purchase_price,h.purchase_date,h.graded,h.grade_cert,h.notes,h.is_listed,h.images,h.created_at,h.updated_at,
         l.id as listing_id,
         l.asking_price,
         l.price_type,
@@ -71,6 +71,7 @@ router.get('/', authenticateToken, async (req, res) => {
         graded: row.graded,
         grade_cert: row.grade_cert,
         notes: row.notes,
+        images: row.images || [],
         is_listed: row.is_listed,
         created_at: row.created_at,
         updated_at: row.updated_at

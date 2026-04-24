@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/contexts/AuthContext';
 import { API_BASE_URL } from '../Config';
 import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check, Lock } from 'lucide-react';
+import HoldingImageUpload from '../components/HoldingImageUpload';
 
 // TypeScript interfaces
 interface SpotPrices {
@@ -24,6 +25,7 @@ interface Holding {
   graded: boolean;
   grade_cert: string | null;
   notes: string | null;
+  images: string[];
   is_listed: boolean;
   created_at: string;
   updated_at: string;
@@ -101,6 +103,8 @@ const Portfolio: React.FC = () => {
   const [selectedHoldingForListing, setSelectedHoldingForListing] = useState<Holding | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [customPurity, setCustomPurity] = useState<boolean>(false);
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [editHoldingId, setEditHoldingId] = useState<number>(0);
 
   // Listing form states
   const [listingFormData, setListingFormData] = useState({
@@ -438,6 +442,8 @@ const Portfolio: React.FC = () => {
       notes: holding.notes || '',
       is_listed: holding.is_listed
     });
+    setEditImages(holding.images ?? []);
+    setEditHoldingId(holding.id);
     setShowEditModal(true);
   };
 
@@ -1278,6 +1284,14 @@ const Portfolio: React.FC = () => {
                       rows={3}
                     />
                   </div>
+
+                  {/* Photo Upload */}
+                  <HoldingImageUpload
+                    holdingId={editHoldingId}
+                    images={editImages}
+                    onChange={setEditImages}
+                    apiBaseUrl={API_BASE_URL}
+                  />
 
                   {/* Action Buttons */}
                   <div className="flex gap-4 pt-4">
