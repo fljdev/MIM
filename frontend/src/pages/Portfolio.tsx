@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../features/auth/contexts/AuthContext';
 import { API_BASE_URL } from '../Config';
-import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check } from 'lucide-react';
+import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check, Lock } from 'lucide-react';
 
 // TypeScript interfaces
 interface SpotPrices {
@@ -53,6 +54,7 @@ interface EditHoldingFormData extends AddHoldingFormData {
 
 const Portfolio: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // State for holdings and spot prices
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -122,6 +124,17 @@ const Portfolio: React.FC = () => {
     fetchHoldings();
     fetchSpotPrices();
   }, [navigate]);
+
+  useEffect(() => {
+    if (addFormData.metal_type === 'gold' && addFormData.category === 'sovereign') {
+      setAddFormData(prev => ({
+        ...prev,
+        purity: '0.9167',
+        weight_grams: 7.98805 * (prev.quantity || 1)
+      }));
+    }
+  }, [addFormData.metal_type, addFormData.category, addFormData.quantity]);
+
 
   // Fetch holdings from API
   const fetchHoldings = async () => {
@@ -594,12 +607,18 @@ const Portfolio: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-amber-900 mb-4">
-            <Scale className="inline-block mr-3" />
-            MiM — Portfolio Manager
-          </h1>
-          <p className="text-lg text-amber-800 max-w-3xl mx-auto">
-            Track your precious metals holdings, calculate values, and manage listings.
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h1 className="text-4xl md:text-5xl font-bold text-amber-900">
+              <Scale className="inline-block mr-3" />
+              {user?.name ? `${user.name}'s Portfolio` : 'Your Portfolio'}
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100/70 text-amber-600 border border-amber-200/50">
+              <Lock className="w-3 h-3" />
+              Private
+            </span>
+          </div>
+          <p className="text-sm text-gray-500">
+            Only you can see this. Your holdings are never visible to other users.
           </p>
         </div>
 
@@ -911,6 +930,7 @@ const Portfolio: React.FC = () => {
                         step="0.01"
                         min="0"
                         value={addFormData.weight_grams}
+                        disabled={addFormData.metal_type === 'gold' && addFormData.category === 'sovereign'}
                         onChange={(e) => setAddFormData({...addFormData, weight_grams: parseFloat(e.target.value) || 0})}
                         className="w-full p-3 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none"
                         required
@@ -922,6 +942,7 @@ const Portfolio: React.FC = () => {
                         Purity *
                       </label>
                       <select
+                        disabled={addFormData.metal_type === 'gold' && addFormData.category === 'sovereign'}
                         value={addFormData.purity}
                         onChange={(e) => {
                           if (e.target.value === 'custom') {
