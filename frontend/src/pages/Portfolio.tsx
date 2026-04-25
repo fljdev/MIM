@@ -38,7 +38,8 @@ interface Holding {
 interface AddHoldingFormData {
   name: string;
   metal_type: 'gold' | 'silver' | 'platinum' | 'palladium';
-  category: 'sovereign' | 'coin' | 'bar' | 'round' | 'junk' | 'jewellery' | 'flatware' | 'other';
+  category: 'sovereign' | 'bar' | 'coin';
+  denomination: string;
   quantity: number;
   weight_grams: number;
   purity: number | string;
@@ -74,6 +75,7 @@ const Portfolio: React.FC = () => {
     name: '',
     metal_type: 'gold',
     category: 'sovereign',
+    denomination: '1oz',
     quantity: 1,
     weight_grams: 7.98805,
     purity: '0.9167',
@@ -89,6 +91,7 @@ const Portfolio: React.FC = () => {
     name: '',
     metal_type: 'gold',
     category: 'sovereign',
+    denomination: '1oz',
     quantity: 1,
     weight_grams: 7.98805,
     purity: '0.9167',
@@ -129,15 +132,35 @@ const Portfolio: React.FC = () => {
     fetchSpotPrices();
   }, [navigate]);
 
+  // Denomination-to-grams lookup for standard sizes
+  const denominationGrams: Record<string, number> = {
+    '1oz': 31.1035,
+    '0.5oz': 15.55175,
+    '0.25oz': 7.775875,
+    '0.1oz': 3.11035,
+    '1g': 1
+  };
+
+  // Auto-calculate weight and select sensible purity defaults based on metal + category
   useEffect(() => {
-    if (addFormData.metal_type === 'gold' && addFormData.category === 'sovereign') {
-      setAddFormData(prev => ({
-        ...prev,
-        purity: '0.9167',
-        weight_grams: 7.98805 * (prev.quantity || 1)
-      }));
-    }
-  }, [addFormData.metal_type, addFormData.category, addFormData.quantity]);
+    setAddFormData(prev => {
+      let weight = prev.weight_grams;
+      let purity = prev.purity;
+
+      if (prev.category === 'sovereign') {
+        weight = 7.98805 * (prev.quantity || 1);
+        purity = '0.9167';
+      } else if (prev.category === 'bar' || prev.category === 'coin') {
+        const denomG = denominationGrams[prev.denomination] || 31.1035;
+        weight = denomG * (prev.quantity || 1);
+        if (prev.metal_type === 'gold' || prev.metal_type === 'silver') {
+          purity = '0.9999';
+        }
+      }
+
+      return { ...prev, weight_grams: weight, purity };
+    });
+  }, [addFormData.metal_type, addFormData.category, addFormData.denomination, addFormData.quantity]);
 
 
   // Fetch holdings from API
@@ -413,6 +436,7 @@ const Portfolio: React.FC = () => {
       name: '',
       metal_type: 'gold',
       category: 'sovereign',
+      denomination: '1oz',
       quantity: 1,
       weight_grams: 7.98805,
       purity: '0.9167',
@@ -431,7 +455,8 @@ const Portfolio: React.FC = () => {
       id: holding.id,
       name: holding.name,
       metal_type: holding.metal_type,
-      category: holding.category,
+      category: holding.category as any,
+      denomination: '1oz',
       quantity: holding.quantity,
       weight_grams: holding.weight_grams,
       purity: holding.purity.toString(),
@@ -575,16 +600,20 @@ const Portfolio: React.FC = () => {
     { value: 'palladium', label: 'Palladium' }
   ];
 
-  // Category options
+  // Category options — reduced to three
   const categoryOptions = [
     { value: 'sovereign', label: 'Sovereign' },
-    { value: 'coin', label: 'Coin' },
     { value: 'bar', label: 'Bar' },
-    { value: 'round', label: 'Round' },
-    { value: 'junk', label: 'Junk' },
-    { value: 'jewellery', label: 'Jewellery' },
-    { value: 'flatware', label: 'Flatware' },
-    { value: 'other', label: 'Other' }
+    { value: 'coin', label: 'Coin' }
+  ];
+
+  // Denomination options — shown only for Bar and Coin
+  const denominationOptions = [
+    { value: '1oz', label: '1 oz' },
+    { value: '0.5oz', label: '1/2 oz' },
+    { value: '0.25oz', label: '1/4 oz' },
+    { value: '0.1oz', label: '1/10 oz' },
+    { value: '1g', label: '1g' }
   ];
 
   // Purity options
@@ -913,6 +942,26 @@ const Portfolio: React.FC = () => {
                       </select>
                     </div>
 
+                    {/* Denomination — only for Bar and Coin */}
+                    {(addFormData.category === 'bar' || addFormData.category === 'coin') && (
+                      <div>
+                        <label className="block text-amber-900 font-semibold mb-2">
+                          Denomination *
+                        </label>
+                        <select
+                          value={addFormData.denomination}
+                          onChange={(e) => setAddFormData({...addFormData, denomination: e.target.value})}
+                          className="w-full p-3 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none"
+                        >
+                          {denominationOptions.map(option => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-amber-900 font-semibold mb-2">
                         Quantity *
@@ -929,26 +978,9 @@ const Portfolio: React.FC = () => {
 
                     <div>
                       <label className="block text-amber-900 font-semibold mb-2">
-                        Weight (grams) *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={addFormData.weight_grams}
-                        disabled={addFormData.metal_type === 'gold' && addFormData.category === 'sovereign'}
-                        onChange={(e) => setAddFormData({...addFormData, weight_grams: parseFloat(e.target.value) || 0})}
-                        className="w-full p-3 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-amber-900 font-semibold mb-2">
                         Purity *
                       </label>
                       <select
-                        disabled={addFormData.metal_type === 'gold' && addFormData.category === 'sovereign'}
                         value={addFormData.purity}
                         onChange={(e) => {
                           if (e.target.value === 'custom') {
