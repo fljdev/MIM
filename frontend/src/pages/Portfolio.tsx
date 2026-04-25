@@ -1218,7 +1218,7 @@ const Portfolio: React.FC = () => {
                       </label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editFormData.weight_grams}
                         onChange={(e) => setEditFormData({...editFormData, weight_grams: parseFloat(e.target.value) || 0})}
