@@ -249,14 +249,14 @@ const Portfolio: React.FC = () => {
     };
   };
 
-  // Format currency
+  // Format currency — always show exactly 2 decimal places
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IE', {
       style: 'currency',
       currency: 'EUR',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(amount);
+    }).format(Number(amount.toFixed(2)));
   };
 
   // Handle add holding form submission
