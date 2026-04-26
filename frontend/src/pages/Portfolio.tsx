@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/contexts/AuthContext';
 import { API_BASE_URL } from '../Config';
-import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check, Lock } from 'lucide-react';
+import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check, Lock, Upload, Loader2 } from 'lucide-react';
 import HoldingImageUpload from '../components/HoldingImageUpload';
 
 // TypeScript interfaces
@@ -108,6 +108,8 @@ const Portfolio: React.FC = () => {
   const [customPurity, setCustomPurity] = useState<boolean>(false);
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editHoldingId, setEditHoldingId] = useState<number>(0);
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [imageUploading, setImageUploading] = useState<boolean>(false);
 
   // Listing form states
   const [listingFormData, setListingFormData] = useState({
@@ -282,6 +284,26 @@ const Portfolio: React.FC = () => {
     }).format(Number(amount.toFixed(2)));
   };
 
+  // Handle add file selection for pending images
+  const handleAddFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const newFiles = Array.from(files);
+    setPendingImages(prev => {
+      const combined = [...prev, ...newFiles];
+      return combined.slice(0, 3);
+    });
+    
+    // Reset input value so the same files can be selected again
+    e.target.value = '';
+  };
+
+  // Handle remove pending file
+  const handleRemovePendingFile = (index: number) => {
+    setPendingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   // Handle add holding form submission
   const handleAddHolding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -319,6 +341,32 @@ const Portfolio: React.FC = () => {
       });
 
       if (response.ok) {
+        const holdingData = await response.json();
+        const holdingId = holdingData.id || holdingData.holding?.id;
+
+        // Upload any pending images now that we have a holding ID
+        if (holdingId && pendingImages.length > 0) {
+          setImageUploading(true);
+          try {
+            const formData = new FormData();
+            pendingImages.forEach(file => {
+              formData.append('images', file);
+            });
+            await fetch(`${API_BASE_URL}/api/holdings/${holdingId}/images`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              },
+              body: formData
+            });
+          } catch (imgErr) {
+            console.error('Error uploading images:', imgErr);
+            // Non-fatal: holding was created, just images failed
+          } finally {
+            setImageUploading(false);
+          }
+        }
+
         setShowAddModal(false);
         resetAddForm();
         fetchHoldings();
@@ -447,6 +495,7 @@ const Portfolio: React.FC = () => {
       notes: ''
     });
     setCustomPurity(false);
+    setPendingImages([]);
   };
 
   // Open edit modal
@@ -767,6 +816,7 @@ const Portfolio: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-amber-200">
+                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Image</th>
                     <th className="text-left py-3 px-4 text-amber-900 font-bold">Name</th>
                     <th className="text-left py-3 px-4 text-amber-900 font-bold">Metal</th>
                     <th className="text-left py-3 px-4 text-amber-900 font-bold">Category</th>
@@ -784,7 +834,35 @@ const Portfolio: React.FC = () => {
                     const details = calculateHoldingDetails(holding);
                     return (
                       <tr key={holding.id} className="border-b border-amber-100 hover:bg-amber-50">
-                        <td className="py-3 px-4">{holding.name}</td>
+                        <td className="py-3 px-4">
+                          {holding.images && holding.images.length > 0 ? (
+                            <button
+                              onClick={() => navigate(`/portfolio/${holding.id}`)}
+                              className="block w-12 h-12 rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            >
+                              <img
+                                src={holding.images[0]}
+                                alt={holding.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => navigate(`/portfolio/${holding.id}`)}
+                              className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            >
+                              <Scale className="w-5 h-5 text-gray-400" />
+                            </button>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => navigate(`/portfolio/${holding.id}`)}
+                            className="text-left font-medium text-amber-900 hover:text-amber-600 hover:underline focus:outline-none"
+                          >
+                            {holding.name}
+                          </button>
+                        </td>
                         <td className="py-3 px-4 capitalize">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${holding.metal_type === 'gold' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'}`}>
                             {holding.metal_type}
@@ -1091,20 +1169,61 @@ const Portfolio: React.FC = () => {
                     />
                   </div>
 
+                  {/* Photo Upload (pending — uploaded after creation) */}
+                  <div className="border-t border-amber-200 pt-6">
+                    <h4 className="text-lg font-bold text-amber-900 mb-4">Photos</h4>
+                    <p className="text-sm text-amber-700 mb-3">
+                      Upload up to 3 photos of this item ({pendingImages.length}/3)
+                    </p>
+
+                    <div className="flex flex-wrap gap-3">
+                      {pendingImages.map((file, index) => (
+                        <div key={index} className="relative group w-24 h-24">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Pending photo ${index + 1}`}
+                            className="w-24 h-24 rounded-lg object-cover border border-amber-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePendingFile(index)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          >
+                            <X className="w-6 h-6 text-white" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {pendingImages.length < 3 && (
+                        <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-amber-300 rounded-lg cursor-pointer hover:border-amber-500 hover:bg-amber-50 transition-colors">
+                          <Upload className="w-6 h-6 text-amber-400 mb-1" />
+                          <span className="text-xs text-amber-500">Upload</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleAddFileSelect}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="flex gap-4 pt-4">
                     <button
                       type="submit"
-                      disabled={submitting}
+                      disabled={submitting || imageUploading}
                       className="flex-1 px-6 py-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold rounded-xl hover:from-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {submitting ? (
+                      {submitting || imageUploading ? (
                         <span className="flex items-center justify-center">
                           <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          Adding...
+                          {imageUploading ? 'Uploading Images...' : 'Adding...'}
                         </span>
                       ) : (
                         <span className="flex items-center justify-center">

@@ -27,6 +27,9 @@ import ValuationCalculator from './features/valuation/pages/ValuationCalculator'
 // Import Portfolio
 import Portfolio from './pages/Portfolio';
 
+// Import HoldingDetail
+import HoldingDetail from './pages/HoldingDetail';
+
 // Import Marketplace
 import Marketplace from './pages/Marketplace';
 
@@ -90,8 +93,9 @@ const AppRouter: React.FC = () => {
         {/* Profile route */}
         <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
 
-        {/* Portfolio route */}
+        {/* Portfolio routes */}
         <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+        <Route path="/portfolio/:id" element={<ProtectedRoute><HoldingDetail /></ProtectedRoute>} />
 
         {/* Marketplace route - public */}
         <Route path="/marketplace" element={<Marketplace />} />
