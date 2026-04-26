@@ -140,7 +140,9 @@ const Portfolio: React.FC = () => {
     '0.5oz': 15.55175,
     '0.25oz': 7.775875,
     '0.1oz': 3.11035,
-    '1g': 1
+    '1g': 1,
+    'tube20': 622.07,
+    'tube25': 777.5875
   };
 
   // Auto-calculate weight and select sensible purity defaults based on metal + category
@@ -155,7 +157,9 @@ const Portfolio: React.FC = () => {
       } else if (prev.category === 'bar' || prev.category === 'coin') {
         const denomG = denominationGrams[prev.denomination] || 31.1035;
         weight = denomG * (prev.quantity || 1);
-        if (prev.metal_type === 'gold' || prev.metal_type === 'silver') {
+        if (prev.denomination === 'tube20' || prev.denomination === 'tube25') {
+          purity = '0.999';
+        } else if (prev.metal_type === 'gold' || prev.metal_type === 'silver') {
           purity = '0.9999';
         }
       }
@@ -657,13 +661,22 @@ const Portfolio: React.FC = () => {
   ];
 
   // Denomination options — shown only for Bar and Coin
-  const denominationOptions = [
-    { value: '1oz', label: '1 oz' },
-    { value: '0.5oz', label: '1/2 oz' },
-    { value: '0.25oz', label: '1/4 oz' },
-    { value: '0.1oz', label: '1/10 oz' },
-    { value: '1g', label: '1g' }
-  ];
+  const getDenominationOptions = (metal_type: string, category: string) => {
+    const base = [
+      { value: '1oz', label: '1 oz' },
+      { value: '0.5oz', label: '1/2 oz' },
+      { value: '0.25oz', label: '1/4 oz' },
+      { value: '0.1oz', label: '1/10 oz' },
+      { value: '1g', label: '1g' }
+    ];
+    if (metal_type === 'silver' && category === 'coin') {
+      base.push(
+        { value: 'tube20', label: 'Tube of 20 (622.07g)' },
+        { value: 'tube25', label: 'Tube of 25 (777.5875g)' }
+      );
+    }
+    return base;
+  };
 
   // Purity options
   const purityOptions = [
@@ -1031,7 +1044,7 @@ const Portfolio: React.FC = () => {
                           onChange={(e) => setAddFormData({...addFormData, denomination: e.target.value})}
                           className="w-full p-3 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none"
                         >
-                          {denominationOptions.map(option => (
+                          {getDenominationOptions(addFormData.metal_type, addFormData.category).map(option => (
                             <option key={option.value} value={option.value}>
                               {option.label}
                             </option>
