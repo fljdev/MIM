@@ -33,6 +33,9 @@ import HoldingDetail from './pages/HoldingDetail';
 // Import Marketplace
 import Marketplace from './pages/Marketplace';
 
+// Import SecurityPage
+import SecurityPage from './pages/SecurityPage';
+
 // Import Navbar
 import Navbar from './components/Navbar';
 
@@ -99,6 +102,9 @@ const AppRouter: React.FC = () => {
 
         {/* Marketplace route - public */}
         <Route path="/marketplace" element={<Marketplace />} />
+
+        {/* Security page */}
+        <Route path="/security" element={<SecurityPage />} />
 
         {/* Catch all - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />

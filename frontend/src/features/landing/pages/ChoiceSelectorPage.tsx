@@ -45,6 +45,39 @@ const ChoiceSelectorPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Privacy / Zero Trust Section */}
+      <div className="w-full bg-gray-900 py-16 md:py-20 px-6 mb-16">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-8 leading-tight">
+            Your stack is nobody's business but yours.
+          </h2>
+          <p className="text-lg md:text-xl text-teal-200 font-light mb-4 leading-relaxed">
+            MiM is built on a foundation of zero trust. That means we don't trust ourselves with your data — and neither should you have to.
+          </p>
+          <p className="text-lg md:text-xl text-teal-200 font-light mb-4 leading-relaxed">
+            Every holding you add is encrypted on your device before it ever reaches our servers, using AES-256-GCM — the same encryption standard used by military and intelligence agencies worldwide. Your unique encryption key is derived from your password and never leaves your device. Not us, not Railway, not any government agency with a court order — nobody can read your data but you.
+          </p>
+          <p className="text-lg md:text-xl text-teal-200 font-light mb-10 leading-relaxed">
+            If we're breached, they get noise. Your stack stays yours.
+          </p>
+          {/* Badge Row */}
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <span className="inline-block px-5 py-2.5 bg-teal-800/50 text-teal-200 rounded-full text-sm font-semibold border border-teal-600/50">
+              🔒 Zero Trust Architecture
+            </span>
+            <span className="inline-block px-5 py-2.5 bg-teal-800/50 text-teal-200 rounded-full text-sm font-semibold border border-teal-600/50">
+              🛡️ End-to-End Encrypted
+            </span>
+            <span className="inline-block px-5 py-2.5 bg-teal-800/50 text-teal-200 rounded-full text-sm font-semibold border border-teal-600/50">
+              🔑 Your Keys, Your Data
+            </span>
+          </div>
+          <p className="text-lg italic text-white/70 font-light">
+            Track your stack. Never be tracked.
+          </p>
+        </div>
+      </div>
+
       {/* Value Propositions */}
       <div className="max-w-6xl w-full mb-16">
         <h3 className="text-3xl font-bold text-white text-center mb-8">

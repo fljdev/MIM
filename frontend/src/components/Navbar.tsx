@@ -198,6 +198,16 @@ const Navbar: React.FC = () => {
             >
               Marketplace
             </Link>
+            <Link
+              to="/security"
+              className={`font-medium transition-colors ${
+                isActive('/security')
+                  ? 'text-brand-turquoise'
+                  : 'text-gray-600 hover:text-brand-turquoise'
+              }`}
+            >
+              Security
+            </Link>
           </div>
 
           {/* Live Prices Display */}
