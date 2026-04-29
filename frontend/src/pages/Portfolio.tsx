@@ -16,6 +16,7 @@ interface Holding {
   user_id: number;
   metal_type: 'gold' | 'silver' | 'platinum' | 'palladium';
   category: 'sovereign' | 'coin' | 'bar' | 'round' | 'junk' | 'jewellery' | 'flatware' | 'other';
+  subcategory?: string;
   name: string;
   quantity: number;
   weight_grams: number;
@@ -39,6 +40,7 @@ interface AddHoldingFormData {
   name: string;
   metal_type: 'gold' | 'silver' | 'platinum' | 'palladium';
   category: 'sovereign' | 'bar' | 'coin';
+  subcategory: string;
   denomination: string;
   quantity: number;
   weight_grams: number;
@@ -55,7 +57,73 @@ interface EditHoldingFormData extends AddHoldingFormData {
   is_listed: boolean;
 }
 
+// Book interface
+interface Book {
+  id: number;
+  user_id: number;
+  title: string;
+  author: string | null;
+  year_published: number | null;
+  edition: string | null;
+  is_signed: boolean;
+  condition: string | null;
+  estimated_value_eur: number | null;
+  purchase_price_eur: number | null;
+  purchase_date: string | null;
+  notes: string | null;
+  images: string[];
+  created_at: string;
+}
+
+// Cash holding interface
+interface CashHolding {
+  id: number;
+  user_id: number;
+  label: string;
+  type: 'bank_account' | 'cash_physical' | 'savings' | 'overdraft' | 'loan' | 'other';
+  currency: string;
+  amount: number;
+  institution: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+// Add Book form data
+interface AddBookFormData {
+  title: string;
+  author: string;
+  year_published: string;
+  edition: string;
+  is_signed: boolean;
+  condition: string;
+  estimated_value_eur: string;
+  purchase_price_eur: string;
+  purchase_date: string;
+  notes: string;
+}
+
+// Edit Book form data
+interface EditBookFormData extends AddBookFormData {
+  id: number;
+}
+
+// Add Cash form data
+interface AddCashFormData {
+  label: string;
+  type: string;
+  currency: string;
+  amount: string;
+  institution: string;
+  notes: string;
+}
+
+// Edit Cash form data
+interface EditCashFormData extends AddCashFormData {
+  id: number;
+}
+
 const Portfolio: React.FC = () => {
+
   const navigate = useNavigate();
   const { user } = useAuth();
   
@@ -64,6 +132,8 @@ const Portfolio: React.FC = () => {
   const [spotPrices, setSpotPrices] = useState<SpotPrices | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [books, setBooks] = useState<any[]>([]);
+  const [cashHoldings, setCashHoldings] = useState<any[]>([]);
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -75,6 +145,7 @@ const Portfolio: React.FC = () => {
     name: '',
     metal_type: 'gold',
     category: 'sovereign',
+    subcategory: 'bullion',
     denomination: '1oz',
     quantity: 1,
     weight_grams: 7.98805,
@@ -91,6 +162,7 @@ const Portfolio: React.FC = () => {
     name: '',
     metal_type: 'gold',
     category: 'sovereign',
+    subcategory: 'bullion',
     denomination: '1oz',
     quantity: 1,
     weight_grams: 7.98805,
@@ -128,7 +200,60 @@ const Portfolio: React.FC = () => {
   const [listingFormError, setListingFormError] = useState<string | null>(null);
   const [listingSubmitting, setListingSubmitting] = useState<boolean>(false);
 
+  // Book modal states
+  const [showAddBookModal, setShowAddBookModal] = useState<boolean>(false);
+  const [showEditBookModal, setShowEditBookModal] = useState<boolean>(false);
+  const [addBookFormData, setAddBookFormData] = useState<AddBookFormData>({
+    title: '',
+    author: '',
+    year_published: '',
+    edition: '',
+    is_signed: false,
+    condition: '',
+    estimated_value_eur: '',
+    purchase_price_eur: '',
+    purchase_date: '',
+    notes: ''
+  });
+  const [editBookFormData, setEditBookFormData] = useState<EditBookFormData>({
+    id: 0,
+    title: '',
+    author: '',
+    year_published: '',
+    edition: '',
+    is_signed: false,
+    condition: '',
+    estimated_value_eur: '',
+    purchase_price_eur: '',
+    purchase_date: '',
+    notes: ''
+  });
+  const [bookPendingImages, setBookPendingImages] = useState<File[]>([]);
+  const [bookImageUploading, setBookImageUploading] = useState<boolean>(false);
+
+  // Cash modal states
+  const [showAddCashModal, setShowAddCashModal] = useState<boolean>(false);
+  const [showEditCashModal, setShowEditCashModal] = useState<boolean>(false);
+  const [addCashFormData, setAddCashFormData] = useState<AddCashFormData>({
+    label: '',
+    type: 'bank_account',
+    currency: 'EUR',
+    amount: '',
+    institution: '',
+    notes: ''
+  });
+  const [editCashFormData, setEditCashFormData] = useState<EditCashFormData>({
+    id: 0,
+    label: '',
+    type: 'bank_account',
+    currency: 'EUR',
+    amount: '',
+    institution: '',
+    notes: ''
+  });
+
   // Check for token on mount
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -137,6 +262,8 @@ const Portfolio: React.FC = () => {
     }
     fetchHoldings();
     fetchSpotPrices();
+    fetchBooks();
+    fetchCash();
   }, [navigate]);
 
   // — DENOMINATION CONFIG LOOKUP —
@@ -411,38 +538,46 @@ const Portfolio: React.FC = () => {
     }
   };
 
-  // Calculate portfolio summary
-  const calculateSummary = () => {
-    let totalFineSilverOz = 0;
-    let totalFineGoldOz = 0;
-    let totalPurchasePrice = 0;
-    
-    holdings.forEach(holding => {
-      const fineOz = (holding.weight_grams * holding.purity) / 31.1035;
-      if (holding.metal_type === 'silver') {
-        totalFineSilverOz += fineOz;
-      } else if (holding.metal_type === 'gold') {
-        totalFineGoldOz += fineOz;
+  // Fetch books from API
+  const fetchBooks = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/books`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBooks(data);
       }
-      if (holding.purchase_price) {
-        totalPurchasePrice += holding.purchase_price;
+    } catch (err) {
+      console.error('Error fetching books:', err);
+    }
+  };
+
+  // Fetch cash holdings from API
+  const fetchCash = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cash`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCashHoldings(data);
       }
-    });
-
-    const silverValueEUR = totalFineSilverOz * (spotPrices?.silver || 0);
-    const goldValueEUR = totalFineGoldOz * (spotPrices?.gold || 0);
-    const combinedTotalEUR = silverValueEUR + goldValueEUR;
-    const totalPL = combinedTotalEUR - totalPurchasePrice;
-
-    return {
-      totalFineSilverOz,
-      totalFineGoldOz,
-      silverValueEUR,
-      goldValueEUR,
-      combinedTotalEUR,
-      totalPurchasePrice,
-      totalPL
-    };
+    } catch (err) {
+      console.error('Error fetching cash holdings:', err);
+    }
   };
 
   // Calculate holding details
@@ -519,6 +654,7 @@ const Portfolio: React.FC = () => {
           name: addFormData.name,
           metal_type: addFormData.metal_type,
           category: addFormData.category,
+          subcategory: addFormData.subcategory,
           quantity: addFormData.quantity,
           weight_grams: addFormData.weight_grams,
           purity: purityValue,
@@ -597,6 +733,7 @@ const Portfolio: React.FC = () => {
           name: editFormData.name,
           metal_type: editFormData.metal_type,
           category: editFormData.category,
+          subcategory: editFormData.subcategory,
           quantity: editFormData.quantity,
           weight_grams: editFormData.weight_grams,
           purity: purityValue,
@@ -674,6 +811,7 @@ const Portfolio: React.FC = () => {
       name: '',
       metal_type: 'gold',
       category: 'sovereign',
+      subcategory: 'bullion',
       denomination: '',
       quantity: 1,
       weight_grams: 0,
@@ -698,6 +836,7 @@ const Portfolio: React.FC = () => {
       name: holding.name,
       metal_type: holding.metal_type,
       category: holding.category as any,
+      subcategory: holding.subcategory ?? 'bullion',
       denomination: '1oz',
       quantity: holding.quantity,
       weight_grams: holding.weight_grams,
@@ -832,8 +971,6 @@ const Portfolio: React.FC = () => {
     return calculatedPrice;
   };
 
-  const summary = calculateSummary();
-
   // Metal type options
   const metalTypeOptions = [
     { value: 'gold', label: 'Gold' },
@@ -859,7 +996,352 @@ const Portfolio: React.FC = () => {
     return !!holdingType;
   };
 
+  // ===== BOOK HANDLERS =====
+
+  const resetAddBookForm = () => {
+    setAddBookFormData({
+      title: '',
+      author: '',
+      year_published: '',
+      edition: '',
+      is_signed: false,
+      condition: '',
+      estimated_value_eur: '',
+      purchase_price_eur: '',
+      purchase_date: '',
+      notes: ''
+    });
+    setBookPendingImages([]);
+  };
+
+  const openEditBookModal = (book: any) => {
+    setEditBookFormData({
+      id: book.id,
+      title: book.title,
+      author: book.author || '',
+      year_published: book.year_published ? String(book.year_published) : '',
+      edition: book.edition || '',
+      is_signed: book.is_signed,
+      condition: book.condition || '',
+      estimated_value_eur: book.estimated_value_eur ? String(book.estimated_value_eur) : '',
+      purchase_price_eur: book.purchase_price_eur ? String(book.purchase_price_eur) : '',
+      purchase_date: book.purchase_date || '',
+      notes: book.notes || ''
+    });
+    setShowEditBookModal(true);
+  };
+
+  const handleAddBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/books`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: addBookFormData.title,
+          author: addBookFormData.author || null,
+          year_published: addBookFormData.year_published ? parseInt(addBookFormData.year_published) : null,
+          edition: addBookFormData.edition || null,
+          is_signed: addBookFormData.is_signed,
+          condition: addBookFormData.condition || null,
+          estimated_value_eur: addBookFormData.estimated_value_eur ? parseFloat(addBookFormData.estimated_value_eur) : null,
+          purchase_price_eur: addBookFormData.purchase_price_eur ? parseFloat(addBookFormData.purchase_price_eur) : null,
+          purchase_date: addBookFormData.purchase_date || null,
+          notes: addBookFormData.notes || null
+        })
+      });
+
+      if (response.ok) {
+        const bookData = await response.json();
+        const bookId = bookData.id;
+
+        // Upload pending book images
+        if (bookId && bookPendingImages.length > 0) {
+          setBookImageUploading(true);
+          try {
+            const formData = new FormData();
+            bookPendingImages.forEach(file => formData.append('images', file));
+            await fetch(`${API_BASE_URL}/api/books/${bookId}/images`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` },
+              body: formData
+            });
+          } catch (imgErr) {
+            console.error('Error uploading book images:', imgErr);
+          } finally {
+            setBookImageUploading(false);
+          }
+        }
+
+        setShowAddBookModal(false);
+        resetAddBookForm();
+        fetchBooks();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to add book');
+      }
+    } catch (err) {
+      console.error('Error adding book:', err);
+      setError('Failed to add book');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/books/${editBookFormData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: editBookFormData.title,
+          author: editBookFormData.author || null,
+          year_published: editBookFormData.year_published ? parseInt(editBookFormData.year_published) : null,
+          edition: editBookFormData.edition || null,
+          is_signed: editBookFormData.is_signed,
+          condition: editBookFormData.condition || null,
+          estimated_value_eur: editBookFormData.estimated_value_eur ? parseFloat(editBookFormData.estimated_value_eur) : null,
+          purchase_price_eur: editBookFormData.purchase_price_eur ? parseFloat(editBookFormData.purchase_price_eur) : null,
+          purchase_date: editBookFormData.purchase_date || null,
+          notes: editBookFormData.notes || null
+        })
+      });
+
+      if (response.ok) {
+        setShowEditBookModal(false);
+        fetchBooks();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update book');
+      }
+    } catch (err) {
+      console.error('Error updating book:', err);
+      setError('Failed to update book');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteBook = async (bookId: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    if (!window.confirm('Are you sure you want to delete this book?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/books/${bookId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        fetchBooks();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to delete book');
+      }
+    } catch (err) {
+      console.error('Error deleting book:', err);
+      setError('Failed to delete book');
+    }
+  };
+
+  // Book pending image handlers
+  const handleAddBookFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newFiles = Array.from(files);
+    setBookPendingImages(prev => {
+      const combined = [...prev, ...newFiles];
+      return combined.slice(0, 3);
+    });
+    e.target.value = '';
+  };
+
+  const handleRemoveBookPendingFile = (index: number) => {
+    setBookPendingImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // ===== CASH HANDLERS =====
+
+  const openEditCashModal = (cash: any) => {
+    setEditCashFormData({
+      id: cash.id,
+      label: cash.label,
+      type: cash.type,
+      currency: cash.currency || 'EUR',
+      amount: String(cash.amount || ''),
+      institution: cash.institution || '',
+      notes: cash.notes || ''
+    });
+    setShowEditCashModal(true);
+  };
+
+  const handleAddCash = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cash`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          label: addCashFormData.label,
+          type: addCashFormData.type,
+          currency: addCashFormData.currency,
+          amount: parseFloat(addCashFormData.amount) || 0,
+          institution: addCashFormData.institution || null,
+          notes: addCashFormData.notes || null
+        })
+      });
+
+      if (response.ok) {
+        setShowAddCashModal(false);
+        setAddCashFormData({
+          label: '',
+          type: 'bank_account',
+          currency: 'EUR',
+          amount: '',
+          institution: '',
+          notes: ''
+        });
+        fetchCash();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to add cash holding');
+      }
+    } catch (err) {
+      console.error('Error adding cash:', err);
+      setError('Failed to add cash holding');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditCash = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cash/${editCashFormData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          label: editCashFormData.label,
+          type: editCashFormData.type,
+          currency: editCashFormData.currency,
+          amount: parseFloat(editCashFormData.amount) || 0,
+          institution: editCashFormData.institution || null,
+          notes: editCashFormData.notes || null
+        })
+      });
+
+      if (response.ok) {
+        setShowEditCashModal(false);
+        fetchCash();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update cash holding');
+      }
+    } catch (err) {
+      console.error('Error updating cash:', err);
+      setError('Failed to update cash holding');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteCash = async (cashId: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    if (!window.confirm('Are you sure you want to delete this cash holding?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cash/${cashId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        fetchCash();
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to delete cash holding');
+      }
+    } catch (err) {
+      console.error('Error deleting cash:', err);
+      setError('Failed to delete cash holding');
+    }
+  };
+
+  const cashTypeOptions = [
+    { value: 'bank_account', label: 'Bank Account' },
+    { value: 'cash_physical', label: 'Physical Cash' },
+    { value: 'savings', label: 'Savings' },
+    { value: 'overdraft', label: 'Overdraft' },
+    { value: 'loan', label: 'Loan' },
+    { value: 'other', label: 'Other' }
+  ];
+
+  const currencyOptions = [
+    { value: 'EUR', label: 'EUR' },
+    { value: 'USD', label: 'USD' },
+    { value: 'GBP', label: 'GBP' },
+    { value: 'CHF', label: 'CHF' }
+  ];
+
+  const formatCashAmount = (type: string, amount: number) => {
+    const isNegative = type === 'overdraft' || type === 'loan';
+    return (isNegative ? '-' : '+') + formatCurrency(Math.abs(amount));
+  };
+
+  const bookConditionOptions = ['Mint', 'Near Mint', 'Very Good', 'Good', 'Fair', 'Poor'];
+
+  const resetAddCashForm = () => {
+    setAddCashFormData({
+      label: '',
+      type: 'bank_account',
+      currency: 'EUR',
+      amount: '',
+      institution: '',
+      notes: ''
+    });
+  };
+
   if (loading && holdings.length === 0) {
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-50 flex items-center justify-center">
         <div className="text-center">
@@ -908,64 +1390,154 @@ const Portfolio: React.FC = () => {
             Portfolio Summary
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-r from-amber-500 to-yellow-500 rounded-xl p-6 text-white">
-              <div className="text-center">
-                <div className="text-sm opacity-90">Gold</div>
-                <div className="text-2xl font-bold">
-                  {summary.totalFineGoldOz.toFixed(3)} oz
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Card 1 — Precious Metals */}
+            <div className="bg-gradient-to-br from-amber-700 via-amber-600 to-yellow-500 rounded-xl p-6 text-white">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <Scale className="mr-2" size={22} />
+                Precious Metals
+              </h3>
+              {/* Gold */}
+              <div className="mb-3">
+                <div className="flex justify-between items-center font-bold text-base">
+                  <span>Gold</span>
+                  <span>{holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0).toFixed(3)} oz</span>
+                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + ((h.weight_grams * h.purity) / 31.1035) * (spotPrices?.gold || 0), 0))}</span>
                 </div>
-                <div className="text-lg font-semibold">
-                  {formatCurrency(summary.goldValueEUR)}
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-gray-600 to-slate-500 rounded-xl p-6 text-white">
-              <div className="text-center">
-                <div className="text-sm opacity-90">Silver</div>
-                <div className="text-2xl font-bold">
-                  {summary.totalFineSilverOz.toFixed(3)} oz
-                </div>
-                <div className="text-lg font-semibold">
-                  {formatCurrency(summary.silverValueEUR)}
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-brand-turquoise to-brand-turquoise-dark rounded-xl p-6 text-white">
-              <div className="text-center">
-                <div className="text-sm opacity-90">Total Value</div>
-                <div className="text-3xl font-bold">
-                  {formatCurrency(summary.combinedTotalEUR)}
-                </div>
-                {summary.totalPurchasePrice > 0 && (
-                  <div className="mt-2">
-                    <div className="text-sm opacity-90">Cost Basis: {formatCurrency(summary.totalPurchasePrice)}</div>
-                    <div className={`text-sm font-bold ${summary.totalPL >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                      P&L: {formatCurrency(summary.totalPL)}
+                {/* Gold subcategories */}
+                {['bullion', 'collectible', 'jewellery'].map(sub => {
+                  const subHoldings = holdings.filter(h => h.metal_type === 'gold' && (h.subcategory || 'bullion') === sub);
+                  if (subHoldings.length === 0) return null;
+                  const subOz = subHoldings.reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0);
+                  const subVal = subOz * (spotPrices?.gold || 0);
+                  return (
+                    <div key={sub} className="flex justify-between text-sm opacity-80 ml-4 mt-1">
+                      <span className="capitalize">{sub}</span>
+                      <span>{subOz.toFixed(3)} oz</span>
+                      <span>{formatCurrency(subVal)}</span>
                     </div>
-                  </div>
-                )}
+                  );
+                })}
+              </div>
+              {/* Silver */}
+              <div className="mb-3">
+                <div className="flex justify-between items-center font-bold text-base">
+                  <span>Silver</span>
+                  <span>{holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0).toFixed(3)} oz</span>
+                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + ((h.weight_grams * h.purity) / 31.1035) * (spotPrices?.silver || 0), 0))}</span>
+                </div>
+                {/* Silver subcategories */}
+                {['bullion', 'collectible', 'jewellery'].map(sub => {
+                  const subHoldings = holdings.filter(h => h.metal_type === 'silver' && (h.subcategory || 'bullion') === sub);
+                  if (subHoldings.length === 0) return null;
+                  const subOz = subHoldings.reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0);
+                  const subVal = subOz * (spotPrices?.silver || 0);
+                  return (
+                    <div key={sub} className="flex justify-between text-sm opacity-80 ml-4 mt-1">
+                      <span className="capitalize">{sub}</span>
+                      <span>{subOz.toFixed(3)} oz</span>
+                      <span>{formatCurrency(subVal)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Precious Metals subtotal */}
+              <div className="border-t border-white/30 pt-2 mt-2 flex justify-between font-bold text-lg">
+                <span>Precious Metals Total</span>
+                <span>{formatCurrency(
+                  holdings.filter(h => h.metal_type === 'gold' || h.metal_type === 'silver').reduce((sum, h) => {
+                    const oz = (h.weight_grams * h.purity) / 31.1035;
+                    const price = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
+                    return sum + oz * price;
+                  }, 0)
+                )}</span>
               </div>
             </div>
-          </div>
 
-          {/* Summary Text */}
-          <div className="mt-6 text-center">
-            <p className="text-lg font-bold text-amber-900">
-              Gold: {summary.totalFineGoldOz.toFixed(3)}oz | {formatCurrency(summary.goldValueEUR)} • 
-              Silver: {summary.totalFineSilverOz.toFixed(3)}oz | {formatCurrency(summary.silverValueEUR)} • 
-              Total: {formatCurrency(summary.combinedTotalEUR)}
-            </p>
-            {summary.totalPurchasePrice > 0 && (
-              <p className="mt-2 text-amber-800">
-                Cost Basis: {formatCurrency(summary.totalPurchasePrice)} • 
-                <span className={`ml-2 font-bold ${summary.totalPL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  P&L: {formatCurrency(summary.totalPL)}
-                </span>
-              </p>
-            )}
+            {/* Card 2 — Books */}
+            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-white">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <svg className="mr-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                Books
+              </h3>
+              {books.length === 0 ? (
+                <p className="text-white/70 italic">— No books added yet —</p>
+              ) : (
+                <div>
+                  <div className="flex justify-between text-base mb-2">
+                    <span>Total books</span>
+                    <span className="font-bold">{books.length}</span>
+                  </div>
+                  <div className="flex justify-between text-base">
+                    <span>Total estimated value</span>
+                    <span className="font-bold">{formatCurrency(books.reduce((sum: number, b: any) => sum + (parseFloat(b.estimated_value_eur) || 0), 0))}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Card 3 — Cash & Fiat */}
+            <div className="bg-gradient-to-br from-slate-600 to-slate-800 rounded-xl p-6 text-white">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <svg className="mr-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Cash & Fiat
+              </h3>
+              {cashHoldings.length === 0 ? (
+                <p className="text-white/70 italic">— No cash holdings added yet —</p>
+              ) : (
+                <div>
+                  {cashHoldings.map((c: any) => {
+                    const isNegative = c.type === 'overdraft' || c.type === 'loan';
+                    return (
+                      <div key={c.id} className="flex justify-between text-sm mb-1">
+                        <span className="truncate mr-2">
+                          {c.label}
+                          <span className="opacity-70 text-xs ml-1">({c.type}{c.currency ? `, ${c.currency}` : ''})</span>
+                        </span>
+                        <span className={isNegative ? 'text-red-300 font-bold' : 'font-bold'}>
+                          {isNegative ? '-' : '+'}{formatCurrency(Math.abs(parseFloat(c.amount) || 0))}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {/* Net cash position */}
+                  <div className="border-t border-white/30 pt-2 mt-2 flex justify-between font-bold text-lg">
+                    <span>Net Cash Position</span>
+                    <span>{formatCurrency(
+                      cashHoldings.reduce((sum: number, c: any) => {
+                        const amt = parseFloat(c.amount) || 0;
+                        return c.type === 'overdraft' || c.type === 'loan' ? sum - Math.abs(amt) : sum + amt;
+                      }, 0)
+                    )}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Card 4 — Total Net Worth */}
+            <div className="bg-gradient-to-r from-brand-turquoise to-brand-turquoise-dark rounded-xl p-6 text-white flex flex-col justify-center">
+              <div className="text-center">
+                <div className="text-sm opacity-90 mb-1">Total Net Worth</div>
+                <div className="text-3xl font-bold">
+                  {formatCurrency(
+                    // Precious metals EUR value
+                    holdings.filter(h => h.metal_type === 'gold' || h.metal_type === 'silver').reduce((sum, h) => {
+                      const oz = (h.weight_grams * h.purity) / 31.1035;
+                      const price = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
+                      return sum + oz * price;
+                    }, 0)
+                    // Books estimated value
+                    + books.reduce((sum: number, b: any) => sum + (parseFloat(b.estimated_value_eur) || 0), 0)
+                    // Net cash position
+                    + cashHoldings.reduce((sum: number, c: any) => {
+                      const amt = parseFloat(c.amount) || 0;
+                      return c.type === 'overdraft' || c.type === 'loan' ? sum - Math.abs(amt) : sum + amt;
+                    }, 0)
+                  )}
+                </div>
+                <div className="text-xs opacity-70 mt-1">Precious Metals + Books + Cash</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1124,7 +1696,175 @@ const Portfolio: React.FC = () => {
           </div>
         </div>
 
+        {/* Books Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mt-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-indigo-900 flex items-center">
+              <svg className="mr-3 text-indigo-600" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              Books
+            </h2>
+            <button
+              onClick={() => {
+                resetAddBookForm();
+                setShowAddBookModal(true);
+              }}
+              className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center"
+            >
+              <Plus className="mr-2" />
+              Add Book
+            </button>
+          </div>
+
+          {books.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-indigo-100 flex items-center justify-center">
+                <svg className="w-12 h-12 text-indigo-400" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              </div>
+              <h3 className="text-xl font-bold text-indigo-900 mb-2">No Books Added Yet</h3>
+              <p className="text-indigo-700 max-w-md mx-auto">Track your collection of rare and valuable books.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-indigo-200">
+                    <th className="text-left py-3 px-4 text-indigo-900 font-bold">Title</th>
+                    <th className="text-left py-3 px-4 text-indigo-900 font-bold">Author</th>
+                    <th className="text-left py-3 px-4 text-indigo-900 font-bold">Edition</th>
+                    <th className="text-left py-3 px-4 text-indigo-900 font-bold">Signed</th>
+                    <th className="text-left py-3 px-4 text-indigo-900 font-bold">Condition</th>
+                    <th className="text-left py-3 px-4 text-indigo-900 font-bold">Est. Value</th>
+                    <th className="text-left py-3 px-4 text-indigo-900 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {books.map((book: any) => (
+                    <tr key={book.id} className="border-b border-indigo-100 hover:bg-indigo-50">
+                      <td className="py-3 px-4 font-medium text-indigo-900">{book.title}</td>
+                      <td className="py-3 px-4">{book.author || '—'}</td>
+                      <td className="py-3 px-4">{book.edition || '—'}</td>
+                      <td className="py-3 px-4">{book.is_signed ? '✓' : '—'}</td>
+                      <td className="py-3 px-4">
+                        {book.condition ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">
+                            {book.condition}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td className="py-3 px-4 font-bold">
+                        {book.estimated_value_eur ? formatCurrency(parseFloat(book.estimated_value_eur)) : '—'}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openEditBookModal(book)}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center text-sm"
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBook(book.id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center text-sm"
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Cash & Fiat Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mt-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center">
+              <svg className="mr-3 text-slate-600" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Cash & Fiat
+            </h2>
+            <button
+              onClick={() => {
+                resetAddCashForm();
+                setShowAddCashModal(true);
+              }}
+              className="px-6 py-3 bg-gradient-to-r from-slate-500 to-slate-700 text-white font-bold rounded-xl hover:from-slate-600 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center"
+            >
+              <Plus className="mr-2" />
+              Add Cash
+            </button>
+          </div>
+
+          {cashHoldings.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
+                <svg className="w-12 h-12 text-slate-400" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No Cash Holdings Added Yet</h3>
+              <p className="text-slate-700 max-w-md mx-auto">Track bank accounts, physical cash, savings, and liabilities.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-slate-200">
+                    <th className="text-left py-3 px-4 text-slate-900 font-bold">Label</th>
+                    <th className="text-left py-3 px-4 text-slate-900 font-bold">Type</th>
+                    <th className="text-left py-3 px-4 text-slate-900 font-bold">Institution</th>
+                    <th className="text-left py-3 px-4 text-slate-900 font-bold">Currency</th>
+                    <th className="text-left py-3 px-4 text-slate-900 font-bold">Amount</th>
+                    <th className="text-left py-3 px-4 text-slate-900 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cashHoldings.map((cash: any) => {
+                    const isNegative = cash.type === 'overdraft' || cash.type === 'loan';
+                    return (
+                      <tr key={cash.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-3 px-4 font-medium text-slate-900">{cash.label}</td>
+                        <td className="py-3 px-4 capitalize">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800">
+                            {cash.type.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">{cash.institution || '—'}</td>
+                        <td className="py-3 px-4">{cash.currency || 'EUR'}</td>
+                        <td className={`py-3 px-4 font-bold ${isNegative ? 'text-red-600' : 'text-green-600'}`}>
+                          {formatCashAmount(cash.type, parseFloat(cash.amount) || 0)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEditCashModal(cash)}
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center text-sm"
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCash(cash.id)}
+                              className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center text-sm"
+                            >
+                              <X className="w-3 h-3 mr-1" />
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         {/* Disclaimer */}
+
         <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
           <p className="text-sm text-amber-800">
             <Shield className="inline-block mr-2" size={16} />
@@ -1218,6 +1958,20 @@ const Portfolio: React.FC = () => {
                           {option.label}
                         </option>
                       ))}
+                    </select>
+                  </div>
+
+                  {/* ===== SUBCATEGORY ===== */}
+                  <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <label className="block text-amber-900 font-bold mb-2">Subcategory *</label>
+                    <select
+                      value={addFormData.subcategory}
+                      onChange={(e) => setAddFormData({...addFormData, subcategory: e.target.value})}
+                      className="w-full p-3 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none bg-white"
+                    >
+                      <option value="bullion">Bullion</option>
+                      <option value="collectible">Collectible</option>
+                      <option value="jewellery">Jewellery</option>
                     </select>
                   </div>
 
@@ -1665,6 +2419,21 @@ const Portfolio: React.FC = () => {
 
                     <div>
                       <label className="block text-amber-900 font-semibold mb-2">
+                        Subcategory *
+                      </label>
+                      <select
+                        value={editFormData.subcategory}
+                        onChange={(e) => setEditFormData({...editFormData, subcategory: e.target.value})}
+                        className="w-full p-3 border-2 border-amber-200 rounded-xl focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none"
+                      >
+                        <option value="bullion">Bullion</option>
+                        <option value="collectible">Collectible</option>
+                        <option value="jewellery">Jewellery</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-amber-900 font-semibold mb-2">
                         Quantity *
                       </label>
                       <input
@@ -2064,8 +2833,686 @@ const Portfolio: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Add Book Modal */}
+      {showAddBookModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-indigo-900">Add Book</h3>
+                <button
+                  onClick={() => {
+                    setShowAddBookModal(false);
+                    resetAddBookForm();
+                  }}
+                  className="p-2 hover:bg-indigo-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-indigo-700" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddBook}>
+                <div className="space-y-5">
+                  {/* Title (required) */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Title *</label>
+                    <input
+                      type="text"
+                      value={addBookFormData.title}
+                      onChange={(e) => setAddBookFormData({...addBookFormData, title: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      required
+                      placeholder="Book title"
+                    />
+                  </div>
+
+                  {/* Author and Year */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Author</label>
+                      <input
+                        type="text"
+                        value={addBookFormData.author}
+                        onChange={(e) => setAddBookFormData({...addBookFormData, author: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                        placeholder="Author name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Year Published</label>
+                      <input
+                        type="number"
+                        value={addBookFormData.year_published}
+                        onChange={(e) => setAddBookFormData({...addBookFormData, year_published: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                        placeholder="e.g. 1925"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Edition and Signed */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Edition</label>
+                      <input
+                        type="text"
+                        value={addBookFormData.edition}
+                        onChange={(e) => setAddBookFormData({...addBookFormData, edition: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                        placeholder="e.g. First Edition, Limited"
+                      />
+                    </div>
+                    <div className="flex items-end pb-3">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={addBookFormData.is_signed}
+                          onChange={(e) => setAddBookFormData({...addBookFormData, is_signed: e.target.checked})}
+                          className="w-5 h-5 text-indigo-500 border-indigo-300 rounded focus:ring-indigo-200"
+                        />
+                        <span className="text-indigo-900 font-medium">Signed?</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Condition Dropdown */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Condition</label>
+                    <select
+                      value={addBookFormData.condition}
+                      onChange={(e) => setAddBookFormData({...addBookFormData, condition: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none bg-white"
+                    >
+                      <option value="">-- Select Condition --</option>
+                      {bookConditionOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Estimated Value and Purchase Price */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Estimated Value (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={addBookFormData.estimated_value_eur}
+                        onChange={(e) => setAddBookFormData({...addBookFormData, estimated_value_eur: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Purchase Price (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={addBookFormData.purchase_price_eur}
+                        onChange={(e) => setAddBookFormData({...addBookFormData, purchase_price_eur: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Purchase Date */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Purchase Date</label>
+                    <input
+                      type="date"
+                      value={addBookFormData.purchase_date}
+                      onChange={(e) => setAddBookFormData({...addBookFormData, purchase_date: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Notes</label>
+                    <textarea
+                      value={addBookFormData.notes}
+                      onChange={(e) => setAddBookFormData({...addBookFormData, notes: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      rows={3}
+                      placeholder="Any notes about this book..."
+                    />
+                  </div>
+
+                  {/* Photos */}
+                  <div className="border-t border-indigo-200 pt-6">
+                    <h4 className="text-lg font-bold text-indigo-900 mb-4">Photos</h4>
+                    <p className="text-sm text-indigo-700 mb-3">
+                      Upload up to 3 photos after the book is created ({bookPendingImages.length}/3 selected)
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {bookPendingImages.map((file, index) => (
+                        <div key={index} className="relative group w-24 h-24">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Book photo ${index + 1}`}
+                            className="w-24 h-24 rounded-lg object-cover border border-indigo-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveBookPendingFile(index)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          >
+                            <X className="w-6 h-6 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      {bookPendingImages.length < 3 && (
+                        <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-indigo-300 rounded-lg cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
+                          {bookImageUploading ? (
+                            <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-6 h-6 text-indigo-400 mb-1" />
+                              <span className="text-xs text-indigo-500">Upload</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleAddBookFileSelect}
+                            disabled={bookImageUploading}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submitting ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="animate-spin mr-2" />
+                          {bookImageUploading ? 'Uploading Images...' : 'Adding Book...'}
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <Plus className="mr-2" />
+                          Add Book
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddBookModal(false);
+                        resetAddBookForm();
+                      }}
+                      className="px-6 py-4 border-2 border-indigo-300 text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Book Modal */}
+      {showEditBookModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-indigo-900">Edit Book</h3>
+                <button
+                  onClick={() => setShowEditBookModal(false)}
+                  className="p-2 hover:bg-indigo-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-indigo-700" />
+                </button>
+              </div>
+
+              <form onSubmit={handleEditBook}>
+                <div className="space-y-5">
+                  {/* Title (required) */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Title *</label>
+                    <input
+                      type="text"
+                      value={editBookFormData.title}
+                      onChange={(e) => setEditBookFormData({...editBookFormData, title: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  {/* Author and Year */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Author</label>
+                      <input
+                        type="text"
+                        value={editBookFormData.author}
+                        onChange={(e) => setEditBookFormData({...editBookFormData, author: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Year Published</label>
+                      <input
+                        type="number"
+                        value={editBookFormData.year_published}
+                        onChange={(e) => setEditBookFormData({...editBookFormData, year_published: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Edition and Signed */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Edition</label>
+                      <input
+                        type="text"
+                        value={editBookFormData.edition}
+                        onChange={(e) => setEditBookFormData({...editBookFormData, edition: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex items-end pb-3">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editBookFormData.is_signed}
+                          onChange={(e) => setEditBookFormData({...editBookFormData, is_signed: e.target.checked})}
+                          className="w-5 h-5 text-indigo-500 border-indigo-300 rounded focus:ring-indigo-200"
+                        />
+                        <span className="text-indigo-900 font-medium">Signed?</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Condition Dropdown */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Condition</label>
+                    <select
+                      value={editBookFormData.condition}
+                      onChange={(e) => setEditBookFormData({...editBookFormData, condition: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none bg-white"
+                    >
+                      <option value="">-- Select Condition --</option>
+                      {bookConditionOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Estimated Value and Purchase Price */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Estimated Value (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editBookFormData.estimated_value_eur}
+                        onChange={(e) => setEditBookFormData({...editBookFormData, estimated_value_eur: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-indigo-900 font-semibold mb-2">Purchase Price (€)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editBookFormData.purchase_price_eur}
+                        onChange={(e) => setEditBookFormData({...editBookFormData, purchase_price_eur: e.target.value})}
+                        className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Purchase Date */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Purchase Date</label>
+                    <input
+                      type="date"
+                      value={editBookFormData.purchase_date}
+                      onChange={(e) => setEditBookFormData({...editBookFormData, purchase_date: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-indigo-900 font-semibold mb-2">Notes</label>
+                    <textarea
+                      value={editBookFormData.notes}
+                      onChange={(e) => setEditBookFormData({...editBookFormData, notes: e.target.value})}
+                      className="w-full p-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submitting ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="animate-spin mr-2" />
+                          Updating...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <Check className="mr-2" />
+                          Update Book
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditBookModal(false)}
+                      className="px-6 py-4 border-2 border-indigo-300 text-indigo-700 font-bold rounded-xl hover:bg-indigo-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Cash Modal */}
+      {showAddCashModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">Add Cash Holding</h3>
+                <button
+                  onClick={() => {
+                    setShowAddCashModal(false);
+                    resetAddCashForm();
+                  }}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-slate-700" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddCash}>
+                <div className="space-y-5">
+                  {/* Label (required) */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Label *</label>
+                    <input
+                      type="text"
+                      value={addCashFormData.label}
+                      onChange={(e) => setAddCashFormData({...addCashFormData, label: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                      required
+                      placeholder='e.g. "AIB Current Account", "Vault Cash EUR"'
+                    />
+                  </div>
+
+                  {/* Type Dropdown */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Type</label>
+                    <select
+                      value={addCashFormData.type}
+                      onChange={(e) => setAddCashFormData({...addCashFormData, type: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none bg-white"
+                    >
+                      {cashTypeOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Currency Dropdown */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Currency</label>
+                    <select
+                      value={addCashFormData.currency}
+                      onChange={(e) => setAddCashFormData({...addCashFormData, currency: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none bg-white"
+                    >
+                      {currencyOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">
+                      Amount *
+                      <span className="text-sm font-normal text-slate-500 ml-2">
+                        (positive number; overdrafts/loans reduce net worth)
+                      </span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={addCashFormData.amount}
+                      onChange={(e) => setAddCashFormData({...addCashFormData, amount: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                      required
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  {/* Institution */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Institution</label>
+                    <input
+                      type="text"
+                      value={addCashFormData.institution}
+                      onChange={(e) => setAddCashFormData({...addCashFormData, institution: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                      placeholder='e.g. AIB, Revolut, Bank of Ireland'
+                    />
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Notes</label>
+                    <textarea
+                      value={addCashFormData.notes}
+                      onChange={(e) => setAddCashFormData({...addCashFormData, notes: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                      rows={3}
+                      placeholder="Any notes about this cash holding..."
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-slate-500 to-slate-700 text-white font-bold rounded-xl hover:from-slate-600 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submitting ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="animate-spin mr-2" />
+                          Adding...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <Plus className="mr-2" />
+                          Add Cash
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddCashModal(false);
+                        resetAddCashForm();
+                      }}
+                      className="px-6 py-4 border-2 border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Cash Modal */}
+      {showEditCashModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-slate-900">Edit Cash Holding</h3>
+                <button
+                  onClick={() => setShowEditCashModal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-slate-700" />
+                </button>
+              </div>
+
+              <form onSubmit={handleEditCash}>
+                <div className="space-y-5">
+                  {/* Label (required) */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Label *</label>
+                    <input
+                      type="text"
+                      value={editCashFormData.label}
+                      onChange={(e) => setEditCashFormData({...editCashFormData, label: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  {/* Type Dropdown */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Type</label>
+                    <select
+                      value={editCashFormData.type}
+                      onChange={(e) => setEditCashFormData({...editCashFormData, type: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none bg-white"
+                    >
+                      {cashTypeOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Currency Dropdown */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Currency</label>
+                    <select
+                      value={editCashFormData.currency}
+                      onChange={(e) => setEditCashFormData({...editCashFormData, currency: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none bg-white"
+                    >
+                      {currencyOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Amount */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">
+                      Amount *
+                      <span className="text-sm font-normal text-slate-500 ml-2">
+                        (positive number; overdrafts/loans reduce net worth)
+                      </span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editCashFormData.amount}
+                      onChange={(e) => setEditCashFormData({...editCashFormData, amount: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  {/* Institution */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Institution</label>
+                    <input
+                      type="text"
+                      value={editCashFormData.institution}
+                      onChange={(e) => setEditCashFormData({...editCashFormData, institution: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-slate-900 font-semibold mb-2">Notes</label>
+                    <textarea
+                      value={editCashFormData.notes}
+                      onChange={(e) => setEditCashFormData({...editCashFormData, notes: e.target.value})}
+                      className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-slate-500 focus:ring-2 focus:ring-slate-200 focus:outline-none"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-slate-500 to-slate-700 text-white font-bold rounded-xl hover:from-slate-600 hover:to-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submitting ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="animate-spin mr-2" />
+                          Updating...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <Check className="mr-2" />
+                          Update Cash
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditCashModal(false)}
+                      className="px-6 py-4 border-2 border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Portfolio;
+
