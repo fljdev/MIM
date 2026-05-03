@@ -130,7 +130,7 @@ const Navbar: React.FC = () => {
                 </div>
                 <span className="text-xl font-bold text-gray-800">MiM</span>
               </div>
-              <span className="text-xs text-gray-600 ml-12 -mt-1">Money in Metals</span>
+              <span className="text-xs text-gray-600 ml-12 -mt-1">Move into Money</span>
             </Link>
           </div>
 

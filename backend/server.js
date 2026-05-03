@@ -24,6 +24,7 @@ const offersRouter = require('./routes/offers');
 const holdingImagesRouter = require('./routes/holdingImages');
 const booksRouter = require('./routes/books');
 const cashRouter = require('./routes/cash');
+const cryptoRouter = require('./routes/crypto');
 
 app.use(cors());
 app.use(express.json());
@@ -146,6 +147,11 @@ console.log('Books routes registered');
 console.log('Registering cash routes at /api/cash');
 app.use('/api/cash', cashRouter);
 console.log('Cash routes registered');
+
+// Crypto holdings routes
+console.log('Registering crypto routes at /api/crypto');
+app.use('/api/crypto', cryptoRouter);
+console.log('Crypto routes registered');
 
 // Mock transport services endpoint for journey planner
 app.get('/api/transport-services', (req, res) => {

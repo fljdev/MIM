@@ -4,6 +4,7 @@ import { useAuth } from '../features/auth/contexts/AuthContext';
 import { API_BASE_URL } from '../Config';
 import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check, Lock, Upload, Loader2 } from 'lucide-react';
 import HoldingImageUpload from '../components/HoldingImageUpload';
+import CryptoSection from '../components/CryptoSection';
 
 // TypeScript interfaces
 interface SpotPrices {
@@ -134,6 +135,7 @@ const Portfolio: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [books, setBooks] = useState<any[]>([]);
   const [cashHoldings, setCashHoldings] = useState<any[]>([]);
+  const [cryptoTotal, setCryptoTotal] = useState<number>(0);
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -1514,7 +1516,23 @@ const Portfolio: React.FC = () => {
               )}
             </div>
 
-            {/* Card 4 — Total Net Worth */}
+            {/* Card 4 — Crypto */}
+            <div className="bg-gradient-to-br from-teal-500 to-emerald-700 rounded-xl p-6 text-white">
+              <h3 className="text-xl font-bold mb-4 flex items-center">
+                <svg className="mr-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+                Crypto
+              </h3>
+              <div className="flex justify-between text-base">
+                <span>Total crypto value</span>
+                <span className="font-bold">{formatCurrency(cryptoTotal)}</span>
+              </div>
+            </div>
+
+            {/* Card 5 — Total Net Worth */}
             <div className="bg-gradient-to-r from-brand-turquoise to-brand-turquoise-dark rounded-xl p-6 text-white flex flex-col justify-center">
               <div className="text-center">
                 <div className="text-sm opacity-90 mb-1">Total Net Worth</div>
@@ -1533,9 +1551,11 @@ const Portfolio: React.FC = () => {
                       const amt = parseFloat(c.amount) || 0;
                       return c.type === 'overdraft' || c.type === 'loan' ? sum - Math.abs(amt) : sum + amt;
                     }, 0)
+                    // Crypto total
+                    + cryptoTotal
                   )}
                 </div>
-                <div className="text-xs opacity-70 mt-1">Precious Metals + Books + Cash</div>
+                <div className="text-xs opacity-70 mt-1">Precious Metals + Books + Cash + Crypto</div>
               </div>
             </div>
           </div>
@@ -1862,6 +1882,9 @@ const Portfolio: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Crypto Section */}
+        <CryptoSection onTotalChange={setCryptoTotal} />
 
         {/* Disclaimer */}
 
