@@ -41,7 +41,7 @@ router.get('/test', (req, res) => {
 router.get('/prices', (req, res) => {
   const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,ripple,cardano,polkadot&vs_currencies=eur';
 
-  https.get(url, (apiRes) => {
+  https.get(url, { headers: { 'User-Agent': 'MiM-App/1.0 (mim.town)' } }, (apiRes) => {
     let data = '';
 
     apiRes.on('data', (chunk) => {
@@ -51,6 +51,7 @@ router.get('/prices', (req, res) => {
     apiRes.on('end', () => {
       try {
         const json = JSON.parse(data);
+        console.log('CoinGecko response:', JSON.stringify(data));
         res.json(json);
       } catch (parseError) {
         console.error('Error parsing CoinGecko response:', parseError);

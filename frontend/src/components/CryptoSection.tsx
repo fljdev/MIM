@@ -107,10 +107,12 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
     notes: '',
   });
 
-  // Fetch crypto holdings and prices on mount
+  // Fetch crypto holdings and prices on mount, then poll prices every 60s
   useEffect(() => {
     fetchCryptoHoldings();
     fetchPrices();
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // Notify parent of total whenever holdings or prices change
@@ -129,6 +131,8 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
       if (response.ok) {
         const data = await response.json();
         setPrices(data);
+        console.log('Prices from CoinGecko:', JSON.stringify(data));
+        cryptoHoldings.forEach(h => console.log(`Holding coin_id: "${h.coin_id}", price exists: ${data[h.coin_id] ? 'yes' : 'NO'}`));
       }
     } catch (err) {
       console.error('Error fetching crypto prices:', err);
