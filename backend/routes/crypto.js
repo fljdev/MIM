@@ -76,6 +76,7 @@ router.get('/', authenticateToken, async (req, res) => {
       ORDER BY created_at DESC
     `, [userId]);
 
+    console.log('GET holdings returning:', result.rows.map(r => ({ id: r.id, unit: r.unit })));
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching crypto holdings:', error);
@@ -85,6 +86,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // POST /api/crypto - Create a new crypto holding
 router.post('/', authenticateToken, async (req, res) => {
+  console.log('Received body:', req.body);
   const pool = req.app.locals.pool;
   const userId = req.user.userId;
   const {
@@ -96,7 +98,8 @@ router.post('/', authenticateToken, async (req, res) => {
     purchase_date,
     wallet_type,
     institution,
-    notes
+    notes,
+    unit
   } = req.body;
 
   // Validate required fields
@@ -109,11 +112,12 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 
   try {
+    console.log('INSERT unit value:', unit);
     const result = await pool.query(`
       INSERT INTO crypto_holdings (
         user_id, coin_id, coin_symbol, coin_name, quantity,
-        purchase_price_eur, purchase_date, wallet_type, institution, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        purchase_price_eur, purchase_date, wallet_type, institution, notes, unit
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `, [
       userId,
@@ -125,7 +129,8 @@ router.post('/', authenticateToken, async (req, res) => {
       purchase_date,
       wallet_type,
       institution,
-      notes
+      notes,
+      unit
     ]);
 
     res.status(201).json(result.rows[0]);

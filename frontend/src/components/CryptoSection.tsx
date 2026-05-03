@@ -26,6 +26,7 @@ interface CryptoHolding {
   institution: string | null;
   notes: string | null;
   created_at: string;
+  unit?: string;
 }
 
 interface CryptoPrices {
@@ -42,6 +43,7 @@ interface AddCryptoFormData {
   wallet_type: string;
   institution: string;
   notes: string;
+  unit: string;
 }
 
 interface EditCryptoFormData extends AddCryptoFormData {
@@ -64,9 +66,22 @@ const WALLET_TYPE_OPTIONS = [
   { value: 'Cold Storage', label: 'Cold Storage' },
 ];
 
+const UNIT_OPTIONS = [
+  { value: 'BTC', label: 'BTC' },
+  { value: 'mBTC', label: 'mBTC' },
+  { value: 'sats', label: 'sats' },
+];
+
 interface CryptoSectionProps {
   onTotalChange?: (total: number) => void;
 }
+
+// Convert quantity to BTC based on unit
+const toBTC = (qty: number, unit?: string): number => {
+  if (unit === 'mBTC') return qty / 1000;
+  if (unit === 'sats') return qty / 100000000;
+  return qty; // BTC (default)
+};
 
 const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
   const navigate = useNavigate();
@@ -92,6 +107,7 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
     wallet_type: 'Exchange',
     institution: '',
     notes: '',
+    unit: 'BTC',
   });
 
   const [editFormData, setEditFormData] = useState<EditCryptoFormData>({
@@ -105,6 +121,7 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
     wallet_type: 'Exchange',
     institution: '',
     notes: '',
+    unit: 'BTC',
   });
 
   // Fetch crypto holdings and prices on mount, then poll prices every 60s
@@ -118,7 +135,8 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
   // Notify parent of total whenever holdings or prices change
   const cryptoTotal = cryptoHoldings.reduce((sum, h) => {
     const livePrice = prices[h.coin_id]?.eur || 0;
-    return sum + h.quantity * livePrice;
+    const btcQty = toBTC(h.quantity, h.unit);
+    return sum + btcQty * livePrice;
   }, 0);
 
   useEffect(() => {
@@ -206,6 +224,7 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
 
     setSubmitting(true);
     try {
+      console.log('unit being sent:', addFormData.unit);
       const response = await fetch(`${API_BASE_URL}/api/crypto`, {
         method: 'POST',
         headers: {
@@ -224,6 +243,7 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
           wallet_type: addFormData.wallet_type || null,
           institution: addFormData.institution || null,
           notes: addFormData.notes || null,
+          unit: addFormData.unit,
         }),
       });
 
@@ -256,6 +276,7 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
       wallet_type: holding.wallet_type || 'Exchange',
       institution: holding.institution || '',
       notes: holding.notes || '',
+      unit: holding.unit || 'BTC',
     });
     setShowEditModal(true);
   };
@@ -287,6 +308,7 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
             wallet_type: editFormData.wallet_type || null,
             institution: editFormData.institution || null,
             notes: editFormData.notes || null,
+            unit: editFormData.unit,
           }),
         }
       );
@@ -349,6 +371,7 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
       wallet_type: 'Exchange',
       institution: '',
       notes: '',
+      unit: 'BTC',
     });
   };
 
@@ -362,13 +385,11 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
   // Calculate P&L for a holding
   const calculatePnL = (holding: CryptoHolding) => {
     const livePrice = prices[holding.coin_id]?.eur || 0;
-    const currentValue = holding.quantity * livePrice;
-    const purchaseCost = holding.quantity * (holding.purchase_price_eur || 0);
+    const btcQty = toBTC(holding.quantity, holding.unit);
+    const currentValue = btcQty * livePrice;
+    const purchaseCost = btcQty * (holding.purchase_price_eur || 0);
     const pl = currentValue - purchaseCost;
-    const plPercent =
-      holding.purchase_price_eur && holding.purchase_price_eur > 0
-        ? ((livePrice - holding.purchase_price_eur) / holding.purchase_price_eur) * 100
-        : 0;
+    const plPercent = purchaseCost > 0 ? (pl / purchaseCost) * 100 : 0;
     return { currentValue, pl, plPercent, livePrice };
   };
 
@@ -484,7 +505,9 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">{holding.quantity}</td>
+                      <td className="py-3 px-4">
+                        {holding.quantity} {holding.unit || 'BTC'}
+                      </td>
                       <td className="py-3 px-4 text-right">
                         {holding.purchase_price_eur
                           ? formatCurrency(holding.purchase_price_eur)
@@ -648,6 +671,29 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
                       required
                       placeholder="e.g. 0.5"
                     />
+                  </div>
+
+                  {/* Unit */}
+                  <div>
+                    <label className="block text-teal-900 font-semibold mb-2">
+                      Unit
+                    </label>
+                    <select
+                      value={addFormData.unit}
+                      onChange={(e) =>
+                        setAddFormData({
+                          ...addFormData,
+                          unit: e.target.value,
+                        })
+                      }
+                      className="w-full p-3 border-2 border-teal-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-200 focus:outline-none bg-white"
+                    >
+                      {UNIT_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Purchase Price */}
@@ -846,6 +892,29 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
                       className="w-full p-3 border-2 border-teal-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-200 focus:outline-none"
                       required
                     />
+                  </div>
+
+                  {/* Unit */}
+                  <div>
+                    <label className="block text-teal-900 font-semibold mb-2">
+                      Unit
+                    </label>
+                    <select
+                      value={editFormData.unit}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          unit: e.target.value,
+                        })
+                      }
+                      className="w-full p-3 border-2 border-teal-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-200 focus:outline-none bg-white"
+                    >
+                      {UNIT_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Purchase Price */}
