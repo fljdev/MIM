@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/contexts/AuthContext';
 import { API_BASE_URL } from '../Config';
-import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check, Lock, Upload, Loader2 } from 'lucide-react';
+import { Calculator, Scale, TrendingUp, Shield, AlertCircle, Info, Edit, List, Plus, X, Check, Lock, Upload, Loader2, ChevronDown } from 'lucide-react';
 import HoldingImageUpload from '../components/HoldingImageUpload';
 import CryptoSection from '../components/CryptoSection';
 
@@ -121,6 +121,110 @@ interface AddCashFormData {
 // Edit Cash form data
 interface EditCashFormData extends AddCashFormData {
   id: number;
+}
+
+// Metal section grouping
+interface MetalSection {
+  key: string;
+  label: string;
+  icon: string; // 'Au' or 'Ag'
+  iconColor: string; // badge bg color
+  match: (h: Holding) => boolean;
+}
+
+interface MetalSectionData {
+  section: MetalSection;
+  holdings: Holding[];
+  subtotals: {
+    fineOz: number;
+    spotValue: number;
+    purchasePrice: number;
+    pl: number;
+  };
+}
+
+// Metal section definitions for grouping holdings
+const METAL_SECTIONS: MetalSection[] = [
+  {
+    key: 'gold_bullion',
+    label: 'Gold Bullion',
+    icon: 'Au',
+    iconColor: 'bg-amber-500',
+    match: (h) => h.metal_type === 'gold' && (h.subcategory || 'bullion') === 'bullion',
+  },
+  {
+    key: 'gold_sovereigns',
+    label: 'Gold Sovereigns',
+    icon: 'Au',
+    iconColor: 'bg-amber-500',
+    match: (h) => h.metal_type === 'gold' && (h.category === 'sovereign' || (h.category === 'coin' && (h.subcategory || '') === 'collectible')),
+  },
+  {
+    key: 'gold_jewellery',
+    label: 'Gold Jewellery',
+    icon: 'Au',
+    iconColor: 'bg-amber-500',
+    match: (h) => h.metal_type === 'gold' && (h.subcategory || '') === 'jewellery',
+  },
+  {
+    key: 'silver_bullion',
+    label: 'Silver Bullion',
+    icon: 'Ag',
+    iconColor: 'bg-gray-400',
+    match: (h) => h.metal_type === 'silver' && (h.subcategory || 'bullion') === 'bullion',
+  },
+  {
+    key: 'silver_coins',
+    label: 'Silver Coins',
+    icon: 'Ag',
+    iconColor: 'bg-gray-400',
+    match: (h) => h.metal_type === 'silver' && h.category === 'coin' && (h.subcategory || '') === 'collectible',
+  },
+  {
+    key: 'silver_jewellery',
+    label: 'Silver Jewellery',
+    icon: 'Ag',
+    iconColor: 'bg-gray-400',
+    match: (h) => h.metal_type === 'silver' && (h.subcategory || '') === 'jewellery',
+  },
+  // Other Metals — catch-all for anything not matched above
+  // Uses exact same logic as the six named sections above, hardcoded to avoid self-reference
+  {
+    key: 'other_metals',
+    label: 'Other Metals',
+    icon: 'M',
+    iconColor: 'bg-teal-500',
+    match: (h) => {
+      const isGoldBullion = h.metal_type === 'gold' && (h.subcategory || 'bullion') === 'bullion';
+      const isGoldSovereign = h.metal_type === 'gold' && (h.category === 'sovereign' || (h.category === 'coin' && (h.subcategory || '') === 'collectible'));
+      const isGoldJewellery = h.metal_type === 'gold' && (h.subcategory || '') === 'jewellery';
+      const isSilverBullion = h.metal_type === 'silver' && (h.subcategory || 'bullion') === 'bullion';
+      const isSilverCoins = h.metal_type === 'silver' && h.category === 'coin' && (h.subcategory || '') === 'collectible';
+      const isSilverJewellery = h.metal_type === 'silver' && (h.subcategory || '') === 'jewellery';
+      return !(isGoldBullion || isGoldSovereign || isGoldJewellery || isSilverBullion || isSilverCoins || isSilverJewellery);
+    },
+  },
+];
+
+// Group holdings into sections, computing subtotals
+function getMetalSections(holdings: Holding[], spotPrices: SpotPrices | null): MetalSectionData[] {
+  return METAL_SECTIONS.map(section => {
+    const sectionHoldings = holdings.filter(section.match);
+    if (sectionHoldings.length === 0) return null;
+    const subtotals = sectionHoldings.reduce((acc, h) => {
+      const fineOz = (h.weight_grams * h.purity) / 31.1035;
+      const spotPrice = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
+      const spotValue = fineOz * spotPrice;
+      const purchasePrice = h.purchase_price || 0;
+      return {
+        fineOz: acc.fineOz + fineOz,
+        spotValue: acc.spotValue + spotValue,
+        purchasePrice: acc.purchasePrice + purchasePrice,
+        pl: acc.pl + (spotValue - purchasePrice),
+      };
+    }, { fineOz: 0, spotValue: 0, purchasePrice: 0, pl: 0 });
+    return { section, holdings: sectionHoldings, subtotals };
+  }).filter((s): s is MetalSectionData => s !== null);
 }
 
 const Portfolio: React.FC = () => {
@@ -244,6 +348,33 @@ const Portfolio: React.FC = () => {
     institution: '',
     notes: ''
   });
+  // Collapsible sections state
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+
+  // Track viewport size for responsive collapse behavior
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // On mobile -> collapse all; on desktop -> expand all
+      setExpandedSections(prev => {
+        const allKeys = METAL_SECTIONS.map(s => s.key);
+        const next: Record<string, boolean> = {};
+        allKeys.forEach(key => { next[key] = !mobile; });
+        return { ...prev, ...next };
+      });
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Toggle a single section open/closed
+  const toggleSection = (key: string) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const [editCashFormData, setEditCashFormData] = useState<EditCashFormData>({
     id: 0,
     label: '',
@@ -1616,128 +1747,170 @@ const Portfolio: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-amber-200">
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Image</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Name</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Metal</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Category</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Qty</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Fine Oz</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Spot Value</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Purchase Price</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">P&L</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Status</th>
-                    <th className="text-left py-3 px-4 text-amber-900 font-bold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {holdings.map((holding) => {
-                    const details = calculateHoldingDetails(holding);
-                    return (
-                      <tr key={holding.id} className="border-b border-amber-100 hover:bg-amber-50">
-                        <td className="py-3 px-4">
-                          {holding.images && holding.images.length > 0 ? (
-                            <button
-                              onClick={() => navigate(`/portfolio/${holding.id}`)}
-                              className="block w-12 h-12 rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            >
-                              <img
-                                src={holding.images[0]}
-                                alt={holding.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => navigate(`/portfolio/${holding.id}`)}
-                              className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            >
-                              <Scale className="w-5 h-5 text-gray-400" />
-                            </button>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <button
-                            onClick={() => navigate(`/portfolio/${holding.id}`)}
-                            className="text-left font-medium text-amber-900 hover:text-amber-600 hover:underline focus:outline-none"
-                          >
-                            {holding.name}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 capitalize">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${holding.metal_type === 'gold' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {holding.metal_type}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 capitalize">{holding.category}</td>
-                        <td className="py-3 px-4">{holding.quantity}</td>
-                        <td className="py-3 px-4">{details.fineOz.toFixed(3)}</td>
-                        <td className="py-3 px-4 font-bold">{formatCurrency(details.spotValueEUR)}</td>
-                        <td className="py-3 px-4">
-                          {holding.purchase_price ? formatCurrency(holding.purchase_price) : '—'}
-                        </td>
-                        <td className="py-3 px-4">
-                          {holding.purchase_price ? (
-                            <span className={`font-bold ${details.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {formatCurrency(details.pl)}
-                            </span>
-                          ) : '—'}
-                        </td>
-                        <td className="py-3 px-4">
-                          {holding.is_listed ? (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                              Listed
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">
-                              Private
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openEditModal(holding)}
-                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center text-sm"
-                            >
-                              <Edit className="w-3 h-3 mr-1" />
-                              Edit
-                            </button>
-                            {holding.is_listed ? (
-                              <button
-                                onClick={() => handleUnlistHolding(holding.id, holding.listing_id)}
-                                className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center text-sm"
-                              >
-                                <X className="w-3 h-3 mr-1" />
-                                Unlist
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => openListingModal(holding)}
-                                className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center text-sm"
-                              >
-                                <List className="w-3 h-3 mr-1" />
-                                List
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteHolding(holding.id)}
-                              className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center text-sm"
-                            >
-                              <X className="w-3 h-3 mr-1" />
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {getMetalSections(holdings, spotPrices).map((metalSection, sIdx) => {
+                const { section, holdings: sectionHoldings, subtotals } = metalSection;
+                const isExpanded = expandedSections[section.key] !== false;
+                return (
+                  <div key={section.key} className={`${sIdx > 0 ? 'mt-8' : ''} mb-6`}>
+                    {/* Section header */}
+                    <button
+                      onClick={() => toggleSection(section.key)}
+                      className="w-full flex items-center justify-between p-4 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors mb-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`inline-flex items-center justify-center w-10 h-10 rounded-full ${section.iconColor} text-white font-bold text-sm`}>
+                          {section.icon}
+                        </span>
+                        <h3 className="text-lg font-bold text-[#00A693]">{section.label}</h3>
+                        <span className="text-sm text-gray-500">({sectionHoldings.length})</span>
+                      </div>
+                      <ChevronDown
+                        className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {/* Section body */}
+                    {isExpanded && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b-2 border-amber-200">
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Image</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Name</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Metal</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Category</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Qty</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Fine Oz</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Spot Value</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Purchase Price</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">P&L</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Status</th>
+                              <th className="text-left py-3 px-4 text-amber-900 font-bold">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sectionHoldings.map((holding) => {
+                              const details = calculateHoldingDetails(holding);
+                              return (
+                                <tr key={holding.id} className="border-b border-amber-100 hover:bg-amber-50">
+                                  <td className="py-3 px-4">
+                                    {holding.images && holding.images.length > 0 ? (
+                                      <button
+                                        onClick={() => navigate(`/portfolio/${holding.id}`)}
+                                        className="block w-12 h-12 rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                      >
+                                        <img
+                                          src={holding.images[0]}
+                                          alt={holding.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => navigate(`/portfolio/${holding.id}`)}
+                                        className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                      >
+                                        <Scale className="w-5 h-5 text-gray-400" />
+                                      </button>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <button
+                                      onClick={() => navigate(`/portfolio/${holding.id}`)}
+                                      className="text-left font-medium text-amber-900 hover:text-amber-600 hover:underline focus:outline-none"
+                                    >
+                                      {holding.name}
+                                    </button>
+                                  </td>
+                                  <td className="py-3 px-4 capitalize">
+                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${holding.metal_type === 'gold' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-800'}`}>
+                                      {holding.metal_type}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4 capitalize">{holding.category}</td>
+                                  <td className="py-3 px-4">{holding.quantity}</td>
+                                  <td className="py-3 px-4">{details.fineOz.toFixed(3)}</td>
+                                  <td className="py-3 px-4 font-bold">{formatCurrency(details.spotValueEUR)}</td>
+                                  <td className="py-3 px-4">
+                                    {holding.purchase_price ? formatCurrency(holding.purchase_price) : '—'}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    {holding.purchase_price ? (
+                                      <span className={`font-bold ${details.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {formatCurrency(details.pl)}
+                                      </span>
+                                    ) : '—'}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    {holding.is_listed ? (
+                                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                                        Listed
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">
+                                        Private
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <div className="flex gap-2">
+                                      <button
+                                        onClick={() => openEditModal(holding)}
+                                        className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center text-sm"
+                                      >
+                                        <Edit className="w-3 h-3 mr-1" />
+                                        Edit
+                                      </button>
+                                      {holding.is_listed ? (
+                                        <button
+                                          onClick={() => handleUnlistHolding(holding.id, holding.listing_id)}
+                                          className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center text-sm"
+                                        >
+                                          <X className="w-3 h-3 mr-1" />
+                                          Unlist
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => openListingModal(holding)}
+                                          className="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center text-sm"
+                                        >
+                                          <List className="w-3 h-3 mr-1" />
+                                          List
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleDeleteHolding(holding.id)}
+                                        className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center text-sm"
+                                      >
+                                        <X className="w-3 h-3 mr-1" />
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {/* Subtotal row */}
+                            <tr className="bg-gray-100 font-bold">
+                              <td colSpan={5} className="py-3 px-4 text-right text-sm text-gray-700">Section Total</td>
+                              <td className="py-3 px-4 text-right">{subtotals.fineOz.toFixed(3)}</td>
+                              <td className="py-3 px-4 text-right">{formatCurrency(subtotals.spotValue)}</td>
+                              <td className="py-3 px-4 text-right">
+                                {subtotals.purchasePrice > 0 ? formatCurrency(subtotals.purchasePrice) : '—'}
+                              </td>
+                              <td className={`py-3 px-4 text-right ${subtotals.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {subtotals.purchasePrice > 0 ? formatCurrency(subtotals.pl) : '—'}
+                              </td>
+                              <td colSpan={2}></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
           )}
 
           {/* Spot Prices Info */}
