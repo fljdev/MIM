@@ -870,6 +870,34 @@ const Portfolio: React.FC = () => {
     setShowListingModal(true);
   };
 
+  // Handle delete holding
+  const handleDeleteHolding = async (holdingId: number) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    if (!window.confirm('Are you sure you want to delete this holding?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/holdings/${holdingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        setHoldings(prev => prev.filter(h => h.id !== holdingId));
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to delete holding');
+      }
+    } catch (err) {
+      console.error('Error deleting holding:', err);
+      setError('Failed to delete holding');
+    }
+  };
+
   // Handle listing form submission
   const handleListingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1695,6 +1723,13 @@ const Portfolio: React.FC = () => {
                                 List
                               </button>
                             )}
+                            <button
+                              onClick={() => handleDeleteHolding(holding.id)}
+                              className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center text-sm"
+                            >
+                              <X className="w-3 h-3 mr-1" />
+                              Delete
+                            </button>
                           </div>
                         </td>
                       </tr>
