@@ -146,25 +146,32 @@ interface MetalSectionData {
 // Metal section definitions for grouping holdings
 const METAL_SECTIONS: MetalSection[] = [
   {
-    key: 'gold_bullion',
-    label: 'Gold Bullion',
-    icon: 'Au',
-    iconColor: 'bg-amber-500',
-    match: (h) => h.metal_type === 'gold' && (h.subcategory || 'bullion') === 'bullion',
-  },
-  {
     key: 'gold_sovereigns',
     label: 'Gold Sovereigns',
     icon: 'Au',
     iconColor: 'bg-amber-500',
-    match: (h) => h.metal_type === 'gold' && (h.category === 'sovereign' || (h.category === 'coin' && (h.subcategory || '') === 'collectible')),
+    match: (h) => h.metal_type === 'gold' && h.category === 'sovereign' && !h.graded,
   },
   {
-    key: 'gold_jewellery',
-    label: 'Gold Jewellery',
+    key: 'graded_sovereigns',
+    label: 'Graded Sovereigns',
+    icon: 'Au',
+    iconColor: 'bg-amber-600',
+    match: (h) => h.metal_type === 'gold' && h.category === 'sovereign' && h.graded === true,
+  },
+  {
+    key: 'gold_coins',
+    label: 'Gold Coins',
     icon: 'Au',
     iconColor: 'bg-amber-500',
-    match: (h) => h.metal_type === 'gold' && (h.subcategory || '') === 'jewellery',
+    match: (h) => h.metal_type === 'gold' && h.category === 'coin',
+  },
+  {
+    key: 'gold_bars',
+    label: 'Gold Bars',
+    icon: 'Au',
+    iconColor: 'bg-amber-500',
+    match: (h) => h.metal_type === 'gold' && (h.category === 'bar' || h.category === 'round'),
   },
   {
     key: 'silver_bullion',
@@ -187,21 +194,19 @@ const METAL_SECTIONS: MetalSection[] = [
     iconColor: 'bg-gray-400',
     match: (h) => h.metal_type === 'silver' && (h.subcategory || '') === 'jewellery',
   },
-  // Other Metals — catch-all for anything not matched above
-  // Uses exact same logic as the six named sections above, hardcoded to avoid self-reference
   {
     key: 'other_metals',
     label: 'Other Metals',
     icon: 'M',
     iconColor: 'bg-teal-500',
     match: (h) => {
-      const isGoldBullion = h.metal_type === 'gold' && (h.subcategory || 'bullion') === 'bullion';
-      const isGoldSovereign = h.metal_type === 'gold' && (h.category === 'sovereign' || (h.category === 'coin' && (h.subcategory || '') === 'collectible'));
-      const isGoldJewellery = h.metal_type === 'gold' && (h.subcategory || '') === 'jewellery';
+      const isGoldSovereign = h.metal_type === 'gold' && h.category === 'sovereign';
+      const isGoldCoin = h.metal_type === 'gold' && h.category === 'coin';
+      const isGoldBar = h.metal_type === 'gold' && (h.category === 'bar' || h.category === 'round');
       const isSilverBullion = h.metal_type === 'silver' && (h.subcategory || 'bullion') === 'bullion';
-      const isSilverCoins = h.metal_type === 'silver' && h.category === 'coin' && (h.subcategory || '') === 'collectible';
+      const isSilverCoin = h.metal_type === 'silver' && h.category === 'coin' && (h.subcategory || '') === 'collectible';
       const isSilverJewellery = h.metal_type === 'silver' && (h.subcategory || '') === 'jewellery';
-      return !(isGoldBullion || isGoldSovereign || isGoldJewellery || isSilverBullion || isSilverCoins || isSilverJewellery);
+      return !(isGoldSovereign || isGoldCoin || isGoldBar || isSilverBullion || isSilverCoin || isSilverJewellery);
     },
   },
 ];
