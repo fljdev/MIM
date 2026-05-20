@@ -39,7 +39,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
 // Database connection - use DATABASE_URL from Railway environment
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://john:REDACTED@localhost:5432/mim',
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false }
 });
 
 // Make pool available to routes
