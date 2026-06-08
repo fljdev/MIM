@@ -1,53 +1,58 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import App from './App';
-import CreateMeetup from './features/meetup/pages/CreateMeetup';
-import MeetupCreated from './features/meetup/pages/MeetupCreated';
-import JoinMeetup from './features/meetup/pages/JoinMeetup';
-import MeetupLobby from './features/meetup/pages/MeetupLobby';
-import MeetupResults from './features/meetup/pages/MeetupResults';
-import MeetupConfirmed from './features/meetup/pages/MeetupConfirmed';
-import InvitationView from './features/meetup/pages/InvitationView';
-import JoinerPreferences from './features/meetup/pages/JoinerPreferences';
-import ChoiceSelectorPage from './features/landing/pages/ChoiceSelectorPage';
-import LoginPage from './features/auth/pages/LoginPage';
-import ProfileDashboard from './features/profile/pages/ProfileDashboard';
-import { useAuth } from './features/auth/contexts/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Portfolio from './pages/Portfolio';
+import AddHolding from './pages/AddHolding';
+import HoldingDetail from './pages/HoldingDetail';
+import Security from './pages/Security';
 
-// Import new accessibility components
-import AccessibilityProfileWizard from './features/accessibility/components/AccessibilityProfileWizard';
-import VenueDetailPage from './features/accessibility/pages/VenueDetailPage';
-import JourneyPlanner from './features/accessibility/pages/JourneyPlanner';
-import BrowseVenuesPage from './features/accessibility/pages/BrowseVenuesPage';
+const Navbar: React.FC = () => {
+  const token = localStorage.getItem('token');
+  const user = token ? JSON.parse(localStorage.getItem('user') || '{}') : null;
 
-// Import MiM Town components
-import MimTownDashboard from './features/mim-town/pages/MimTownDashboard';
-import BusinessProfileWizard from './features/mim-town/components/BusinessProfileWizard';
-import BrowseMaterialsPage from './features/mim-town/pages/BrowseMaterialsPage';
-import MaterialDetailPage from './features/mim-town/pages/MaterialDetailPage';
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
+  };
 
-// Import Navbar
-import Navbar from './components/Navbar';
-
-// Protected Route Component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading...</p>
+  return (
+    <nav className="bg-amber-800 text-white shadow-lg">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="text-xl font-bold hover:text-amber-200 transition">
+          Move into Money
+        </Link>
+        <div className="flex items-center gap-4">
+          {token && user ? (
+            <>
+              <Link to="/dashboard" className="hover:text-amber-200 transition">Dashboard</Link>
+              <Link to="/portfolio" className="hover:text-amber-200 transition">Portfolio</Link>
+              <Link to="/security" className="hover:text-amber-200 transition">Security</Link>
+              <span className="text-amber-300 text-sm">Hi, {user.name}</span>
+              <button onClick={handleLogout} className="px-3 py-1 bg-amber-700 rounded hover:bg-amber-600 transition text-sm">
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="hover:text-amber-200 transition">Sign In</Link>
+              <Link to="/register" className="px-3 py-1 bg-amber-600 rounded hover:bg-amber-500 transition text-sm">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
       </div>
-    );
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
+    </nav>
+  );
+};
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -56,39 +61,14 @@ const AppRouter: React.FC = () => {
     <Router>
       <Navbar />
       <Routes>
-        {/* Main accessibility landing page */}
-        <Route path="/" element={<ChoiceSelectorPage />} />
-
-        {/* Accessibility features */}
-        <Route path="/accessibility-profile" element={<ProtectedRoute><AccessibilityProfileWizard /></ProtectedRoute>} />
-        <Route path="/journey-planner" element={<ProtectedRoute><JourneyPlanner /></ProtectedRoute>} />
-        <Route path="/browse-venues" element={<BrowseVenuesPage />} />
-        <Route path="/venues/:id" element={<ProtectedRoute><VenueDetailPage /></ProtectedRoute>} />
-
-        {/* MiM Town - Circular Economy Platform */}
-        <Route path="/mim-town/dashboard" element={<ProtectedRoute><MimTownDashboard /></ProtectedRoute>} />
-        <Route path="/mim-town/business-profile" element={<ProtectedRoute><BusinessProfileWizard /></ProtectedRoute>} />
-        <Route path="/mim-town/materials" element={<BrowseMaterialsPage />} />
-        <Route path="/mim-town/materials/:id" element={<MaterialDetailPage />} />
-
-        {/* Login/Signup page */}
-        <Route path="/login" element={<LoginPage />} />
-
-        {/* Meetup flow routes */}
-        <Route path="/create-meetup" element={<CreateMeetup />} />
-        <Route path="/meetup/created" element={<MeetupCreated />} />
-        <Route path="/meetup/created/:code" element={<MeetupCreated />} />
-        <Route path="/join/:code" element={<JoinMeetup />} />
-        <Route path="/invite/:shareableCode" element={<InvitationView />} />
-        <Route path="/meetup/:id/preferences" element={<ProtectedRoute><JoinerPreferences /></ProtectedRoute>} />
-        <Route path="/meetup/:code/lobby" element={<ProtectedRoute><MeetupLobby /></ProtectedRoute>} />
-        <Route path="/meetup/:code/results" element={<ProtectedRoute><MeetupResults /></ProtectedRoute>} />
-        <Route path="/meetup/:code/confirmed" element={<ProtectedRoute><MeetupConfirmed /></ProtectedRoute>} />
-
-        {/* Profile route */}
-        <Route path="/profile" element={<ProtectedRoute><ProfileDashboard /></ProtectedRoute>} />
-
-        {/* Catch all - redirect to home */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+        <Route path="/add-holding" element={<ProtectedRoute><AddHolding /></ProtectedRoute>} />
+        <Route path="/holdings/:id" element={<ProtectedRoute><HoldingDetail /></ProtectedRoute>} />
+        <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
