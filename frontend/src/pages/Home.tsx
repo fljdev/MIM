@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../features/auth/contexts/AuthContext';
 
 const Home: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100">
       <div className="container mx-auto px-4 py-16">
@@ -13,18 +16,29 @@ const Home: React.FC = () => {
             Track your precious metals, crypto, and cash portfolio. Know what you own, what it's worth.
           </p>
           <div className="flex gap-4 justify-center">
-            <Link
-              to="/register"
-              className="px-8 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
-            >
-              Get Started
-            </Link>
-            <Link
-              to="/login"
-              className="px-8 py-3 bg-white text-amber-700 rounded-lg font-semibold border-2 border-amber-300 hover:bg-amber-50 transition"
-            >
-              Sign In
-            </Link>
+            {user ? (
+              <Link
+                to="/dashboard"
+                className="px-8 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+              >
+                Go to Your Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/register"
+                  className="px-8 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+                >
+                  Get Started
+                </Link>
+                <Link
+                  to="/login"
+                  className="px-8 py-3 bg-white text-amber-700 rounded-lg font-semibold border-2 border-amber-300 hover:bg-amber-50 transition"
+                >
+                  Sign In
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

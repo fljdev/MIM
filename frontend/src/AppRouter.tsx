@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -8,15 +8,15 @@ import Portfolio from './pages/Portfolio';
 import AddHolding from './pages/AddHolding';
 import HoldingDetail from './pages/HoldingDetail';
 import Security from './pages/Security';
+import { AuthProvider, useAuth } from './features/auth/contexts/AuthContext';
 
 const Navbar: React.FC = () => {
-  const token = localStorage.getItem('token');
-  const user = token ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const { user, isLoading, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/';
+    logout();
+    navigate('/');
   };
 
   return (
@@ -26,7 +26,9 @@ const Navbar: React.FC = () => {
           Move into Money
         </Link>
         <div className="flex items-center gap-4">
-          {token && user ? (
+          {isLoading ? (
+            <span className="text-amber-200 text-sm">Loading...</span>
+          ) : user ? (
             <>
               <Link to="/dashboard" className="hover:text-amber-200 transition">Dashboard</Link>
               <Link to="/portfolio" className="hover:text-amber-200 transition">Portfolio</Link>
@@ -56,9 +58,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const AppRouter: React.FC = () => {
+const AppRouterContent: React.FC = () => {
   return (
-    <Router>
+    <>
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -71,6 +73,16 @@ const AppRouter: React.FC = () => {
         <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+    </>
+  );
+};
+
+const AppRouter: React.FC = () => {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRouterContent />
+      </AuthProvider>
     </Router>
   );
 };
