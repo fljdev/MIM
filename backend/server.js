@@ -34,7 +34,7 @@ app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/meetup-time-suggestions', meetupTimeSuggestionsRouter);
 
 // JWT Secret - use environment variable in production, fallback for development
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Database connection - use DATABASE_URL from Railway environment
 const pool = new Pool({

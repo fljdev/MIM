@@ -17,7 +17,7 @@ const {
 } = require('../data/mocks/mockCarbonData');
 
 // JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
  * Authentication middleware - verifies JWT token

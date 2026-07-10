@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 console.log('Accessibility Profile router loaded');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Helper function to ensure array fields are properly serialized
 const ensureArray = (value) => {

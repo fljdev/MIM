@@ -1,4 +1,3 @@
-# MIM
 # MiM Town — Materials in Motion
 
 **Live at [mim.town](https://mim.town)**

@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 console.log('Accessible Venues router loaded');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Authentication middleware (for admin endpoints)
 const authenticateAdminToken = (req, res, next) => {

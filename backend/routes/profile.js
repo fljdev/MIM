@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 console.log('Profile router loaded');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Authentication middleware (same as savedLocations.js)
 const authenticateToken = (req, res, next) => {

@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 console.log('Venues router loaded (with accessibility)');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'REDACTED';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Authentication middleware (optional for some endpoints)
 const authenticateToken = (req, res, next) => {
