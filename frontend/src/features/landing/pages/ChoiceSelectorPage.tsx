@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
+import heroImage from '../../../assets/hero-metals.jpg';
 
 const ChoiceSelectorPage: React.FC = () => {
   const { user } = useAuth();
@@ -21,8 +22,8 @@ const ChoiceSelectorPage: React.FC = () => {
         {/* Hero Image */}
         <div className="flex-1 order-1 lg:order-1">
           <img
-            src="/MoveIntoMoney.jpg"
-            alt="Move into Money — MiM"
+            src={heroImage}
+            alt="Gold bar and gold and silver coins on a teal surface."
             className="w-full h-auto rounded-2xl shadow-2xl"
           />
         </div>
@@ -30,10 +31,10 @@ const ChoiceSelectorPage: React.FC = () => {
         {/* Text Content */}
         <div className="flex-1 text-center lg:text-left order-2 lg:order-2">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-            The euro loses value every year. Gold doesn't.
+            Track, value, and trade your precious metals.
           </h1>
           <p className="text-lg md:text-xl text-white/90 font-light mb-8 leading-relaxed">
-            Track, value, and trade precious metals — built for Ireland and Europe. Know exactly what your stack is worth. Buy, sell, and connect with real buyers, all in one place.
+            A personal portfolio tracker and peer-to-peer marketplace — live EUR pricing, accurate valuations, and full control of your data.
           </p>
           <button
             onClick={handleCTA}
