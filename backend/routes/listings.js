@@ -156,6 +156,111 @@ router.post('/', authenticateToken, async (req, res) => {
   }
 });
 
+// PUT /api/listings/:id - Update a listing (protected)
+router.put('/:id', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+  const listingId = req.params.id;
+  const {
+    asking_price,
+    price_type,
+    spot_premium,
+    location_county,
+    postage_offered,
+    visible_to
+  } = req.body;
+
+  // Validate price_type enum if provided
+  const validPriceTypes = ['fixed', 'spot_plus', 'offers'];
+  if (price_type && !validPriceTypes.includes(price_type)) {
+    return res.status(400).json({ 
+      error: `Invalid price_type. Must be one of: ${validPriceTypes.join(', ')}` 
+    });
+  }
+
+  // Validate visible_to enum if provided
+  const validVisibleTo = ['all', 'verified_only'];
+  if (visible_to && !validVisibleTo.includes(visible_to)) {
+    return res.status(400).json({ 
+      error: `Invalid visible_to. Must be one of: ${validVisibleTo.join(', ')}` 
+    });
+  }
+
+  try {
+    // Start transaction
+    await pool.query('BEGIN');
+
+    // 1. Confirm listing belongs to authenticated user
+    const listingCheck = await pool.query(
+      'SELECT * FROM listings WHERE id = $1 AND user_id = $2',
+      [listingId, userId]
+    );
+
+    if (listingCheck.rows.length === 0) {
+      await pool.query('ROLLBACK');
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    const listing = listingCheck.rows[0];
+
+    // 2. Only allow editing active listings
+    if (listing.status !== 'active') {
+      await pool.query('ROLLBACK');
+      return res.status(400).json({ error: 'Only active listings can be edited' });
+    }
+
+    // 3. Update listing fields (listing-only — no holdings fields touched)
+    const updateResult = await pool.query(`
+      UPDATE listings SET
+        asking_price = COALESCE($1, asking_price),
+        price_type = COALESCE($2, price_type),
+        spot_premium = $3,
+        location_county = COALESCE($4, location_county),
+        postage_offered = COALESCE($5, postage_offered),
+        visible_to = COALESCE($6, visible_to),
+        updated_at = NOW()
+      WHERE id = $7
+      RETURNING *
+    `, [
+      asking_price ?? listing.asking_price,
+      price_type || listing.price_type,
+      spot_premium !== undefined ? spot_premium : listing.spot_premium,
+      location_county ?? listing.location_county,
+      postage_offered !== undefined ? postage_offered : listing.postage_offered,
+      visible_to || listing.visible_to,
+      listingId
+    ]);
+
+    const updatedListing = updateResult.rows[0];
+
+    // 4. Get the joined data with holding details
+    const joinedResult = await pool.query(`
+      SELECT 
+        l.*,
+        h.metal_type,
+        h.category,
+        h.name as holding_name,
+        h.quantity,
+        h.weight_grams,
+        h.purity,
+        h.graded,
+        h.grade_cert,
+        h.notes as holding_notes
+      FROM listings l
+      JOIN holdings h ON l.holding_id = h.id
+      WHERE l.id = $1
+    `, [updatedListing.id]);
+
+    await pool.query('COMMIT');
+
+    res.json(joinedResult.rows[0]);
+  } catch (error) {
+    await pool.query('ROLLBACK');
+    console.error('Error updating listing:', error);
+    res.status(500).json({ error: 'Failed to update listing' });
+  }
+});
+
 // DELETE /api/listings/:id - Withdraw a listing (protected)
 router.delete('/:id', authenticateToken, async (req, res) => {
   const pool = req.app.locals.pool;
@@ -168,24 +273,46 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     // 1. Confirm listing belongs to authenticated user and get holding_id
     const listingCheck = await pool.query(
-      'SELECT id, holding_id FROM listings WHERE id = $1 AND user_id = $2',
+      'SELECT id, holding_id, status FROM listings WHERE id = $1 AND user_id = $2',
       [listingId, userId]
     );
 
     if (listingCheck.rows.length === 0) {
       await pool.query('ROLLBACK');
-      return res.status(403).json({ error: 'Listing not found or does not belong to user' });
+      return res.status(404).json({ error: 'Listing not found or does not belong to user' });
     }
 
     const listing = listingCheck.rows[0];
 
-    // 2. Update listings set status = 'withdrawn'
+    // 2. Belt-and-braces: reject if listing status is 'under_offer' (state machine guard)
+    if (listing.status === 'under_offer') {
+      await pool.query('ROLLBACK');
+      return res.status(409).json({ 
+        error: 'Cannot delete listing that is under offer. Decline or complete the active offer first.' 
+      });
+    }
+
+    // 3. Also check for pending/accepted transaction records
+    const activeTxCheck = await pool.query(`
+      SELECT id FROM transactions 
+      WHERE listing_id = $1 AND status IN ('pending', 'accepted')
+      LIMIT 1
+    `, [listingId]);
+
+    if (activeTxCheck.rows.length > 0) {
+      await pool.query('ROLLBACK');
+      return res.status(409).json({ 
+        error: 'Cannot delete listing with active offers. Decline or resolve all pending offers first.' 
+      });
+    }
+
+    // 4. Update listings set status = 'withdrawn'
     await pool.query(
       "UPDATE listings SET status = 'withdrawn', updated_at = NOW() WHERE id = $1",
       [listingId]
     );
 
-    // 3. Update holdings set is_listed = false
+    // 5. Update holdings set is_listed = false
     await pool.query(
       'UPDATE holdings SET is_listed = false, updated_at = NOW() WHERE id = $1',
       [listing.holding_id]
