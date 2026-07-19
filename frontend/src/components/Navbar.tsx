@@ -3,6 +3,8 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../features/auth/contexts/AuthContext';
 import { API_BASE_URL } from '../Config';
 
+const OZ_TO_GRAM = 31.1035;
+
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -10,6 +12,7 @@ const Navbar: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [hasAccessibilityProfile, setHasAccessibilityProfile] = useState<boolean | null>(null);
   const [checkingAccessibility, setCheckingAccessibility] = useState(false);
+  const [unit, setUnit] = useState<'oz' | 'g'>('oz');
   const [prices, setPrices] = useState<{ gold: number | null; silver: number | null; loading: boolean; error: boolean }>({
     gold: null,
     silver: null,
@@ -28,6 +31,14 @@ const Navbar: React.FC = () => {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Restore unit preference from localStorage on mount
+  useEffect(() => {
+    const savedUnit = localStorage.getItem('mim_price_unit');
+    if (savedUnit === 'oz' || savedUnit === 'g') {
+      setUnit(savedUnit);
+    }
   }, []);
 
   // Check accessibility profile when user is authenticated
@@ -104,6 +115,20 @@ const Navbar: React.FC = () => {
     
     return () => clearInterval(intervalId);
   }, []);
+
+  const toggleUnit = () => {
+    const newUnit = unit === 'oz' ? 'g' : 'oz';
+    setUnit(newUnit);
+    localStorage.setItem('mim_price_unit', newUnit);
+  };
+
+  const formatPrice = (price: number | null): string => {
+    if (price === null) return '—';
+    if (unit === 'oz') {
+      return `€${Math.round(price).toLocaleString()}`;
+    }
+    return `€${(price / OZ_TO_GRAM).toFixed(2)}/g`;
+  };
 
   const handleLogout = () => {
     logout();
@@ -220,18 +245,18 @@ const Navbar: React.FC = () => {
             ) : prices.error ? (
               <div className="text-xs text-red-500">Price error</div>
             ) : (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 cursor-pointer" onClick={toggleUnit} title="Click to toggle per oz / per gram">
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-bold text-amber-700">Au</span>
                   <span className="text-sm font-bold text-amber-900">
-                    €{prices.gold ? Math.round(prices.gold).toLocaleString() : '—'}
+                    {formatPrice(prices.gold)}
                   </span>
                 </div>
                 <div className="h-4 w-px bg-gray-300"></div>
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-bold text-gray-600">Ag</span>
                   <span className="text-sm font-bold text-gray-800">
-                    €{prices.silver ? Math.round(prices.silver).toLocaleString() : '—'}
+                    {formatPrice(prices.silver)}
                   </span>
                 </div>
               </div>
