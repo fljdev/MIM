@@ -33,6 +33,9 @@ import HoldingDetail from './pages/HoldingDetail';
 // Import Marketplace
 import Marketplace from './pages/Marketplace';
 
+// Import Gallery
+import GalleryPage from './features/gallery/pages/GalleryPage';
+
 // Import SecurityPage
 import SecurityPage from './pages/SecurityPage';
 
@@ -102,6 +105,9 @@ const AppRouter: React.FC = () => {
 
         {/* Marketplace route - public */}
         <Route path="/marketplace" element={<Marketplace />} />
+
+        {/* Gallery route - protected */}
+        <Route path="/gallery" element={<ProtectedRoute><GalleryPage /></ProtectedRoute>} />
 
         {/* Security page */}
         <Route path="/security" element={<SecurityPage />} />

@@ -153,6 +153,40 @@ console.log('Registering crypto routes at /api/crypto');
 app.use('/api/crypto', cryptoRouter);
 console.log('Crypto routes registered');
 
+// Gallery route (uses jwt and JWT_SECRET declared earlier in this file)
+const galleryAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  try {
+    req.user = jwt.verify(authHeader.substring(7), JWT_SECRET);
+    next();
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') return res.status(401).json({ error: 'Invalid token' });
+    if (error.name === 'TokenExpiredError') return res.status(401).json({ error: 'Token expired' });
+    return res.status(500).json({ error: 'Authentication failed' });
+  }
+};
+
+// GET /api/gallery - Return all gallery holdings across all users
+app.get('/api/gallery', galleryAuth, async (req, res) => {
+  try {
+    const pool = req.app.locals.pool;
+    const result = await pool.query(`
+      SELECT id, user_id, metal_type, category, name, quantity,
+             weight_grams, purity, notes, images, grade_cert, graded, subcategory
+      FROM holdings
+      WHERE in_gallery = true
+      ORDER BY metal_type ASC, name ASC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching gallery holdings:', error);
+    res.status(500).json({ error: 'Failed to fetch gallery holdings' });
+  }
+});
+
 // Mock transport services endpoint for journey planner
 app.get('/api/transport-services', (req, res) => {
   const mockTransportServices = [

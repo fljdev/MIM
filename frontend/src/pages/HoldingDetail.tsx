@@ -25,6 +25,7 @@ interface Holding {
   notes: string | null;
   images: string[];
   is_listed: boolean;
+  in_gallery: boolean;
   created_at: string;
   updated_at: string;
   listing_id?: number;
@@ -407,8 +408,61 @@ const HoldingDetail: React.FC = () => {
                 </div>
               )}
 
+              {/* Gallery Actions */}
+              <div className="border-t border-amber-200 pt-4 mb-4">
+                {holding.in_gallery ? (
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      try {
+                        const res = await fetch(`${API_BASE_URL}/api/holdings/${holding.id}/ungallery`, {
+                          method: 'PATCH',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                        });
+                        if (res.ok) {
+                          setHolding(prev => prev ? { ...prev, in_gallery: false } : prev);
+                        }
+                      } catch (err) {
+                        console.error('Error removing from gallery:', err);
+                      }
+                    }}
+                    className="w-full px-6 py-2.5 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300 transition-colors flex items-center justify-center"
+                  >
+                    Remove from Gallery
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('token');
+                      if (!token) return;
+                      try {
+                        const res = await fetch(`${API_BASE_URL}/api/holdings/${holding.id}/gallery`, {
+                          method: 'PATCH',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                          },
+                        });
+                        if (res.ok) {
+                          setHolding(prev => prev ? { ...prev, in_gallery: true } : prev);
+                        }
+                      } catch (err) {
+                        console.error('Error adding to gallery:', err);
+                      }
+                    }}
+                    className="w-full px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all flex items-center justify-center"
+                  >
+                    Add to Gallery
+                  </button>
+                )}
+              </div>
+
               {/* Actions */}
-              <div className="border-t border-amber-200 pt-6 flex flex-col sm:flex-row gap-3">
+              <div className="border-t border-amber-200 pt-4 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => navigate('/portfolio')}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-bold rounded-xl hover:from-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"

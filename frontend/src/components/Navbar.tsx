@@ -223,6 +223,18 @@ const Navbar: React.FC = () => {
             >
               Marketplace
             </Link>
+            {user && (
+              <Link
+                to="/gallery"
+                className={`font-medium transition-colors ${
+                  isActive('/gallery')
+                    ? 'text-brand-turquoise'
+                    : 'text-gray-600 hover:text-brand-turquoise'
+                }`}
+              >
+                Gallery
+              </Link>
+            )}
             <Link
               to="/security"
               className={`font-medium transition-colors ${

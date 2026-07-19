@@ -44,7 +44,7 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        h.id,h.user_id,h.metal_type,h.category,h.name,h.quantity,h.weight_grams,h.purity,h.purchase_price,h.purchase_date,h.graded,h.grade_cert,h.notes,h.is_listed,h.images,h.created_at,h.updated_at,
+        h.id,h.user_id,h.metal_type,h.category,h.name,h.quantity,h.weight_grams,h.purity,h.purchase_price,h.purchase_date,h.graded,h.grade_cert,h.notes,h.is_listed,h.images,h.in_gallery,h.created_at,h.updated_at,
         l.id as listing_id,
         l.asking_price,
         l.price_type,
@@ -73,6 +73,7 @@ router.get('/', authenticateToken, async (req, res) => {
         notes: row.notes,
         images: row.images || [],
         is_listed: row.is_listed,
+        in_gallery: row.in_gallery || false,
         created_at: row.created_at,
         updated_at: row.updated_at
       };
@@ -351,6 +352,56 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting holding:', error);
     res.status(500).json({ error: 'Failed to delete holding' });
+  }
+});
+
+// PATCH /api/holdings/:id/gallery - Add a holding to the gallery
+router.patch('/:id/gallery', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+  const holdingId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `UPDATE holdings SET in_gallery = true, updated_at = NOW()
+       WHERE id = $1 AND user_id = $2
+       RETURNING *`,
+      [holdingId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Holding not found or unauthorized' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error adding holding to gallery:', error);
+    res.status(500).json({ error: 'Failed to add holding to gallery' });
+  }
+});
+
+// PATCH /api/holdings/:id/ungallery - Remove a holding from the gallery
+router.patch('/:id/ungallery', authenticateToken, async (req, res) => {
+  const pool = req.app.locals.pool;
+  const userId = req.user.userId;
+  const holdingId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `UPDATE holdings SET in_gallery = false, updated_at = NOW()
+       WHERE id = $1 AND user_id = $2
+       RETURNING *`,
+      [holdingId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Holding not found or unauthorized' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error removing holding from gallery:', error);
+    res.status(500).json({ error: 'Failed to remove holding from gallery' });
   }
 });
 
