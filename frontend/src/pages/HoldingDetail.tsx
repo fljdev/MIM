@@ -14,6 +14,7 @@ interface Holding {
   user_id: number;
   metal_type: 'gold' | 'silver' | 'platinum' | 'palladium';
   category: string;
+  subcategory?: string;
   name: string;
   quantity: number;
   weight_grams: number;
@@ -396,9 +397,13 @@ const HoldingDetail: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-xs opacity-90 uppercase tracking-wider">P&L</p>
-                        <p className={`text-xl font-bold ${details.pl >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                          {details.purchasePrice > 0 ? formatCurrency(details.pl) : '—'}
-                        </p>
+                        {holding.subcategory === 'numismatic' ? (
+                          <p className="text-xl font-bold text-gray-300">Numismatic</p>
+                        ) : (
+                          <p className={`text-xl font-bold ${details.pl >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                            {details.purchasePrice > 0 ? formatCurrency(details.pl) : '—'}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -221,11 +221,12 @@ function getMetalSections(holdings: Holding[], spotPrices: SpotPrices | null): M
       const spotPrice = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
       const spotValue = fineOz * spotPrice;
       const purchasePrice = Number(h.purchase_price) || 0;
+      const pl = h.subcategory === 'numismatic' ? 0 : (spotValue - purchasePrice);
       return {
         fineOz: acc.fineOz + fineOz,
         spotValue: acc.spotValue + spotValue,
         purchasePrice: acc.purchasePrice + purchasePrice,
-        pl: acc.pl + (spotValue - purchasePrice),
+        pl: acc.pl + pl,
       };
     }, { fineOz: 0, spotValue: 0, purchasePrice: 0, pl: 0 });
     return { section, holdings: sectionHoldings, subtotals };
@@ -1842,7 +1843,10 @@ const Portfolio: React.FC = () => {
                                     {holding.purchase_price ? formatCurrency(holding.purchase_price) : '—'}
                                   </td>
                                   <td className="py-3 px-4">
-                                    {holding.purchase_price ? (
+                                    {(() => { console.log('holding subcategory:', holding.subcategory, 'name:', holding.name); return null; })()}
+                                    {holding.subcategory === 'numismatic' ? (
+                                      <span className="text-gray-400 font-medium">Numismatic</span>
+                                    ) : holding.purchase_price ? (
                                       <span className={`font-bold ${details.pl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         {formatCurrency(details.pl)}
                                       </span>
