@@ -198,8 +198,9 @@ const CryptoSection: React.FC<CryptoSectionProps> = ({ onTotalChange }) => {
       currency: 'EUR',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(Number(amount.toFixed(2)));
+    }).format(Number(Number(amount).toFixed(2)));
   };
+
 
   // Handle coin selection change (populate symbol + name)
   const handleCoinChange = (

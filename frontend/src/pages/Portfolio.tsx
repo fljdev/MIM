@@ -217,10 +217,10 @@ function getMetalSections(holdings: Holding[], spotPrices: SpotPrices | null): M
     const sectionHoldings = holdings.filter(section.match);
     if (sectionHoldings.length === 0) return null;
     const subtotals = sectionHoldings.reduce((acc, h) => {
-      const fineOz = (h.weight_grams * h.purity) / 31.1035;
+      const fineOz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035;
       const spotPrice = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
       const spotValue = fineOz * spotPrice;
-      const purchasePrice = h.purchase_price || 0;
+      const purchasePrice = Number(h.purchase_price) || 0;
       return {
         fineOz: acc.fineOz + fineOz,
         spotValue: acc.spotValue + spotValue,
@@ -720,12 +720,12 @@ const Portfolio: React.FC = () => {
 
   // Calculate holding details
   const calculateHoldingDetails = (holding: Holding) => {
-    const fineOz = (holding.weight_grams * holding.purity) / 31.1035;
+    const fineOz = (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035;
     const spotPrice = holding.metal_type === 'gold' 
       ? (spotPrices?.gold || 0) 
       : (spotPrices?.silver || 0);
     const spotValueEUR = fineOz * spotPrice;
-    const purchasePrice = holding.purchase_price || 0;
+    const purchasePrice = Number(holding.purchase_price) || 0;
     const pl = spotValueEUR - purchasePrice;
 
     return {
@@ -744,7 +744,7 @@ const Portfolio: React.FC = () => {
       currency: 'EUR',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(Number(amount.toFixed(2)));
+    }).format(Number(amount));
   };
 
   // Handle add file selection for pending images
@@ -1111,7 +1111,7 @@ const Portfolio: React.FC = () => {
 
   // Calculate fine oz for a holding
   const calculateFineOz = (holding: Holding) => {
-    return (holding.weight_grams * holding.purity) / 31.1035;
+    return (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035;
   };
 
   // Calculate spot plus price
@@ -1567,14 +1567,14 @@ const Portfolio: React.FC = () => {
               <div className="mb-3">
                 <div className="flex justify-between items-center font-bold text-base">
                   <span>Gold</span>
-                  <span>{holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0).toFixed(3)} oz</span>
-                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + ((h.weight_grams * h.purity) / 31.1035) * (spotPrices?.gold || 0), 0))}</span>
+                  <span>{holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0).toFixed(3)} oz</span>
+                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + ((Number(h.weight_grams) * Number(h.purity)) / 31.1035) * (spotPrices?.gold || 0), 0))}</span>
                 </div>
                 {/* Gold subcategories */}
                 {['bullion', 'collectible', 'jewellery'].map(sub => {
                   const subHoldings = holdings.filter(h => h.metal_type === 'gold' && (h.subcategory || 'bullion') === sub);
                   if (subHoldings.length === 0) return null;
-                  const subOz = subHoldings.reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0);
+                  const subOz = subHoldings.reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0);
                   const subVal = subOz * (spotPrices?.gold || 0);
                   return (
                     <div key={sub} className="flex justify-between text-sm opacity-80 ml-4 mt-1">
@@ -1589,14 +1589,14 @@ const Portfolio: React.FC = () => {
               <div className="mb-3">
                 <div className="flex justify-between items-center font-bold text-base">
                   <span>Silver</span>
-                  <span>{holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0).toFixed(3)} oz</span>
-                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + ((h.weight_grams * h.purity) / 31.1035) * (spotPrices?.silver || 0), 0))}</span>
+                  <span>{holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0).toFixed(3)} oz</span>
+                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + ((Number(h.weight_grams) * Number(h.purity)) / 31.1035) * (spotPrices?.silver || 0), 0))}</span>
                 </div>
                 {/* Silver subcategories */}
                 {['bullion', 'collectible', 'jewellery'].map(sub => {
                   const subHoldings = holdings.filter(h => h.metal_type === 'silver' && (h.subcategory || 'bullion') === sub);
                   if (subHoldings.length === 0) return null;
-                  const subOz = subHoldings.reduce((sum, h) => sum + (h.weight_grams * h.purity) / 31.1035, 0);
+                  const subOz = subHoldings.reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0);
                   const subVal = subOz * (spotPrices?.silver || 0);
                   return (
                     <div key={sub} className="flex justify-between text-sm opacity-80 ml-4 mt-1">
@@ -1612,7 +1612,7 @@ const Portfolio: React.FC = () => {
                 <span>Precious Metals Total</span>
                 <span>{formatCurrency(
                   holdings.filter(h => h.metal_type === 'gold' || h.metal_type === 'silver').reduce((sum, h) => {
-                    const oz = (h.weight_grams * h.purity) / 31.1035;
+                    const oz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035;
                     const price = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
                     return sum + oz * price;
                   }, 0)
@@ -1625,6 +1625,7 @@ const Portfolio: React.FC = () => {
               <h3 className="text-xl font-bold mb-4 flex items-center">
                 <svg className="mr-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                 Books
+
               </h3>
               {books.length === 0 ? (
                 <p className="text-white/70 italic">— No books added yet —</p>
@@ -1704,11 +1705,12 @@ const Portfolio: React.FC = () => {
                   {formatCurrency(
                     // Precious metals EUR value
                     holdings.filter(h => h.metal_type === 'gold' || h.metal_type === 'silver').reduce((sum, h) => {
-                      const oz = (h.weight_grams * h.purity) / 31.1035;
+                      const oz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035;
                       const price = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
                       return sum + oz * price;
                     }, 0)
                     // Books estimated value
+
                     + books.reduce((sum: number, b: any) => sum + (parseFloat(b.estimated_value_eur) || 0), 0)
                     // Net cash position
                     + cashHoldings.reduce((sum: number, c: any) => {

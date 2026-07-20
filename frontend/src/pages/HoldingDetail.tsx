@@ -140,8 +140,9 @@ const HoldingDetail: React.FC = () => {
       currency: 'EUR',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(Number(amount.toFixed(2)));
+    }).format(Number(Number(amount).toFixed(2)));
   };
+
 
   const details = calculateHoldingDetails();
   const images = holding?.images || [];
