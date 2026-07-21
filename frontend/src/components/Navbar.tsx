@@ -19,13 +19,18 @@ const Navbar: React.FC = () => {
     loading: true,
     error: false
   });
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setShowMobileMenu(false);
       }
     };
 
@@ -159,8 +164,8 @@ const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* Center: Navigation Links */}
-          <div className="flex items-center gap-6">
+          {/* Center: Navigation Links — hidden on mobile, shown on md+ */}
+          <div className="hidden md:flex items-center gap-6">
             <Link
               to="/"
               className={`font-medium transition-colors ${
@@ -260,20 +265,35 @@ const Navbar: React.FC = () => {
               <div className="flex items-center gap-4 cursor-pointer" onClick={toggleUnit} title="Click to toggle per oz / per gram">
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-bold text-amber-700">Au</span>
-                  <span className="text-sm font-bold text-amber-900">
+                  <span className="text-xs md:text-sm font-bold text-amber-900">
                     {formatPrice(prices.gold)}
                   </span>
                 </div>
                 <div className="h-4 w-px bg-gray-300"></div>
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-bold text-gray-600">Ag</span>
-                  <span className="text-sm font-bold text-gray-800">
+                  <span className="text-xs md:text-sm font-bold text-gray-800">
                     {formatPrice(prices.silver)}
                   </span>
                 </div>
               </div>
             )}
           </div>
+
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Toggle navigation menu"
+          >
+            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {showMobileMenu ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
 
           {/* Right: Auth State */}
           <div className="relative" ref={menuRef}>
@@ -365,6 +385,82 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Dropdown */}
+      {showMobileMenu && (
+        <div ref={mobileMenuRef} className="md:hidden border-t border-gray-200 bg-white shadow-lg">
+          <div className="container mx-auto px-4 py-3 space-y-1">
+            <Link
+              to="/"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
+                isActive('/')
+                  ? 'text-brand-turquoise bg-brand-turquoise/5'
+                  : 'text-gray-700 hover:text-brand-turquoise hover:bg-gray-50'
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/valuation"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
+                isActive('/valuation')
+                  ? 'text-brand-turquoise bg-brand-turquoise/5'
+                  : 'text-gray-700 hover:text-brand-turquoise hover:bg-gray-50'
+              }`}
+            >
+              Valuation
+            </Link>
+            <Link
+              to="/portfolio"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
+                isActive('/portfolio')
+                  ? 'text-brand-turquoise bg-brand-turquoise/5'
+                  : 'text-gray-700 hover:text-brand-turquoise hover:bg-gray-50'
+              }`}
+            >
+              Portfolio
+            </Link>
+            <Link
+              to="/marketplace"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
+                isActive('/marketplace')
+                  ? 'text-brand-turquoise bg-brand-turquoise/5'
+                  : 'text-gray-700 hover:text-brand-turquoise hover:bg-gray-50'
+              }`}
+            >
+              Marketplace
+            </Link>
+            {user && (
+              <Link
+                to="/gallery"
+                onClick={() => setShowMobileMenu(false)}
+                className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
+                  isActive('/gallery')
+                    ? 'text-brand-turquoise bg-brand-turquoise/5'
+                    : 'text-gray-700 hover:text-brand-turquoise hover:bg-gray-50'
+                }`}
+              >
+                Gallery
+              </Link>
+            )}
+            <Link
+              to="/security"
+              onClick={() => setShowMobileMenu(false)}
+              className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
+                isActive('/security')
+                  ? 'text-brand-turquoise bg-brand-turquoise/5'
+                  : 'text-gray-700 hover:text-brand-turquoise hover:bg-gray-50'
+              }`}
+            >
+              Security
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
