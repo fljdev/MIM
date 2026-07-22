@@ -217,7 +217,7 @@ function getMetalSections(holdings: Holding[], spotPrices: SpotPrices | null): M
     const sectionHoldings = holdings.filter(section.match);
     if (sectionHoldings.length === 0) return null;
     const subtotals = sectionHoldings.reduce((acc, h) => {
-      const fineOz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035;
+      const fineOz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035 * Number(h.quantity);
       const spotPrice = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
       const spotValue = fineOz * spotPrice;
       const purchasePrice = Number(h.purchase_price) || 0;
@@ -721,7 +721,7 @@ const Portfolio: React.FC = () => {
 
   // Calculate holding details
   const calculateHoldingDetails = (holding: Holding) => {
-    const fineOz = (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035;
+    const fineOz = (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035 * Number(holding.quantity);
     const spotPrice = holding.metal_type === 'gold' 
       ? (spotPrices?.gold || 0) 
       : (spotPrices?.silver || 0);
@@ -1112,7 +1112,7 @@ const Portfolio: React.FC = () => {
 
   // Calculate fine oz for a holding
   const calculateFineOz = (holding: Holding) => {
-    return (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035;
+    return (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035 * Number(holding.quantity);
   };
 
   // Calculate spot plus price
@@ -1568,14 +1568,14 @@ const Portfolio: React.FC = () => {
               <div className="mb-3">
                 <div className="flex justify-between items-center font-bold text-base">
                   <span>Gold</span>
-                  <span>{holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0).toFixed(3)} oz</span>
-                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + ((Number(h.weight_grams) * Number(h.purity)) / 31.1035) * (spotPrices?.gold || 0), 0))}</span>
+                  <span>{holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035 * Number(h.quantity), 0).toFixed(3)} oz</span>
+                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'gold').reduce((sum, h) => sum + ((Number(h.weight_grams) * Number(h.purity)) / 31.1035) * Number(h.quantity) * (spotPrices?.gold || 0), 0))}</span>
                 </div>
                 {/* Gold subcategories */}
                 {['bullion', 'collectible', 'jewellery'].map(sub => {
                   const subHoldings = holdings.filter(h => h.metal_type === 'gold' && (h.subcategory || 'bullion') === sub);
                   if (subHoldings.length === 0) return null;
-                  const subOz = subHoldings.reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0);
+                  const subOz = subHoldings.reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035 * Number(h.quantity), 0);
                   const subVal = subOz * (spotPrices?.gold || 0);
                   return (
                     <div key={sub} className="flex justify-between text-sm opacity-80 ml-4 mt-1">
@@ -1590,14 +1590,14 @@ const Portfolio: React.FC = () => {
               <div className="mb-3">
                 <div className="flex justify-between items-center font-bold text-base">
                   <span>Silver</span>
-                  <span>{holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0).toFixed(3)} oz</span>
-                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + ((Number(h.weight_grams) * Number(h.purity)) / 31.1035) * (spotPrices?.silver || 0), 0))}</span>
+                  <span>{holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035 * Number(h.quantity), 0).toFixed(3)} oz</span>
+                  <span>{formatCurrency(holdings.filter(h => h.metal_type === 'silver').reduce((sum, h) => sum + ((Number(h.weight_grams) * Number(h.purity)) / 31.1035) * Number(h.quantity) * (spotPrices?.silver || 0), 0))}</span>
                 </div>
                 {/* Silver subcategories */}
                 {['bullion', 'collectible', 'jewellery'].map(sub => {
                   const subHoldings = holdings.filter(h => h.metal_type === 'silver' && (h.subcategory || 'bullion') === sub);
                   if (subHoldings.length === 0) return null;
-                  const subOz = subHoldings.reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035, 0);
+                  const subOz = subHoldings.reduce((sum, h) => sum + (Number(h.weight_grams) * Number(h.purity)) / 31.1035 * Number(h.quantity), 0);
                   const subVal = subOz * (spotPrices?.silver || 0);
                   return (
                     <div key={sub} className="flex justify-between text-sm opacity-80 ml-4 mt-1">
@@ -1613,7 +1613,7 @@ const Portfolio: React.FC = () => {
                 <span>Precious Metals Total</span>
                 <span>{formatCurrency(
                   holdings.filter(h => h.metal_type === 'gold' || h.metal_type === 'silver').reduce((sum, h) => {
-                    const oz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035;
+                    const oz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035 * Number(h.quantity);
                     const price = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
                     return sum + oz * price;
                   }, 0)
@@ -1706,7 +1706,7 @@ const Portfolio: React.FC = () => {
                   {formatCurrency(
                     // Precious metals EUR value
                     holdings.filter(h => h.metal_type === 'gold' || h.metal_type === 'silver').reduce((sum, h) => {
-                      const oz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035;
+                      const oz = (Number(h.weight_grams) * Number(h.purity)) / 31.1035 * Number(h.quantity);
                       const price = h.metal_type === 'gold' ? (spotPrices?.gold || 0) : (spotPrices?.silver || 0);
                       return sum + oz * price;
                     }, 0)

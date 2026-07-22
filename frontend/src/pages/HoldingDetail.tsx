@@ -121,7 +121,7 @@ const HoldingDetail: React.FC = () => {
   const calculateHoldingDetails = () => {
     if (!holding || !spotPrices) return null;
 
-    const fineOz = (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035;
+    const fineOz = (Number(holding.weight_grams) * Number(holding.purity)) / 31.1035 * Number(holding.quantity);
     const spotPrice = holding.metal_type === 'gold'
       ? spotPrices.gold
       : holding.metal_type === 'silver'
