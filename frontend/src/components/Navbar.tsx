@@ -198,7 +198,8 @@ const Navbar: React.FC = () => {
             >
               Browse Venues
             </Link> */}
-            <Link
+            {/* TODO: Temporarily hidden for MiM Town focus */}
+            {/* <Link
               to="/valuation"
               className={`font-medium transition-colors ${
                 isActive('/valuation')
@@ -207,8 +208,9 @@ const Navbar: React.FC = () => {
               }`}
             >
               Valuation
-            </Link>
-            <Link
+            </Link> */}
+            {/* TODO: Temporarily hidden for MiM Town focus */}
+            {/* <Link
               to="/portfolio"
               className={`font-medium transition-colors ${
                 isActive('/portfolio')
@@ -217,7 +219,7 @@ const Navbar: React.FC = () => {
               }`}
             >
               Portfolio
-            </Link>
+            </Link> */}
             <Link
               to="/marketplace"
               className={`font-medium transition-colors ${
@@ -366,22 +368,17 @@ const Navbar: React.FC = () => {
                 )}
               </div>
             ) : (
-              // Unauthenticated: Login and Sign Up buttons
+              // Unauthenticated: Login button
               <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 text-gray-700 font-medium hover:text-brand-turquoise transition-colors"
+                  className="px-4 py-2 bg-brand-turquoise text-white rounded-lg font-medium hover:bg-brand-turquoise-dark transition-colors"
                 >
                   Login
                 </Link>
-                <Link
-                  to="/login?signup=true"
-                  className="px-4 py-2 bg-brand-turquoise text-white rounded-lg font-medium hover:bg-brand-turquoise-dark transition-colors"
-                >
-                  Sign Up
-                </Link>
               </div>
             )}
+
           </div>
         </div>
       </div>
@@ -401,7 +398,8 @@ const Navbar: React.FC = () => {
             >
               Home
             </Link>
-            <Link
+            {/* TODO: Temporarily hidden for MiM Town focus */}
+            {/* <Link
               to="/valuation"
               onClick={() => setShowMobileMenu(false)}
               className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
@@ -411,8 +409,9 @@ const Navbar: React.FC = () => {
               }`}
             >
               Valuation
-            </Link>
-            <Link
+            </Link> */}
+            {/* TODO: Temporarily hidden for MiM Town focus */}
+            {/* <Link
               to="/portfolio"
               onClick={() => setShowMobileMenu(false)}
               className={`block px-4 py-3 rounded-xl font-medium transition-colors ${
@@ -422,7 +421,7 @@ const Navbar: React.FC = () => {
               }`}
             >
               Portfolio
-            </Link>
+            </Link> */}
             <Link
               to="/marketplace"
               onClick={() => setShowMobileMenu(false)}

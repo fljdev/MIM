@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/contexts/AuthContext';
-import heroImage from '../../../assets/hero-metals.jpg';
+import heroImage from '../../../assets/hero-privacy.svg';
 
 const ChoiceSelectorPage: React.FC = () => {
   const { user } = useAuth();
@@ -11,7 +11,7 @@ const ChoiceSelectorPage: React.FC = () => {
     if (user) {
       navigate('/portfolio');
     } else {
-      navigate('/login?signup=true');
+      navigate('/login');
     }
   };
 
@@ -23,7 +23,7 @@ const ChoiceSelectorPage: React.FC = () => {
         <div className="flex-1 order-1 lg:order-1">
           <img
             src={heroImage}
-            alt="Gold bar and gold and silver coins on a teal surface."
+            alt="A shield and lock surrounded by encrypted data blocks, illustrating privacy by design."
             className="w-full h-auto rounded-2xl shadow-2xl"
           />
         </div>
@@ -31,53 +31,49 @@ const ChoiceSelectorPage: React.FC = () => {
         {/* Text Content */}
         <div className="flex-1 text-center lg:text-left order-2 lg:order-2">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-            Most people don't know what they're worth.
+            Your portfolio. Your privacy.
           </h1>
-          <p className="text-lg md:text-xl text-white/90 font-light mb-4 leading-relaxed">
-            MiM changes that.
-          </p>
           <p className="text-lg md:text-xl text-white/90 font-light mb-8 leading-relaxed">
-            Real assets. Live valuations. Total privacy.
+            MiM is a private way to track and manage what you own — encrypted, and built so no one but you can see it.
           </p>
           <button
             onClick={handleCTA}
             className="px-8 py-4 bg-white text-brand-turquoise-dark text-xl font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-flex items-center gap-2"
           >
-            Take Stock →
+            Login
           </button>
+
         </div>
       </div>
 
-      {/* Privacy / Zero Trust Section */}
+      {/* Built to be private Section */}
       <div className="w-full bg-gray-900 py-16 md:py-20 px-6 mb-16">
         <div className="max-w-4xl mx-auto text-center">
+          <p className="text-teal-300 font-semibold uppercase tracking-widest text-sm mb-4">
+            Built to be private
+          </p>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-8 leading-tight">
-            Your wealth is nobody's business but yours.
+            Privacy by design, encryption on the way.
           </h2>
           <p className="text-lg md:text-xl text-teal-200 font-light mb-4 leading-relaxed">
-            MiM is built on a foundation of zero trust. That means we don't trust ourselves with your data — and neither should you have to.
-          </p>
-          <p className="text-lg md:text-xl text-teal-200 font-light mb-4 leading-relaxed">
-            Every holding you add is encrypted on your device before it ever reaches our servers, using AES-256-GCM — the same encryption standard used by military and intelligence agencies worldwide. Your unique encryption key is derived from your password and never leaves your device. Not us, not Railway, not any government agency with a court order — nobody can read your data but you.
+            MiM is built on a simple principle: not even we should be able to see what you own.
           </p>
           <p className="text-lg md:text-xl text-teal-200 font-light mb-10 leading-relaxed">
-            If we're breached, they get noise. Your wealth stays yours.
+            We're rolling out client-side encryption using AES-256-GCM, with your personal key derived from your password via Argon2 — meaning your key would never leave your device or reach our servers. This is part of our early access roadmap, ahead of public launch.
           </p>
           {/* Badge Row */}
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <span className="inline-block px-5 py-2.5 bg-teal-800/50 text-teal-200 rounded-full text-sm font-semibold border border-teal-600/50">
-              🔒 Zero Trust Architecture
+              Zero-knowledge architecture — in progress
             </span>
             <span className="inline-block px-5 py-2.5 bg-teal-800/50 text-teal-200 rounded-full text-sm font-semibold border border-teal-600/50">
-              🛡️ End-to-End Encrypted
+              Your key stays yours — coming with early access
             </span>
             <span className="inline-block px-5 py-2.5 bg-teal-800/50 text-teal-200 rounded-full text-sm font-semibold border border-teal-600/50">
-              🔑 Your Keys, Your Data
+              Bank-grade encryption — AES-256-GCM, on the roadmap
             </span>
           </div>
-          <p className="text-lg italic text-white/70 font-light">
-            Know what you own. Never be tracked.
-          </p>
+
         </div>
       </div>
 
